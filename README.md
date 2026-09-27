@@ -36,13 +36,13 @@ python -m venv .venv
 
 不知道在哪，再点「全局搜索技能」。它会查找常见的 Cursor、OpenClaw、Hermes、Codex、Claude 技能目录，以及用户主目录里的项目。同名的只保留一份。
 
-## JEV
+## jev-decision
 
 选择器是本机训出来的门打分头，权重在 `models/jev/head.json`：39 扇门、3101 个词片段、229 条技能/插件样本，约 1.1 MB。这是已发布的基线，不要假设 `python -m host.train_jev` 会得到同一份文件。样本表可以比权重新。
 
-它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 JEV 去替代它们。
+它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 jev-decision 去替代它们。
 
-下面几张图是这几天实际踩过的坑：**当时怎样，JEV 现在怎样**。跟 Laya 比的是职责（技能选择 vs 通用能力），没有给 Laya 打柜门分——它不输出柜门 ID，仓库里也没有权重。
+下面几张图是这几天实际踩过的坑：**当时怎样，jev-decision 现在怎样**。跟 Laya 比的是职责（技能选择 vs 通用能力），没有给 Laya 打柜门分——它不输出柜门 ID，仓库里也没有权重。
 
 ![这几天踩过的技能选择坑](docs/compare-laya-skill.svg)
 
@@ -52,7 +52,7 @@ python -m venv .venv
 
 ![这几天测到的数](docs/compare-set-match.svg)
 
-![跟 Laya 比的是职责](docs/compare-scope.svg)
+![jev-decision 和 Laya](docs/compare-scope.svg)
 
 - 训练：`.venv\Scripts\python -m host.train_jev`。候选权重写在 `head.candidate.json` 上评测，回归不下降且提问/否定/核心句不破才替换 `head.json`。对比写在 `models/jev/last-train.json`。要强行覆盖用 `--force`。
 - 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句
@@ -67,7 +67,7 @@ python -m venv .venv
 
 换一种说法、意思接近时，也会沿用这次调整。结果上会写明沿用了哪一句。
 
-JEV 在模型开口之前打一遍分。门上每一项单独问要不要用，例如行情、文件、浏览器、介绍视频、论文。句子里写了这项、并且过线的一起留下。写了不要的那项除外。只教模型怎么想的技能留在柜子里，不进这道题。
+jev-decision 在模型开口之前打一遍分。门上每一项单独问要不要用，例如行情、文件、浏览器、介绍视频、论文。句子里写了这项、并且过线的一起留下。写了不要的那项除外。只教模型怎么想的技能留在柜子里，不进这道题。
 
 - 自己做：这次不读技能
 - 调用技能：读完选定的那几份，照做，不再挑选

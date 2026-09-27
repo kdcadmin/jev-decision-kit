@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="340" viewBox="0 0 960 340">
 <rect width="960" height="340" fill="#f7f6f2"/>
 <text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天测到的数</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。没有 Laya 柜门分。</text>
+<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。绿条是 jev-decision。没有 Laya 柜门分。</text>
 <rect x="24" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>
 <rect x="488" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>
 <text x="44" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">技能选错（越低越好）</text>
@@ -36,5 +36,5 @@
 <rect x="508" y="240" width="272.4" height="12" fill="#0c6b52"/>
 <text x="800" y="250" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">97.3%</text>
 <text x="508" y="270" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">36/37，漏登录页</text>
-<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=现在。</text>
+<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=jev-decision。</text>
 </svg>

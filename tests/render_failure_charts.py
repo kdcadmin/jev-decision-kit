@@ -1,6 +1,6 @@
 """Emit README charts from this week's skill-selection incidents.
 
-Series are 踩坑当时 vs JEV 现在. Do not invent Laya door scores.
+Series are 踩坑当时 vs jev-decision. Do not invent Laya door scores.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
-# 这几天调试里实际出现过的技能选择事故。当时=踩到了（挡住=0）。现在=现行 JEV（含记忆）。
+# 这几天调试里实际出现过的技能选择事故。当时=踩到了（挡住=0）。现在=现行 jev-decision（含记忆）。
 PITS = [
     ("提问误开", "PDF 是什么 / Codex 提问 8/10 误开", 0, 100),
     ("否定仍打开", "不要用 Word", 0, 100),
@@ -41,8 +41,8 @@ def pits_chart() -> str:
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
-        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs JEV 现在</text>',
-        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败，不是给 Laya 在 108 条上打的分。现在=现行选择器。</text>',
+        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs jev-decision</text>',
+        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败。现在=jev-decision。没有给 Laya 打柜门分。</text>',
     ]
     for i, tick in enumerate((0, 25, 50, 75, 100)):
         y = bottom - plot_h * tick / 100
@@ -66,7 +66,7 @@ def pits_chart() -> str:
         '<rect x="48" y="404" width="12" height="12" fill="#1c211c"/>',
         '<text x="66" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">踩坑当时</text>',
         '<rect x="168" y="404" width="12" height="12" fill="#0c6b52"/>',
-        '<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 现在</text>',
+        '<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
         '<text x="300" y="415" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类里 7 类已挡住。换说法漏召仍是盲测登录页。</text>',
         "</svg>",
     ]
@@ -99,7 +99,7 @@ def table_chart() -> str:
         '<text x="24" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">坑</text>',
         '<text x="150" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">怎么踩的</text>',
         '<text x="560" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">当时</text>',
-        '<text x="820" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">JEV 现在</text>',
+        '<text x="820" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">jev-decision</text>',
         '<line x1="24" y1="78" x2="1076" y2="78" stroke="#d5d1c7"/>',
     ]
     for i, (pit, how, then, now) in enumerate(rows):
@@ -112,7 +112,7 @@ def table_chart() -> str:
         parts.append(f'<text x="560" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">{svg_escape(then)}</text>')
         parts.append(f'<text x="820" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="{now_color}">{svg_escape(now)}</text>')
     parts.append(
-        f'<text x="24" y="{height - 14}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">通用写作和推理这几天没有拿 JEV 去比 Laya：那一块本来就不是选择头的活。</text>'
+        f'<text x="24" y="{height - 14}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">通用写作和推理不拿 jev-decision 去比 Laya：那一块本来就不是选择头的活。</text>'
     )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
@@ -125,7 +125,7 @@ def numbers_chart() -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
         '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天测到的数</text>',
-        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。没有 Laya 柜门分。</text>',
+        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。绿条是 jev-decision。没有 Laya 柜门分。</text>',
         '<rect x="24" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>',
         '<rect x="488" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>',
         '<text x="44" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">技能选错（越低越好）</text>',
@@ -156,7 +156,7 @@ def numbers_chart() -> str:
         parts.append(f'<rect x="508" y="{y + 10}" width="{2.8 * value:.1f}" height="12" fill="#0c6b52"/>')
         parts.append(f'<text x="800" y="{y + 20}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{value:.1f}%</text>')
         parts.append(f'<text x="508" y="{y + 40}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(note)}</text>')
-    parts.append('<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=现在。</text>')
+    parts.append('<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=jev-decision。</text>')
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
@@ -164,11 +164,11 @@ def numbers_chart() -> str:
 def scope_chart() -> str:
     return """<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280">
 <rect width="960" height="280" fill="#f7f6f2"/>
-<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">跟 Laya 比的是职责，不是同一张分数表</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">JEV 只训练「这句话要不要开哪几份技能/插件」。Laya 是通用智能体。仓库不发布 Laya 权重，选择路径也不再调用它。</text>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">jev-decision 和 Laya：职责不同，不是同一张分数表</text>
+<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">jev-decision 只训练「这句话要不要开哪几份技能/插件」。Laya 是通用智能体。仓库不发布 Laya 权重，选择路径也不再调用它。</text>
 <rect x="24" y="68" width="448" height="180" fill="#e7f3ee" stroke="#d5d1c7"/>
 <rect x="488" y="68" width="448" height="180" fill="#fff" stroke="#d5d1c7"/>
-<text x="44" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">JEV · 技能选择</text>
+<text x="44" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">jev-decision · 技能选择</text>
 <text x="44" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">1.1 MB 线性头 · 39 门 · 229 条样本</text>
 <text x="44" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这几天修的就是上面那些选错</text>
 <text x="44" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">回归 108/108，盲测 36/37</text>
@@ -176,7 +176,7 @@ def scope_chart() -> str:
 <text x="508" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya · 通用能力</text>
 <text x="508" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">写作、推理、规划、未点名的活</text>
 <text x="508" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不输出柜门 ID，未在本集打分</text>
-<text x="508" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 替代不了，也不该拿它去比通用</text>
+<text x="508" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision 替代不了，也不该拿它去比通用</text>
 <text x="508" y="210" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">用通用模型猜柜门，才会出现左边那些坑</text>
 </svg>
 """

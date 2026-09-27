@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="440" viewBox="0 0 960 440">
 <rect width="960" height="440" fill="#f7f6f2"/>
-<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs JEV 现在</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败，不是给 Laya 在 108 条上打的分。现在=现行选择器。</text>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs jev-decision</text>
+<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败。现在=jev-decision。没有给 Laya 打柜门分。</text>
 <line x1="56" y1="348.0" x2="932" y2="348.0" stroke="#d5d1c7"/>
 <text x="48" y="352.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
 <line x1="56" y1="283.0" x2="932" y2="283.0" stroke="#d5d1c7"/>
@@ -55,6 +55,6 @@
 <rect x="48" y="404" width="12" height="12" fill="#1c211c"/>
 <text x="66" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">踩坑当时</text>
 <rect x="168" y="404" width="12" height="12" fill="#0c6b52"/>
-<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 现在</text>
+<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>
 <text x="300" y="415" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类里 7 类已挡住。换说法漏召仍是盲测登录页。</text>
 </svg>
