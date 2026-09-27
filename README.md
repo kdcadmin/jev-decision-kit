@@ -42,17 +42,17 @@ python -m venv .venv
 
 它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 JEV 去替代它们。
 
-下面几张图用的是你们实际踩过的事故句，不是抽象总分。
+下面几张图对照的是 **Laya 猜门** 和 **JEV 现行**。用的是你们实际踩过的选错技能句，不是规则/记忆的内部对比。Laya 不输出柜门 ID，仓库里也没有它的权重，所以左边那列不是同一 108 条上的实测分数，表示通用模型去选技能时会出现的失败；JEV 列是本机选择器实测。
+
+![Laya 猜门会踩的坑，JEV 现在守不守得住](docs/compare-laya-skill.svg)
 
 ![以前选错的那些句](docs/compare-failures.svg)
 
-提问误开（「PDF 是什么」）、否定被盖掉（「不要用 Word」）、WordPress 被当成 Word、纪要+Word+幻灯片收成一门、不要 PDF 却漏掉论文、填表导出只开 PDF、股价要 Excel 仍开 Word、登录页换一种说法就没了。规则仍会把 WordPress 误开成建站；JEV 单独会漏论文和网页操作；记忆补上这两句；盲测「在登录页填完再点提交」现在还漏。
+提问误开（「PDF 是什么」）、否定被盖掉（「不要用 Word」）、WordPress 被当成 Word、纪要+Word+幻灯片收成一门、不要 PDF 却漏掉论文、填表导出只开 PDF、股价要 Excel 仍开 Word。这些 JEV 现在挡住了。盲测「在登录页填完再点提交」两边都还漏。
 
-![旧事故覆盖](docs/compare-errors.svg)
+![权重和职责](docs/compare-set-match.svg)
 
-![柜门集合匹配](docs/compare-set-match.svg)
-
-![JEV 与 Laya 的职责](docs/compare-scope.svg)
+![JEV 把技能选准，通用能力仍是 Laya](docs/compare-scope.svg)
 
 - 训练：`.venv\Scripts\python -m host.train_jev`。候选权重写在 `head.candidate.json` 上评测，回归不下降且提问/否定/核心句不破才替换 `head.json`。对比写在 `models/jev/last-train.json`。要强行覆盖用 `--force`。
 - 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句

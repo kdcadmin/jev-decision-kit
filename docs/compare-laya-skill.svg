@@ -1,0 +1,52 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+  <rect width="960" height="420" fill="#f7f6f2"/>
+  <text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">技能选择：Laya 猜门时会踩的坑，JEV 现在守不守得住</text>
+  <text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴：这类事故是否被挡住（100=挡住）。Laya 列不是同一评测集实测，表示通用模型去选技能时会出现的失败；JEV 列是本机现行选择器（含记忆）。</text>
+  <g font-family="Segoe UI, sans-serif" font-size="11" fill="#5c6560">
+    <line x1="48" y1="86" x2="936" y2="86" stroke="#d5d1c7"/>
+    <text x="40" y="90" text-anchor="end">100</text>
+    <line x1="48" y1="150" x2="936" y2="150" stroke="#d5d1c7"/>
+    <text x="40" y="154" text-anchor="end">75</text>
+    <line x1="48" y1="214" x2="936" y2="214" stroke="#d5d1c7"/>
+    <text x="40" y="218" text-anchor="end">50</text>
+    <line x1="48" y1="278" x2="936" y2="278" stroke="#d5d1c7"/>
+    <text x="40" y="282" text-anchor="end">25</text>
+    <line x1="48" y1="342" x2="936" y2="342" stroke="#d5d1c7"/>
+    <text x="40" y="346" text-anchor="end">0</text>
+  </g>
+  <rect x="64" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="108" y="86" width="40" height="256" fill="#0c6b52"/>
+  <text x="106" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">提问误开</text>
+  <text x="84" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="128" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
+  <rect x="212" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="256" y="86" width="40" height="256" fill="#0c6b52"/>
+  <text x="254" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定仍打开</text>
+  <text x="232" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="276" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
+  <rect x="360" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="404" y="86" width="40" height="256" fill="#0c6b52"/>
+  <text x="402" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">赢家通吃</text>
+  <text x="380" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="424" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
+  <rect x="508" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="552" y="86" width="40" height="256" fill="#0c6b52"/>
+  <text x="550" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">选错技能</text>
+  <text x="528" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="572" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
+  <rect x="656" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="700" y="86" width="40" height="256" fill="#0c6b52"/>
+  <text x="698" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">多门并列</text>
+  <text x="676" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="720" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
+  <rect x="804" y="338" width="40" height="4" fill="#1c211c"/>
+  <rect x="848" y="338" width="40" height="4" fill="#0c6b52"/>
+  <text x="846" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法漏召</text>
+  <text x="824" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
+  <text x="868" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">0</text>
+  <rect x="48" y="392" width="12" height="12" fill="#1c211c"/>
+  <text x="66" y="403" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 猜门（会踩）</text>
+  <rect x="220" y="392" width="12" height="12" fill="#0c6b52"/>
+  <text x="238" y="403" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 现行</text>
+  <text x="400" y="403" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">换说法漏召=盲测登录页，两边都还没补上。</text>
+</svg>
