@@ -76,7 +76,9 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 决定会过期。`get_skill` 必须带这次前言末尾的 `decision_id`。号不对时返回「决定已过期。不要改选，也不要猜别的技能。」选过的名字写错则是「没有选定」。过期之后重新把原句交给前言服务，不要猜技能。
 
-独立评测句在 `tests/eval_cases.json`。训练脚本会核对，评测原句不能进 `POS`。对比规则、规则加 JEV、再加记忆：`.venv\Scripts\python.exe -m host.eval_heldout`。
+独立评测分三份：`tests/eval_cases.json` 是回归集（已经指导过规则修改）；`tests/eval_blind.json` 是未参与调试的句子；记忆第三列只用 `tests/memory_fixture.json`，不读你电脑上的真实记录。训练脚本会拦截前两份里的原句。对比：`.venv\Scripts\python.exe -m host.eval_heldout`，盲测加 `--blind`。
+
+「不要用 PDF，给我论文」按论文请求计分；模型低于 0.4 算漏召回。固定记忆里若有相近论文样本，习惯分可以补上。「WordPress 建站，不是 Word」按排除 Word 计，不打开建站插件。
 
 插件没有写进权重文件时，只要原句点了它的名字，也会留下。
 

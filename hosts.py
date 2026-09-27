@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -45,22 +44,54 @@ def _hermes_block(enabled: bool) -> str:
     )
 
 
-def sync_hermes(enabled: bool) -> dict:
-    path = Path.home() / ".hermes" / "config.yaml"
+def upsert_mcp_block(text: str, block: str) -> str:
+    if not block.endswith("\n"):
+        block += "\n"
+    lines = text.splitlines(keepends=True)
+    if not lines:
+        return "mcp_servers:\n" + block
+    parent = next((index for index, line in enumerate(lines) if line.startswith("mcp_servers:")), None)
+    if parent is None:
+        return text.rstrip() + "\n\nmcp_servers:\n" + block
+
+    def server_key(line: str) -> bool:
+        return line.startswith("  ") and not line.startswith("    ") and bool(line.strip())
+
+    start = None
+    limit = len(lines)
+    for index in range(parent + 1, len(lines)):
+        line = lines[index]
+        if line.strip() and not line.startswith((" ", "\t")):
+            limit = index
+            break
+        if line.startswith("  jev-skill-kit:"):
+            start = index
+            break
+    if start is None:
+        lines.insert(limit, block)
+        return "".join(lines)
+    end = start + 1
+    while end < limit:
+        line = lines[end]
+        if server_key(line) and not line.startswith("  jev-skill-kit:"):
+            break
+        end += 1
+    lines[start:end] = [block]
+    return "".join(lines)
+
+
+def sync_hermes(enabled: bool, path: Path | None = None) -> dict:
+    path = path or (Path.home() / ".hermes" / "config.yaml")
     if not path.is_file():
         return {"name": "hermes", "present": False, "enabled": False}
     text = path.read_text(encoding="utf-8")
-    block = _hermes_block(enabled)
-    pattern = re.compile(r"\n  jev-skill-kit:\n(?:    .*\n)*")
-    if pattern.search("\n" + text if not text.startswith("\n") else text) or "\n  jev-skill-kit:\n" in "\n" + text:
-        text2 = re.sub(r"(?m)^  jev-skill-kit:\n(?:    .*\n)*", lambda _match: block, text, count=1)
-    elif "\nmcp_servers:\n" in "\n" + text or text.startswith("mcp_servers:\n"):
-        text2 = text.replace("mcp_servers:\n", "mcp_servers:\n" + block, 1)
-    else:
-        text2 = text.rstrip() + "\n\nmcp_servers:\n" + block
+    text2 = upsert_mcp_block(text, _hermes_block(enabled))
     if text2 != text:
+        backup = path.with_name(path.name + ".jev.bak")
+        if not backup.is_file():
+            backup.write_text(text, encoding="utf-8")
         path.write_text(text2, encoding="utf-8")
-    return {"name": "hermes", "present": True, "enabled": enabled}
+    return {"name": "hermes", "present": True, "enabled": enabled, "backup": str(path.with_name(path.name + ".jev.bak"))}
 
 
 def sync_openclaw(enabled: bool) -> dict:

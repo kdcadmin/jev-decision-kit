@@ -64,6 +64,21 @@ class ToolMemoryTests(unittest.TestCase):
         self.assertEqual(routed["method"], "think")
         self.assertEqual(routed["skills"], [])
 
+    def test_fixture_habit_can_recover_named_thesis(self):
+        from unittest.mock import patch
+
+        import cabinet
+        from host.tool_memory import remembered_doors
+        import json
+
+        samples = json.loads((ROOT / "tests" / "memory_fixture.json").read_text(encoding="utf-8"))
+        with patch(
+            "host.tool_memory.remembered_doors",
+            lambda text, samples_arg=None, line=0.72: remembered_doors(text, samples, line),
+        ):
+            routed = cabinet.route_task("不要用 PDF，给我论文", "test", record=False)
+        self.assertEqual([item["name"] for item in routed["skills"]], ["chinese-thesis-workbench"])
+
 
 if __name__ == "__main__":
     unittest.main()

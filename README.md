@@ -8,9 +8,11 @@ JEV 选的是技能和能点名的插件。MCP 只在柜子里查看和管理，
 
 ## 展示
 
+走一遍柜子（和截图同一比例 594×674）：
+
 ![柜子走一遍](docs/tour.gif)
 
-GitHub 说明页不能内嵌仓库里的 mp4，所以这里用动图。同一段也在 [docs/tour.mp4](docs/tour.mp4)（约 25 秒，带静音音轨，本机播放器可打开）。完整介绍片仍是本机的 `jev-skill-kit-intro.mp4`，约 44MB，网页预览打不开。
+GitHub 点开 `docs/tour.mp4` 不会播，这是网页文件页的限制。要看 mp4：下载后用播放器打开，或把 [docs/play-tour.html](docs/play-tour.html) 和 `tour.mp4` 放在一起用浏览器打开。完整介绍片仍是本机 `jev-skill-kit-intro.mp4`，约 44MB，网页预览打不开。
 
 ![柜子](docs/cabinet.png)
 

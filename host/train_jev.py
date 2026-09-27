@@ -13,6 +13,7 @@ from host.gate import GATE
 from host.jev import WEIGHTS, ngrams
 
 EVAL_FILE = ROOT / "tests" / "eval_cases.json"
+BLIND_FILE = ROOT / "tests" / "eval_blind.json"
 
 # Exact strings used as the live exam. They are not training rows.
 EXAM = {
@@ -165,6 +166,19 @@ NONE = [
 ]
 
 
+def held_out_texts() -> set[str]:
+    held = set(EXAM)
+    for path in (EVAL_FILE, BLIND_FILE):
+        if not path.is_file():
+            continue
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        for item in payload.get("cases") or []:
+            text = str(item.get("text") or "").strip()
+            if text:
+                held.add(text)
+    return held
+
+
 def rows() -> list[tuple[str, set[str]]]:
     found = []
     for gate_id, lines in POS.items():
@@ -193,13 +207,7 @@ def rows() -> list[tuple[str, set[str]]]:
         doors = {str(door) for door in (item.get("doors") or []) if str(door)}
         if text and doors:
             found.append((text, doors))
-    held = set(EXAM)
-    if EVAL_FILE.is_file():
-        payload = json.loads(EVAL_FILE.read_text(encoding="utf-8"))
-        for item in payload.get("cases") or []:
-            text = str(item.get("text") or "").strip()
-            if text:
-                held.add(text)
+    held = held_out_texts()
     leaked = [text for text, _labels in found if text in held]
     if leaked:
         raise SystemExit("exam sentence leaked into training: " + leaked[0])
