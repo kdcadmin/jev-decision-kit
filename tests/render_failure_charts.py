@@ -1,6 +1,8 @@
-"""Emit README charts from this week's skill-selection incidents.
+"""README charts: the 33 sentences Laya actually scored on 2026-09-27.
 
-Series are 踩坑当时 vs jev-decision. Do not invent Laya door scores.
+Laya column is the saved run (threshold 0.5, at most 3 doors, 15/33 exact).
+jev-decision column is route_task on the same sentences, record=False, 2026-09-27 evening.
+Exact means the doors that should stay are all there and nothing extra is kept.
 """
 
 from __future__ import annotations
@@ -10,16 +12,41 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
-# 这几天调试里实际出现过的技能选择事故。当时=踩到了（挡住=0）。现在=现行 jev-decision（含记忆）。
-PITS = [
-    ("提问误开", "PDF 是什么 / Codex 提问 8/10 误开", 0, 100),
-    ("否定仍打开", "不要用 Word", 0, 100),
-    ("未点名却开", "线性头 ~0.99 仍开门", 0, 100),
-    ("赢家通吃", "纪要+Word+幻灯片只留一门", 0, 100),
-    ("选错技能", "WordPress 当成 Word", 0, 100),
-    ("否定后乱选", "不要 PDF，给我论文", 0, 100),
-    ("漏掉操作门", "填表提交之后导出成 PDF", 0, 100),
-    ("换说法漏召", "在登录页填完再点提交", 0, 0),
+# task, group, laya_got, laya_ok, jev_got, jev_ok
+ROWS = [
+    ("帮我看一下贵州茅台现在多少钱", "每道门", "行情 0.83", True, "行情", True),
+    ("盯盘今天有没有提醒", "每道门", "自己做", False, "自己做", False),
+    ("把刚才的会整理成纪要", "每道门", "自己做（纪要 0.31）", False, "会议纪要", True),
+    ("按模板写一份 Word", "每道门", "自己做（Word 0.44）", False, "Word", True),
+    ("读一下这个 PDF", "每道门", "自己做（PDF 0.24）", False, "自己做", False),
+    ("做一套幻灯片文件", "每道门", "幻灯片 0.71", True, "幻灯片", True),
+    ("把这张表算一下", "每道门", "表格 0.58", True, "自己做", False),
+    ("打开这个网页把正文摘出来", "每道门", "操作网页、读网页、Godot", False, "读网页", True),
+    ("在网页上把这个表单填完", "每道门", "操作网页 0.59", True, "自己做", False),
+    ("再做一支同样风格的介绍视频", "每道门", "介绍视频 0.52", True, "介绍视频", True),
+    ("把这几段实拍剪到一起", "每道门", "自己做（0.29）", False, "实拍剪辑", True),
+    ("给这篇文章画一张小黑风格的图", "每道门", "小黑插图 0.81", True, "小黑插图", True),
+    ("用本机模型把这张图生成视频", "每道门", "自己做（0.45）", False, "自己做", False),
+    ("做一段背景音乐", "每道门", "出音乐 0.77", True, "自己做", False),
+    ("把这张照片做成表情包", "每道门", "表情贴纸 0.81", True, "自己做", False),
+    ("按论文工作台写这一章", "每道门", "论文 0.90", True, "论文", True),
+    ("查一下这家公司", "每道门", "读网页、公司情报", False, "公司情报", True),
+    ("把这些资料收进资料库", "每道门", "自己做（0.44）", False, "资料库", True),
+    ("最近三十天这个话题有什么", "每道门", "自己做", False, "近三十天", True),
+    ("在 Godot 里把这个场景跑起来", "每道门", "自己做（0.48）", False, "Godot", True),
+    ("把这个项目推到远程", "每道门", "自己做", False, "远程备份", True),
+    ("帮我把这句话写顺一点", "每道门", "自己做", True, "自己做", True),
+    ("这段代码什么意思", "每道门", "读网页 0.66", False, "自己做", True),
+    ("查股价、写成 Word、配小黑图", "一句多门", "行情、Word、小黑", True, "行情、Word、小黑", True),
+    ("打开 https://example.com 把正文读出来", "换说法", "读网页 0.86", True, "读网页", True),
+    ("打开登录页，填账号密码然后点登录", "换说法", "操作网页、表格", False, "操作网页", True),
+    ("宁德时代今天涨了多少，整理进 Excel", "换说法", "只留行情", False, "只留表格", False),
+    ("再来一支大肥鱼的介绍片，剧情换成上班", "换说法", "介绍视频 0.73", True, "介绍视频", True),
+    ("股价、Word、小黑图、幻灯片", "超过三道", "丢掉行情（最多 3 道）", False, "四道都留", True),
+    ("这段话帮我改得顺一点就行", "换说法", "自己做", True, "自己做", True),
+    ("用 MiniMax 出一张图", "换说法", "自己做（0.07）", False, "自己做", False),
+    ("把仓库备份到远程", "换说法", "远程备份 0.98", True, "远程备份", True),
+    ("最近一个月大家在讨论什么", "换说法", "自己做", False, "自己做", False),
 ]
 
 
@@ -31,163 +58,168 @@ def write(name: str, body: str) -> None:
     (DOCS / name).write_text(body, encoding="utf-8", newline="\n")
 
 
-def pits_chart() -> str:
-    w, h = 960, 440
-    top, bottom, left, right = 88, 348, 56, 932
-    plot_h = bottom - top
-    n = len(PITS)
-    gap = (right - left) / n
-    bar_w = 22
+def group_rates() -> list[tuple[str, int, int, int]]:
+    order = ["每道门", "一句多门", "换说法", "超过三道"]
+    out = []
+    for name in order:
+        rows = [row for row in ROWS if row[1] == name]
+        out.append(
+            (
+                name,
+                len(rows),
+                sum(1 for row in rows if row[3]),
+                sum(1 for row in rows if row[5]),
+            )
+        )
+    return out
+
+
+def overview() -> str:
+    w, h = 960, 420
+    groups = group_rates()
+    laya = sum(1 for row in ROWS if row[3])
+    jev = sum(1 for row in ROWS if row[5])
+    n = len(ROWS)
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
-        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs jev-decision</text>',
-        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败。现在=jev-decision。没有给 Laya 打柜门分。</text>',
+        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">同一批 33 句：Laya 当时 vs jev-decision</text>',
+        f'<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">Laya 是 2026-09-27 实测：逐门打分，过 0.5，最多留 3 道，刚好选对 {laya}/{n}。jev-decision 是现行选择器重跑这 33 句，{jev}/{n}。纵轴是刚好选对的比例。</text>',
     ]
-    for i, tick in enumerate((0, 25, 50, 75, 100)):
+    left, right, top, bottom = 64, 920, 78, 320
+    plot_h = bottom - top
+    for tick in (0, 25, 50, 75, 100):
         y = bottom - plot_h * tick / 100
         parts.append(f'<line x1="{left}" y1="{y:.1f}" x2="{right}" y2="{y:.1f}" stroke="#d5d1c7"/>')
         parts.append(
             f'<text x="{left - 8}" y="{y + 4:.1f}" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">{tick}</text>'
         )
-    for i, (name, _ex, then, now) in enumerate(PITS):
+    cats = [("全部 33 句", laya, jev, n)] + [(name, a, b, count) for name, count, a, b in groups]
+    gap = (right - left) / len(cats)
+    bar_w = 28
+    for i, (name, a, b, count) in enumerate(cats):
         cx = left + gap * (i + 0.5)
-        for dx, value, color in ((-bar_w - 2, then, "#1c211c"), (2, now, "#0c6b52")):
+        for dx, value, color in ((-bar_w - 3, 100 * a / count, "#1c211c"), (3, 100 * b / count, "#0c6b52")):
             bh = max(4, plot_h * value / 100)
             y = bottom - bh
             parts.append(f'<rect x="{cx + dx:.1f}" y="{y:.1f}" width="{bar_w}" height="{bh:.1f}" fill="{color}"/>')
             parts.append(
-                f'<text x="{cx + dx + bar_w / 2:.1f}" y="{y - 6:.1f}" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="{color}">{value}</text>'
+                f'<text x="{cx + dx + bar_w / 2:.1f}" y="{y - 6:.1f}" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="{color}">{value:.0f}</text>'
             )
         parts.append(
-            f'<text x="{cx:.1f}" y="{bottom + 22}" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
+            f'<text x="{cx:.1f}" y="{bottom + 22}" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
+        )
+        parts.append(
+            f'<text x="{cx:.1f}" y="{bottom + 40}" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">{a}/{count} → {b}/{count}</text>'
         )
     parts += [
-        '<rect x="48" y="404" width="12" height="12" fill="#1c211c"/>',
-        '<text x="66" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">踩坑当时</text>',
-        '<rect x="168" y="404" width="12" height="12" fill="#0c6b52"/>',
-        '<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
-        '<text x="300" y="415" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类里 7 类已挡住。换说法漏召仍是盲测登录页。</text>',
+        '<rect x="48" y="388" width="12" height="12" fill="#1c211c"/>',
+        '<text x="66" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>',
+        '<rect x="168" y="388" width="12" height="12" fill="#0c6b52"/>',
+        '<text x="186" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
+        '<text x="340" y="399" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">出音乐、表情包后来不在门上，所以这两句 jev-decision 记成没选中。</text>',
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
 
 
-def table_chart() -> str:
-    rows = [
-        ("提问误开", "PDF 是什么；Codex 试用提问 8/10 都开门", "当成导出/操作", "提问句自己做"),
-        ("否定被盖", "不要用 Word", "习惯分把 Word 又打开", "不开 Word"),
-        ("未点名却开", "句子没点名，头仍打到 ~0.99", "无名门也留下", "未点名清零"),
-        ("赢家通吃", "纪要，再写成 Word，再做幻灯片", "YES_LIMIT / 只留一门", "点名的门都留"),
-        ("选错技能", "WordPress 建站，不是 Word", "当成 Word 或建站", "不开 Word"),
-        ("否定后乱选", "不要用 PDF，给我论文", "关掉 PDF，论文也没了", "留论文工作台"),
-        ("漏掉操作门", "填表提交之后导出成 PDF", "只开 PDF", "填表 + PDF"),
-        ("股价否定", "放进 Excel，不要写 Word", "仍打开 Word", "只开行情和表格"),
-        ("换说法漏召", "在登录页填完再点提交", "对不上网页操作门", "仍漏（盲测）"),
-        ("训差权重", "一次重训回归 106→99", "差点覆盖 head.json", "发布门拒绝，基线仍在"),
-        ("评测句进训练", "用考卷原句修召回", "分数虚高", "训练拦截评测原句"),
-        ("Harness 选门", "pre-step 返回数组", "宿主 TypeError", "PreStepDecision 追加"),
-    ]
-    row_h = 30
-    height = 72 + row_h * len(rows) + 36
+def table() -> str:
+    row_h = 26
+    height = 86 + row_h * len(ROWS) + 28
     width = 1100
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         f'<rect width="{width}" height="{height}" fill="#f7f6f2"/>',
-        '<text x="24" y="28" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天实际踩过的坑</text>',
-        '<text x="24" y="48" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">来源：这几天试用和评测原句。不是 Laya 108 条打分。</text>',
-        '<text x="24" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">坑</text>',
-        '<text x="150" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">怎么踩的</text>',
-        '<text x="560" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">当时</text>',
-        '<text x="820" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">jev-decision</text>',
-        '<line x1="24" y1="78" x2="1076" y2="78" stroke="#d5d1c7"/>',
+        '<text x="24" y="28" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句逐条：Laya 留下什么，jev-decision 留下什么</text>',
+        '<text x="24" y="48" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">对 = 该留的门都在，且没有多出来的门。Laya 数字来自当时那次打分。</text>',
+        '<text x="24" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">句子</text>',
+        '<text x="430" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">Laya 当时</text>',
+        '<text x="760" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">jev-decision</text>',
+        '<line x1="24" y1="80" x2="1076" y2="80" stroke="#d5d1c7"/>',
     ]
-    for i, (pit, how, then, now) in enumerate(rows):
-        y = 98 + i * row_h
-        if i % 2 == 0:
-            parts.append(f'<rect x="16" y="{y - 18}" width="1068" height="{row_h}" fill="#e7f3ee"/>')
-        now_color = "#8f3d32" if "仍漏" in now else "#0c6b52"
-        parts.append(f'<text x="24" y="{y}" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(pit)}</text>')
-        parts.append(f'<text x="150" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(how)}</text>')
-        parts.append(f'<text x="560" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">{svg_escape(then)}</text>')
-        parts.append(f'<text x="820" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="{now_color}">{svg_escape(now)}</text>')
+    for i, (task, _group, laya_got, laya_ok, jev_got, jev_ok) in enumerate(ROWS):
+        y = 100 + i * row_h
+        if jev_ok and not laya_ok:
+            bg = "#e7f3ee"
+        elif laya_ok and not jev_ok:
+            bg = "#f6e8e4"
+        elif i % 2 == 0:
+            bg = "#fff"
+        else:
+            bg = ""
+        if bg:
+            parts.append(f'<rect x="16" y="{y - 16}" width="1068" height="{row_h}" fill="{bg}"/>')
+        short = task if len(task) <= 28 else task[:27] + "…"
+        parts.append(f'<text x="24" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(short)}</text>')
+        parts.append(
+            f'<text x="430" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="{"#0c6b52" if laya_ok else "#8f3d32"}">{svg_escape(("对 · " if laya_ok else "错 · ") + laya_got)}</text>'
+        )
+        parts.append(
+            f'<text x="760" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="{"#0c6b52" if jev_ok else "#8f3d32"}">{svg_escape(("对 · " if jev_ok else "错 · ") + jev_got)}</text>'
+        )
     parts.append(
-        f'<text x="24" y="{height - 14}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">通用写作和推理不拿 jev-decision 去比 Laya：那一块本来就不是选择头的活。</text>'
+        f'<text x="24" y="{height - 12}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">绿底：Laya 错、jev-decision 对。红底：Laya 对、jev-decision 错（表格、表单、出音乐、表情包）。</text>'
     )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
 
-def numbers_chart() -> str:
-    # 实测数字，分开两把尺子：错误率 vs 集合匹配
-    w, h = 960, 340
+def moved() -> str:
+    better = sum(1 for row in ROWS if row[5] and not row[3])
+    worse = sum(1 for row in ROWS if row[3] and not row[5])
+    same_ok = sum(1 for row in ROWS if row[3] and row[5])
+    same_bad = sum(1 for row in ROWS if not row[3] and not row[5])
+    w, h = 960, 220
+    items = [
+        ("两边都对", same_ok, "#0c6b52"),
+        ("Laya 错，现在对", better, "#0c6b52"),
+        ("Laya 对，现在错", worse, "#8f3d32"),
+        ("两边都错", same_bad, "#1c211c"),
+    ]
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
-        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天测到的数</text>',
-        '<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。绿条是 jev-decision。没有 Laya 柜门分。</text>',
-        '<rect x="24" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>',
-        '<rect x="488" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>',
-        '<text x="44" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">技能选错（越低越好）</text>',
-        '<text x="508" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">集合匹配（越高越好）</text>',
+        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句里谁变了</text>',
+        '<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。现在错的 4 句是「把这张表算一下」「在网页上把这个表单填完」「做一段背景音乐」「把这张照片做成表情包」。</text>',
     ]
-    # left: asking 8/10 = 80% then 0; login still miss = 100% miss then 100%
-    left_rows = [
-        ("提问误开（试用 10 句）", 80, 0, "8/10 → 挡住"),
-        ("8 类旧事故漏掉", 100, 12.5, "8/8 → 1/8"),
-        ("登录页换说法", 100, 100, "仍漏"),
-    ]
-    for i, (label, then, now, note) in enumerate(left_rows):
-        y = 118 + i * 56
-        parts.append(f'<text x="44" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(label)}</text>')
-        parts.append(f'<rect x="44" y="{y + 8}" width="280" height="10" fill="#eceae4"/>')
-        parts.append(f'<rect x="44" y="{y + 8}" width="{2.8 * then:.1f}" height="10" fill="#1c211c"/>')
-        parts.append(f'<rect x="44" y="{y + 22}" width="{max(4, 2.8 * now):.1f}" height="10" fill="#0c6b52"/>')
-        parts.append(f'<text x="336" y="{y + 22}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(note)}</text>')
-    right_rows = [
-        ("回归 108 条", 100.0, "现行 108/108（含记忆）"),
-        ("训差候选（未发布）", 91.7, "99/108，发布门拒绝"),
-        ("盲测 37 条", 97.3, "36/37，漏登录页"),
-    ]
-    for i, (label, value, note) in enumerate(right_rows):
-        y = 118 + i * 56
-        parts.append(f'<text x="508" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(label)}</text>')
-        parts.append(f'<rect x="508" y="{y + 10}" width="280" height="12" fill="#eceae4"/>')
-        parts.append(f'<rect x="508" y="{y + 10}" width="{2.8 * value:.1f}" height="12" fill="#0c6b52"/>')
-        parts.append(f'<text x="800" y="{y + 20}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{value:.1f}%</text>')
-        parts.append(f'<text x="508" y="{y + 40}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">{svg_escape(note)}</text>')
-    parts.append('<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=jev-decision。</text>')
+    gap = (900 - 48) / 4
+    for i, (name, value, color) in enumerate(items):
+        x = 48 + i * gap
+        bh = 90 * value / 33
+        y = 160 - bh
+        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="70" height="{bh:.1f}" fill="{color}"/>')
+        parts.append(
+            f'<text x="{x + 35:.1f}" y="{y - 8:.1f}" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">{value}</text>'
+        )
+        parts.append(
+            f'<text x="{x + 35:.1f}" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
+        )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
 
 def scope_chart() -> str:
-    return """<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280">
-<rect width="960" height="280" fill="#f7f6f2"/>
-<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">jev-decision 和 Laya：职责不同，不是同一张分数表</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">jev-decision 只训练「这句话要不要开哪几份技能/插件」。Laya 是通用智能体。仓库不发布 Laya 权重，选择路径也不再调用它。</text>
-<rect x="24" y="68" width="448" height="180" fill="#e7f3ee" stroke="#d5d1c7"/>
-<rect x="488" y="68" width="448" height="180" fill="#fff" stroke="#d5d1c7"/>
-<text x="44" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">jev-decision · 技能选择</text>
-<text x="44" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">1.1 MB 线性头 · 39 门 · 229 条样本</text>
-<text x="44" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这几天修的就是上面那些选错</text>
-<text x="44" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">回归 108/108，盲测 36/37</text>
-<text x="44" y="210" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">开口前选定，模型不再挑技能</text>
-<text x="508" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya · 通用能力</text>
-<text x="508" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">写作、推理、规划、未点名的活</text>
-<text x="508" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不输出柜门 ID，未在本集打分</text>
-<text x="508" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision 替代不了，也不该拿它去比通用</text>
-<text x="508" y="210" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">用通用模型猜柜门，才会出现左边那些坑</text>
+    return """<svg xmlns="http://www.w3.org/2000/svg" width="960" height="220" viewBox="0 0 960 220">
+<rect width="960" height="220" fill="#f7f6f2"/>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这张对比只覆盖技能选择</text>
+<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">Laya 当时：通用模型逐门打分，过 0.5，最多 3 道。33 句刚好选对 15 句。</text>
+<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点名才开门，过线的都留。刚好选对 23 句。</text>
+<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">变好的主要是纪要、Word、资料库、Godot、远程备份，以及一句里超过 3 道门。</text>
+<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">变差的 4 句：表格、网页表单，以及后来撤掉的出音乐、表情包。</text>
+<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">写作、推理、没点名的活仍是 Laya 的通用能力。这 33 句没有测那一块。</text>
+<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">两边都还错：盯盘提醒、读 PDF、本机出视频、MiniMax 出图、宁德时代进 Excel、最近一个月。</text>
 </svg>
 """
 
 
 def main() -> None:
-    write("compare-laya-skill.svg", pits_chart())
-    write("compare-failures.svg", table_chart())
-    write("compare-set-match.svg", numbers_chart())
+    write("compare-laya-skill.svg", overview())
+    write("compare-failures.svg", table())
+    write("compare-set-match.svg", moved())
     write("compare-scope.svg", scope_chart())
-    print("wrote 4 compare SVGs")
+    laya = sum(1 for row in ROWS if row[3])
+    jev = sum(1 for row in ROWS if row[5])
+    print(f"laya {laya}/33 jev {jev}/33")
 
 
 if __name__ == "__main__":

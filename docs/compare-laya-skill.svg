@@ -1,60 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="440" viewBox="0 0 960 440">
-<rect width="960" height="440" fill="#f7f6f2"/>
-<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs jev-decision</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败。现在=jev-decision。没有给 Laya 打柜门分。</text>
-<line x1="56" y1="348.0" x2="932" y2="348.0" stroke="#d5d1c7"/>
-<text x="48" y="352.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
-<line x1="56" y1="283.0" x2="932" y2="283.0" stroke="#d5d1c7"/>
-<text x="48" y="287.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">25</text>
-<line x1="56" y1="218.0" x2="932" y2="218.0" stroke="#d5d1c7"/>
-<text x="48" y="222.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">50</text>
-<line x1="56" y1="153.0" x2="932" y2="153.0" stroke="#d5d1c7"/>
-<text x="48" y="157.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">75</text>
-<line x1="56" y1="88.0" x2="932" y2="88.0" stroke="#d5d1c7"/>
-<text x="48" y="92.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">100</text>
-<rect x="86.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="97.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="112.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="123.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="110.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">提问误开</text>
-<rect x="196.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="207.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="222.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="233.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="220.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定仍打开</text>
-<rect x="305.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="316.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="331.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="342.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="329.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">未点名却开</text>
-<rect x="415.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="426.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="441.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="452.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="439.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">赢家通吃</text>
-<rect x="524.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="535.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="550.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="561.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="548.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">选错技能</text>
-<rect x="634.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="645.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="660.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="671.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="658.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定后乱选</text>
-<rect x="743.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="754.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="769.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
-<text x="780.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
-<text x="767.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">漏掉操作门</text>
-<rect x="853.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
-<text x="864.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
-<rect x="879.2" y="344.0" width="22" height="4.0" fill="#0c6b52"/>
-<text x="890.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">0</text>
-<text x="877.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法漏召</text>
-<rect x="48" y="404" width="12" height="12" fill="#1c211c"/>
-<text x="66" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">踩坑当时</text>
-<rect x="168" y="404" width="12" height="12" fill="#0c6b52"/>
-<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>
-<text x="300" y="415" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类里 7 类已挡住。换说法漏召仍是盲测登录页。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+<rect width="960" height="420" fill="#f7f6f2"/>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">同一批 33 句：Laya 当时 vs jev-decision</text>
+<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">Laya 是 2026-09-27 实测：逐门打分，过 0.5，最多留 3 道，刚好选对 15/33。jev-decision 是现行选择器重跑这 33 句，23/33。纵轴是刚好选对的比例。</text>
+<line x1="64" y1="320.0" x2="920" y2="320.0" stroke="#d5d1c7"/>
+<text x="56" y="324.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
+<line x1="64" y1="259.5" x2="920" y2="259.5" stroke="#d5d1c7"/>
+<text x="56" y="263.5" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">25</text>
+<line x1="64" y1="199.0" x2="920" y2="199.0" stroke="#d5d1c7"/>
+<text x="56" y="203.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">50</text>
+<line x1="64" y1="138.5" x2="920" y2="138.5" stroke="#d5d1c7"/>
+<text x="56" y="142.5" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">75</text>
+<line x1="64" y1="78.0" x2="920" y2="78.0" stroke="#d5d1c7"/>
+<text x="56" y="82.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">100</text>
+<rect x="118.6" y="210.0" width="28" height="110.0" fill="#1c211c"/>
+<text x="132.6" y="204.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">45</text>
+<rect x="152.6" y="151.3" width="28" height="168.7" fill="#0c6b52"/>
+<text x="166.6" y="145.3" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">70</text>
+<text x="149.6" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">全部 33 句</text>
+<text x="149.6" y="360" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">15/33 → 23/33</text>
+<rect x="289.8" y="214.8" width="28" height="105.2" fill="#1c211c"/>
+<text x="303.8" y="208.8" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">43</text>
+<rect x="323.8" y="151.7" width="28" height="168.3" fill="#0c6b52"/>
+<text x="337.8" y="145.7" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">70</text>
+<text x="320.8" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">每道门</text>
+<text x="320.8" y="360" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">10/23 → 16/23</text>
+<rect x="461.0" y="78.0" width="28" height="242.0" fill="#1c211c"/>
+<text x="475.0" y="72.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">100</text>
+<rect x="495.0" y="78.0" width="28" height="242.0" fill="#0c6b52"/>
+<text x="509.0" y="72.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="492.0" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">一句多门</text>
+<text x="492.0" y="360" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">1/1 → 1/1</text>
+<rect x="632.2" y="199.0" width="28" height="121.0" fill="#1c211c"/>
+<text x="646.2" y="193.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">50</text>
+<rect x="666.2" y="168.8" width="28" height="151.2" fill="#0c6b52"/>
+<text x="680.2" y="162.8" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">62</text>
+<text x="663.2" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法</text>
+<text x="663.2" y="360" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">4/8 → 5/8</text>
+<rect x="803.4" y="316.0" width="28" height="4.0" fill="#1c211c"/>
+<text x="817.4" y="310.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="837.4" y="78.0" width="28" height="242.0" fill="#0c6b52"/>
+<text x="851.4" y="72.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="834.4" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">超过三道</text>
+<text x="834.4" y="360" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0/1 → 1/1</text>
+<rect x="48" y="388" width="12" height="12" fill="#1c211c"/>
+<text x="66" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>
+<rect x="168" y="388" width="12" height="12" fill="#0c6b52"/>
+<text x="186" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>
+<text x="340" y="399" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">出音乐、表情包后来不在门上，所以这两句 jev-decision 记成没选中。</text>
 </svg>

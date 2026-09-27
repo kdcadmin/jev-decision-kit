@@ -42,17 +42,17 @@ python -m venv .venv
 
 它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 jev-decision 去替代它们。
 
-下面几张图是这几天实际踩过的坑：**当时怎样，jev-decision 现在怎样**。跟 Laya 比的是职责（技能选择 vs 通用能力），没有给 Laya 打柜门分——它不输出柜门 ID，仓库里也没有权重。
+下面几张图用的是 **2026-09-27 那次 Laya 实测** 的 33 句，再拿现行 **jev-decision** 重跑同一句。Laya 当时是逐门打分、过 0.5、最多留 3 道，刚好选对 15/33。jev-decision 是 23/33。判定一样：该留的门都在，且没有多出来的门。
 
-![这几天踩过的技能选择坑](docs/compare-laya-skill.svg)
+![同一批 33 句](docs/compare-laya-skill.svg)
 
-![这几天实际踩过的坑](docs/compare-failures.svg)
+![33 句逐条](docs/compare-failures.svg)
 
-提问误开（Codex 试用 10 句里 8 句开门）、否定被盖掉、未点名却开、赢家通吃、WordPress 当成 Word、不要 PDF 却漏论文、填表只开 PDF。这些现在挡住了。盲测「在登录页填完再点提交」还漏。一次重训把回归打到 99/108，发布门拒绝了，基线没被覆盖。
+变好的主要是纪要、Word、资料库、Godot、远程备份，以及一句里超过 3 道门。变差的 4 句是「把这张表算一下」「在网页上把这个表单填完」，以及后来撤掉的出音乐、表情包。盯盘、读 PDF、宁德时代进 Excel 两边都还错。
 
-![这几天测到的数](docs/compare-set-match.svg)
+![33 句里谁变了](docs/compare-set-match.svg)
 
-![jev-decision 和 Laya](docs/compare-scope.svg)
+![这张对比只覆盖技能选择](docs/compare-scope.svg)
 
 - 训练：`.venv\Scripts\python -m host.train_jev`。候选权重写在 `head.candidate.json` 上评测，回归不下降且提问/否定/核心句不破才替换 `head.json`。对比写在 `models/jev/last-train.json`。要强行覆盖用 `--force`。
 - 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句

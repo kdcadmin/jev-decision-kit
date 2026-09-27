@@ -1,17 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280">
-<rect width="960" height="280" fill="#f7f6f2"/>
-<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">jev-decision 和 Laya：职责不同，不是同一张分数表</text>
-<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">jev-decision 只训练「这句话要不要开哪几份技能/插件」。Laya 是通用智能体。仓库不发布 Laya 权重，选择路径也不再调用它。</text>
-<rect x="24" y="68" width="448" height="180" fill="#e7f3ee" stroke="#d5d1c7"/>
-<rect x="488" y="68" width="448" height="180" fill="#fff" stroke="#d5d1c7"/>
-<text x="44" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">jev-decision · 技能选择</text>
-<text x="44" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">1.1 MB 线性头 · 39 门 · 229 条样本</text>
-<text x="44" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这几天修的就是上面那些选错</text>
-<text x="44" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">回归 108/108，盲测 36/37</text>
-<text x="44" y="210" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">开口前选定，模型不再挑技能</text>
-<text x="508" y="98" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya · 通用能力</text>
-<text x="508" y="126" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">写作、推理、规划、未点名的活</text>
-<text x="508" y="150" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不输出柜门 ID，未在本集打分</text>
-<text x="508" y="174" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision 替代不了，也不该拿它去比通用</text>
-<text x="508" y="210" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">用通用模型猜柜门，才会出现左边那些坑</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="220" viewBox="0 0 960 220">
+<rect width="960" height="220" fill="#f7f6f2"/>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这张对比只覆盖技能选择</text>
+<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">Laya 当时：通用模型逐门打分，过 0.5，最多 3 道。33 句刚好选对 15 句。</text>
+<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点名才开门，过线的都留。刚好选对 23 句。</text>
+<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">变好的主要是纪要、Word、资料库、Godot、远程备份，以及一句里超过 3 道门。</text>
+<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">变差的 4 句：表格、网页表单，以及后来撤掉的出音乐、表情包。</text>
+<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">写作、推理、没点名的活仍是 Laya 的通用能力。这 33 句没有测那一块。</text>
+<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">两边都还错：盯盘提醒、读 PDF、本机出视频、MiniMax 出图、宁德时代进 Excel、最近一个月。</text>
 </svg>

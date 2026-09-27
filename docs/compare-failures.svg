@@ -1,65 +1,132 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="468" viewBox="0 0 1100 468">
-<rect width="1100" height="468" fill="#f7f6f2"/>
-<text x="24" y="28" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天实际踩过的坑</text>
-<text x="24" y="48" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">来源：这几天试用和评测原句。不是 Laya 108 条打分。</text>
-<text x="24" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">坑</text>
-<text x="150" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">怎么踩的</text>
-<text x="560" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">当时</text>
-<text x="820" y="70" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">jev-decision</text>
-<line x1="24" y1="78" x2="1076" y2="78" stroke="#d5d1c7"/>
-<rect x="16" y="80" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="98" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">提问误开</text>
-<text x="150" y="98" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">PDF 是什么；Codex 试用提问 8/10 都开门</text>
-<text x="560" y="98" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">当成导出/操作</text>
-<text x="820" y="98" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">提问句自己做</text>
-<text x="24" y="128" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定被盖</text>
-<text x="150" y="128" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">不要用 Word</text>
-<text x="560" y="128" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">习惯分把 Word 又打开</text>
-<text x="820" y="128" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">不开 Word</text>
-<rect x="16" y="140" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="158" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">未点名却开</text>
-<text x="150" y="158" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">句子没点名，头仍打到 ~0.99</text>
-<text x="560" y="158" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">无名门也留下</text>
-<text x="820" y="158" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">未点名清零</text>
-<text x="24" y="188" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">赢家通吃</text>
-<text x="150" y="188" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">纪要，再写成 Word，再做幻灯片</text>
-<text x="560" y="188" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">YES_LIMIT / 只留一门</text>
-<text x="820" y="188" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">点名的门都留</text>
-<rect x="16" y="200" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="218" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">选错技能</text>
-<text x="150" y="218" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">WordPress 建站，不是 Word</text>
-<text x="560" y="218" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">当成 Word 或建站</text>
-<text x="820" y="218" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">不开 Word</text>
-<text x="24" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定后乱选</text>
-<text x="150" y="248" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">不要用 PDF，给我论文</text>
-<text x="560" y="248" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">关掉 PDF，论文也没了</text>
-<text x="820" y="248" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">留论文工作台</text>
-<rect x="16" y="260" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="278" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">漏掉操作门</text>
-<text x="150" y="278" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">填表提交之后导出成 PDF</text>
-<text x="560" y="278" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">只开 PDF</text>
-<text x="820" y="278" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">填表 + PDF</text>
-<text x="24" y="308" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">股价否定</text>
-<text x="150" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">放进 Excel，不要写 Word</text>
-<text x="560" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">仍打开 Word</text>
-<text x="820" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">只开行情和表格</text>
-<rect x="16" y="320" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="338" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法漏召</text>
-<text x="150" y="338" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">在登录页填完再点提交</text>
-<text x="560" y="338" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">对不上网页操作门</text>
-<text x="820" y="338" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">仍漏（盲测）</text>
-<text x="24" y="368" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">训差权重</text>
-<text x="150" y="368" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">一次重训回归 106→99</text>
-<text x="560" y="368" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">差点覆盖 head.json</text>
-<text x="820" y="368" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">发布门拒绝，基线仍在</text>
-<rect x="16" y="380" width="1068" height="30" fill="#e7f3ee"/>
-<text x="24" y="398" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">评测句进训练</text>
-<text x="150" y="398" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">用考卷原句修召回</text>
-<text x="560" y="398" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">分数虚高</text>
-<text x="820" y="398" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">训练拦截评测原句</text>
-<text x="24" y="428" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Harness 选门</text>
-<text x="150" y="428" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">pre-step 返回数组</text>
-<text x="560" y="428" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">宿主 TypeError</text>
-<text x="820" y="428" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">PreStepDecision 追加</text>
-<text x="24" y="454" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">通用写作和推理不拿 jev-decision 去比 Laya：那一块本来就不是选择头的活。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="972" viewBox="0 0 1100 972">
+<rect width="1100" height="972" fill="#f7f6f2"/>
+<text x="24" y="28" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句逐条：Laya 留下什么，jev-decision 留下什么</text>
+<text x="24" y="48" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">对 = 该留的门都在，且没有多出来的门。Laya 数字来自当时那次打分。</text>
+<text x="24" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">句子</text>
+<text x="430" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">Laya 当时</text>
+<text x="760" y="72" font-size="12" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">jev-decision</text>
+<line x1="24" y1="80" x2="1076" y2="80" stroke="#d5d1c7"/>
+<rect x="16" y="84" width="1068" height="26" fill="#fff"/>
+<text x="24" y="100" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">帮我看一下贵州茅台现在多少钱</text>
+<text x="430" y="100" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 行情 0.83</text>
+<text x="760" y="100" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 行情</text>
+<text x="24" y="126" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">盯盘今天有没有提醒</text>
+<text x="430" y="126" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="760" y="126" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<rect x="16" y="136" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="152" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把刚才的会整理成纪要</text>
+<text x="430" y="152" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（纪要 0.31）</text>
+<text x="760" y="152" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 会议纪要</text>
+<rect x="16" y="162" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="178" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">按模板写一份 Word</text>
+<text x="430" y="178" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（Word 0.44）</text>
+<text x="760" y="178" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · Word</text>
+<rect x="16" y="188" width="1068" height="26" fill="#fff"/>
+<text x="24" y="204" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">读一下这个 PDF</text>
+<text x="430" y="204" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（PDF 0.24）</text>
+<text x="760" y="204" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="24" y="230" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">做一套幻灯片文件</text>
+<text x="430" y="230" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 幻灯片 0.71</text>
+<text x="760" y="230" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 幻灯片</text>
+<rect x="16" y="240" width="1068" height="26" fill="#f6e8e4"/>
+<text x="24" y="256" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这张表算一下</text>
+<text x="430" y="256" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 表格 0.58</text>
+<text x="760" y="256" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<rect x="16" y="266" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="282" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">打开这个网页把正文摘出来</text>
+<text x="430" y="282" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 操作网页、读网页、Godot</text>
+<text x="760" y="282" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 读网页</text>
+<rect x="16" y="292" width="1068" height="26" fill="#f6e8e4"/>
+<text x="24" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">在网页上把这个表单填完</text>
+<text x="430" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 操作网页 0.59</text>
+<text x="760" y="308" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="24" y="334" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">再做一支同样风格的介绍视频</text>
+<text x="430" y="334" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 介绍视频 0.52</text>
+<text x="760" y="334" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 介绍视频</text>
+<rect x="16" y="344" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="360" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这几段实拍剪到一起</text>
+<text x="430" y="360" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.29）</text>
+<text x="760" y="360" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 实拍剪辑</text>
+<text x="24" y="386" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">给这篇文章画一张小黑风格的图</text>
+<text x="430" y="386" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 小黑插图 0.81</text>
+<text x="760" y="386" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 小黑插图</text>
+<rect x="16" y="396" width="1068" height="26" fill="#fff"/>
+<text x="24" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用本机模型把这张图生成视频</text>
+<text x="430" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.45）</text>
+<text x="760" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<rect x="16" y="422" width="1068" height="26" fill="#f6e8e4"/>
+<text x="24" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">做一段背景音乐</text>
+<text x="430" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 出音乐 0.77</text>
+<text x="760" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<rect x="16" y="448" width="1068" height="26" fill="#f6e8e4"/>
+<text x="24" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这张照片做成表情包</text>
+<text x="430" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 表情贴纸 0.81</text>
+<text x="760" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="24" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">按论文工作台写这一章</text>
+<text x="430" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 论文 0.90</text>
+<text x="760" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 论文</text>
+<rect x="16" y="500" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="516" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">查一下这家公司</text>
+<text x="430" y="516" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 读网页、公司情报</text>
+<text x="760" y="516" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 公司情报</text>
+<rect x="16" y="526" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="542" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这些资料收进资料库</text>
+<text x="430" y="542" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.44）</text>
+<text x="760" y="542" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 资料库</text>
+<rect x="16" y="552" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="568" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">最近三十天这个话题有什么</text>
+<text x="430" y="568" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="760" y="568" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 近三十天</text>
+<rect x="16" y="578" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="594" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">在 Godot 里把这个场景跑起来</text>
+<text x="430" y="594" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.48）</text>
+<text x="760" y="594" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · Godot</text>
+<rect x="16" y="604" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="620" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这个项目推到远程</text>
+<text x="430" y="620" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="760" y="620" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 远程备份</text>
+<text x="24" y="646" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">帮我把这句话写顺一点</text>
+<text x="430" y="646" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<text x="760" y="646" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<rect x="16" y="656" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="672" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这段代码什么意思</text>
+<text x="430" y="672" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 读网页 0.66</text>
+<text x="760" y="672" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<text x="24" y="698" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">查股价、写成 Word、配小黑图</text>
+<text x="430" y="698" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 行情、Word、小黑</text>
+<text x="760" y="698" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 行情、Word、小黑</text>
+<rect x="16" y="708" width="1068" height="26" fill="#fff"/>
+<text x="24" y="724" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">打开 https://example.com 把正文读…</text>
+<text x="430" y="724" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 读网页 0.86</text>
+<text x="760" y="724" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 读网页</text>
+<rect x="16" y="734" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="750" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">打开登录页，填账号密码然后点登录</text>
+<text x="430" y="750" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 操作网页、表格</text>
+<text x="760" y="750" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 操作网页</text>
+<rect x="16" y="760" width="1068" height="26" fill="#fff"/>
+<text x="24" y="776" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">宁德时代今天涨了多少，整理进 Excel</text>
+<text x="430" y="776" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 只留行情</text>
+<text x="760" y="776" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 只留表格</text>
+<text x="24" y="802" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">再来一支大肥鱼的介绍片，剧情换成上班</text>
+<text x="430" y="802" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 介绍视频 0.73</text>
+<text x="760" y="802" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 介绍视频</text>
+<rect x="16" y="812" width="1068" height="26" fill="#e7f3ee"/>
+<text x="24" y="828" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">股价、Word、小黑图、幻灯片</text>
+<text x="430" y="828" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 丢掉行情（最多 3 道）</text>
+<text x="760" y="828" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 四道都留</text>
+<text x="24" y="854" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这段话帮我改得顺一点就行</text>
+<text x="430" y="854" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<text x="760" y="854" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<rect x="16" y="864" width="1068" height="26" fill="#fff"/>
+<text x="24" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用 MiniMax 出一张图</text>
+<text x="430" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.07）</text>
+<text x="760" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="24" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把仓库备份到远程</text>
+<text x="430" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 远程备份 0.98</text>
+<text x="760" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 远程备份</text>
+<rect x="16" y="916" width="1068" height="26" fill="#fff"/>
+<text x="24" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">最近一个月大家在讨论什么</text>
+<text x="430" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="760" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="24" y="960" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">绿底：Laya 错、jev-decision 对。红底：Laya 对、jev-decision 错（表格、表单、出音乐、表情包）。</text>
 </svg>
