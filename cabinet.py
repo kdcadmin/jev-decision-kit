@@ -95,6 +95,59 @@ def _atomic_write(path: Path, text: str) -> None:
     tmp.replace(path)
 
 
+_config_thread = threading.RLock()
+
+
+def _config_lock():
+    class _Lock:
+        def __enter__(self):
+            _config_thread.acquire()
+            (ROOT / "runtime").mkdir(parents=True, exist_ok=True)
+            self.file = open(ROOT / "runtime" / "config.lock", "a+b")
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    self.file.seek(0)
+                    if self.file.read(1) == b"":
+                        self.file.write(b"x")
+                        self.file.flush()
+                    self.file.seek(0)
+                    msvcrt.locking(self.file.fileno(), msvcrt.LK_LOCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(self.file.fileno(), fcntl.LOCK_EX)
+            except OSError:
+                self.file.close()
+                _config_thread.release()
+                raise
+            return self
+
+        def __exit__(self, *_args) -> None:
+            try:
+                self.file.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(self.file.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
+            except OSError:
+                pass
+            self.file.close()
+            _config_thread.release()
+
+    return _Lock()
+
+
+def _write_config(data: dict) -> None:
+    with _config_lock():
+        _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
+
+
 def save_catalog(data: dict) -> None:
     _atomic_write(CATALOG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
 
@@ -338,7 +391,7 @@ def save_config(updates: dict) -> dict:
         _loaded_from = None
     if "extraScanRoots" in updates and isinstance(updates["extraScanRoots"], list):
         data["extraScanRoots"] = [str(item).strip() for item in updates["extraScanRoots"] if str(item).strip()]
-    _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
+    _write_config(data)
     from hosts import sync_hosts
 
     hosts = sync_hosts(bool(data["selectorEnabled"]))
@@ -403,7 +456,7 @@ def ensure_laya_weights() -> Path:
     stored = load_config()
     if not weights_ready(Path(str(stored.get("layaModelDir") or ""))):
         stored["layaModelDir"] = str(directory)
-        _atomic_write(CONFIG_PATH, json.dumps(stored, ensure_ascii=False, indent=2))
+        _write_config(stored)
     return directory
 
 
@@ -955,7 +1008,7 @@ def sync_skills(direction: str, name: str | None = None, preview: bool = False) 
 def _write_roots(paths: list[str]) -> list[str]:
     data = load_config()
     data["extraScanRoots"] = paths
-    _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
+    _write_config(data)
     return paths
 
 

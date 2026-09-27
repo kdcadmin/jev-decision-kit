@@ -141,10 +141,14 @@ class Handler(BaseHTTPRequestHandler):
                 from host.train_jev import train
 
                 report = extract_tool_memory()
-                train()
+                try:
+                    train()
+                    report["retrained"] = True
+                except RuntimeError as exc:
+                    report["retrained"] = False
+                    report["reason"] = str(exc)
                 cache_clear()
                 load_head()
-                report["retrained"] = True
                 self._json(200, report)
                 return
             if parsed.path == "/api/sync":

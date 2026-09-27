@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from host.plugin_inventory import plugin_gates
-from host.train_jev import BLIND_FILE, EVAL_FILE, MULTI, NONE, POS, held_out_texts, replace_if_not_worse
+from host.train_jev import BLIND_FILE, EVAL_FILE, MULTI, NONE, POS, compare_rows, held_out_texts, publish_if_not_worse, replace_if_not_worse
 from hosts import upsert_mcp_block, sync_hermes
 
 
@@ -135,6 +135,8 @@ class TrainPublishTests(unittest.TestCase):
             self.assertFalse(kept)
             self.assertEqual((before, after), (5, 3))
             self.assertEqual(path.read_text(encoding="utf-8"), "old")
+            self.assertFalse(path.with_name("head.candidate.json").is_file())
+            self.assertFalse(path.with_suffix(path.suffix + ".tmp").is_file())
 
     def test_replace_if_not_worse_keeps_equal_or_better(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -150,6 +152,44 @@ class TrainPublishTests(unittest.TestCase):
             self.assertTrue(kept)
             self.assertEqual((before, after), (5, 5))
             self.assertIn('"ok": 1', path.read_text(encoding="utf-8"))
+
+    def test_eval_failure_leaves_official_head_untouched(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "head.json"
+            path.write_text("OFFICIAL", encoding="utf-8")
+
+            def score_path(chosen: Path) -> int:
+                if "candidate" in chosen.name:
+                    raise RuntimeError("eval failed")
+                return 106
+
+            with self.assertRaises(RuntimeError):
+                publish_if_not_worse(path, {"ok": 1}, score_path)
+            self.assertEqual(path.read_text(encoding="utf-8"), "OFFICIAL")
+            self.assertFalse(path.with_name("head.candidate.json").is_file())
+            self.assertFalse(path.with_suffix(path.suffix + ".tmp").is_file())
+
+    def test_guards_reject_ask_and_negation_even_if_total_rises(self):
+        before = [
+            {"text": "PDF 是什么", "expect": [], "got": [], "ok": True},
+            {"text": "不要用 Word", "expect": [], "got": [], "ok": True},
+            {"text": "看一下茅台现在多少钱", "expect": ["china-stock-data"], "got": ["china-stock-data"], "ok": True},
+        ]
+        after = [
+            {"text": "PDF 是什么", "expect": [], "got": ["pdf"], "ok": False},
+            {"text": "不要用 Word", "expect": [], "got": [], "ok": True},
+            {"text": "看一下茅台现在多少钱", "expect": ["china-stock-data"], "got": ["china-stock-data"], "ok": True},
+        ]
+        report = compare_rows(before, after)
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["guards"][0]["kind"], "ask")
+
+    def test_compare_rows_records_score_swings(self):
+        before = [{"text": "t", "expect": ["a"], "got": ["a"], "ok": True, "scores": {"a": 0.9}}]
+        after = [{"text": "t", "expect": ["a"], "got": [], "ok": False, "scores": {"a": 0.1}}]
+        report = compare_rows(before, after)
+        self.assertEqual(report["lost"][0]["scores"]["before"]["a"], 0.9)
+        self.assertEqual(report["lost"][0]["scores"]["after"]["a"], 0.1)
 
 
 if __name__ == "__main__":

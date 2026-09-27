@@ -47,11 +47,11 @@ def load_board() -> dict:
 
 
 def save_board(board: dict) -> dict:
-    from cabinet import _atomic_write
+    from cabinet import _write_config
 
     data = _read_config()
     data["board"] = board
-    _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
+    _write_config(data)
     return board
 
 

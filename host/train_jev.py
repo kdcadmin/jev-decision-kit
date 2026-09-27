@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -214,32 +215,121 @@ def rows() -> list[tuple[str, set[str]]]:
     held = held_out_texts()
     leaked = [text for text, _labels in found if text in held]
     if leaked:
-        raise SystemExit("exam sentence leaked into training: " + leaked[0])
+        raise RuntimeError("exam sentence leaked into training: " + leaked[0])
     return found
 
 
-def replace_if_not_worse(path: Path, payload: dict, score) -> tuple[bool, int, int]:
-    before = score()
-    previous = path.read_text(encoding="utf-8") if path.is_file() else None
+def _git_rev() -> str:
+    try:
+        done = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return (done.stdout or "").strip() if done.returncode == 0 else ""
+
+
+def _sample_hash(data: list[tuple[str, set[str]]]) -> str:
+    blob = json.dumps([(text, sorted(names)) for text, names in data], ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
+def _guard_reason(text: str, expect: list[str]) -> str | None:
+    if not expect and any(mark in text for mark in ("是什么", "怎么用", "有什么用", "哪个好", "什么意思", "干什么用")):
+        return "ask"
+    if text == "不要用 Word":
+        return "negation"
+    if text in {"看一下茅台现在多少钱", "用Word写一份报告", "不要 PDF 只要 Word"}:
+        return "core"
+    return None
+
+
+def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     tmp.replace(path)
+
+
+def _door_scores(old: dict, new: dict) -> dict:
+    names = sorted(set(old.get("expect") or []) | set(old.get("got") or []) | set(new.get("got") or []))
+    before = old.get("scores") or {}
+    after = new.get("scores") or {}
+    return {
+        "before": {name: before.get(name) for name in names if name in before},
+        "after": {name: after.get(name) for name in names if name in after},
+    }
+
+
+def _diff_row(old: dict, new: dict) -> dict:
+    item = {"text": old["text"], "expect": old["expect"], "before": old["got"], "after": new.get("got")}
+    scores = _door_scores(old, new)
+    if scores["before"] or scores["after"]:
+        item["scores"] = scores
+    return item
+
+
+def compare_rows(before: list[dict], after: list[dict]) -> dict:
+    lost = []
+    gained = []
+    guards = []
+    keyed = {row["text"]: row for row in after}
+    for old in before:
+        new = keyed.get(old["text"]) or {}
+        if old["ok"] and not new.get("ok"):
+            lost.append(_diff_row(old, new))
+        if new.get("ok") and not old["ok"]:
+            gained.append(_diff_row(old, new))
+        kind = _guard_reason(old["text"], old["expect"])
+        if not kind:
+            continue
+        if kind in {"ask", "negation"} and new.get("got"):
+            guards.append({"text": old["text"], "kind": kind, "got": new.get("got")})
+        elif kind == "core" and old["ok"] and not new.get("ok"):
+            guards.append({"text": old["text"], "kind": kind, "got": new.get("got")})
+    before_ok = sum(int(row["ok"]) for row in before)
+    after_ok = sum(int(row["ok"]) for row in after)
+    return {
+        "before": before_ok,
+        "after": after_ok,
+        "lost": lost,
+        "gained": gained,
+        "guards": guards,
+        "ok": after_ok >= before_ok and not guards,
+    }
+
+
+def publish_if_not_worse(official: Path, payload: dict, score_path) -> tuple[bool, dict]:
+    candidate = official.with_name(official.stem + ".candidate.json")
+    report_path = official.with_name("last-train.json")
+    _write_json(candidate, payload)
     try:
-        after = score()
+        before = score_path(official)
+        after = score_path(candidate)
     except Exception:
-        if previous is None:
-            path.unlink(missing_ok=True)
-        else:
-            path.write_text(previous, encoding="utf-8")
+        candidate.unlink(missing_ok=True)
         raise
+    report = {"before": before, "after": after, "kept": after >= before}
+    _write_json(report_path, report)
     if after < before:
-        if previous is None:
-            path.unlink(missing_ok=True)
-        else:
-            path.write_text(previous, encoding="utf-8")
-        return False, before, after
-    return True, before, after
+        candidate.unlink(missing_ok=True)
+        return False, report
+    tmp = official.with_suffix(official.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(official)
+    candidate.unlink(missing_ok=True)
+    report["kept"] = True
+    _write_json(report_path, report)
+    return True, report
+
+
+def replace_if_not_worse(path: Path, payload: dict, score) -> tuple[bool, int, int]:
+    kept, report = publish_if_not_worse(path, payload, lambda _p, fn=score: fn())
+    return kept, int(report["before"]), int(report["after"])
 
 
 def train(force: bool = False) -> None:
@@ -290,30 +380,57 @@ def train(force: bool = False) -> None:
         "train_rows": len(data),
         "train_fit": round(fit, 4),
     }
-    from host.eval_heldout import jev_set_ok
+    from host.eval_heldout import jev_case_rows
     from host.jev import cache_clear
 
-    def score() -> int:
+    payload["source"] = {
+        "sample_hash": _sample_hash(data),
+        "rows": len(data),
+        "seed": 0,
+        "epochs": 320,
+        "lr": 0.05,
+        "git": _git_rev(),
+        "fit": round(fit, 4),
+    }
+    candidate = WEIGHTS.with_name("head.candidate.json")
+    report_path = WEIGHTS.with_name("last-train.json")
+    _write_json(candidate, payload)
+    try:
+        before_rows = jev_case_rows(WEIGHTS)
+        after_rows = jev_case_rows(candidate)
+    except Exception:
+        candidate.unlink(missing_ok=True)
+        raise
+    compared = compare_rows(before_rows, after_rows)
+    compared["source"] = payload["source"]
+    _write_json(report_path, compared)
+    if not force and not compared["ok"]:
+        candidate.unlink(missing_ok=True)
         cache_clear()
-        hits, _total = jev_set_ok()
-        return hits
-
-    if force:
-        tmp = WEIGHTS.with_suffix(".json.tmp")
-        WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(WEIGHTS)
-        cache_clear()
-        print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4), "forced")
-        return
-    kept, before, after = replace_if_not_worse(WEIGHTS, payload, score)
+        raise RuntimeError(
+            "refused head.json: regression "
+            + str(compared["after"])
+            + " vs "
+            + str(compared["before"])
+            + ", lost "
+            + str(len(compared["lost"]))
+            + ", guards "
+            + str(len(compared["guards"]))
+        )
+    payload["source"]["regression"] = compared["after"]
+    payload["source"]["baseline"] = compared["before"]
+    tmp = WEIGHTS.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(WEIGHTS)
+    candidate.unlink(missing_ok=True)
     cache_clear()
-    if not kept:
-        raise SystemExit("refused head.json: regression " + str(after) + " < " + str(before))
-    print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4), "regression", after)
+    print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4), "regression", compared["after"])
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
-    train(force=parser.parse_args().force)
+    try:
+        train(force=parser.parse_args().force)
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc

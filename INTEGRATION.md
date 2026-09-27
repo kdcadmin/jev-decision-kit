@@ -76,7 +76,7 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 决定会过期。`get_skill` 必须带这次前言末尾的 `decision_id`。号不对时返回「决定已过期。不要改选，也不要猜别的技能。」选过的名字写错则是「没有选定」。过期之后重新把原句交给前言服务，不要猜技能。
 
-独立评测分三份：`tests/eval_cases.json` 是回归集（已经指导过规则修改）；`tests/eval_blind.json` 是未参与调试的句子；记忆第三列只用 `tests/memory_fixture.json`，不读你电脑上的真实记录。训练脚本会拦截前两份里的原句。对比：`.venv\Scripts\python.exe -m host.eval_heldout`，盲测加 `--blind`。`python -m host.train_jev` 训完会跑回归集，匹配数下降就不写入 `head.json`。样本可以比当前权重新。
+独立评测分三份：`tests/eval_cases.json` 是回归集（已经指导过规则修改）；`tests/eval_blind.json` 是未参与调试的句子；记忆第三列只用 `tests/memory_fixture.json`，不读你电脑上的真实记录。训练脚本会拦截前两份里的原句。对比：`.venv\Scripts\python.exe -m host.eval_heldout`，盲测加 `--blind`。`python -m host.train_jev` 先在候选文件上评测，回归下降或提问/否定/核心句被破坏就不替换 `head.json`；对比写在 `models/jev/last-train.json`。样本可以比当前权重新。网页上重新训练若被拒绝，会返回原因而不会挂死。
 
 「不要用 PDF，给我论文」按论文请求计分；模型低于 0.4 算漏召回。记忆样本不得与评测原句相同，但要和要对上的评测句成对；n-gram 覆盖够近才会抬分。「WordPress 建站，不是 Word」按排除 Word 计，不打开建站插件。
 

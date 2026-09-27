@@ -9,5 +9,7 @@ __pycache__/
 *.pyc
 runtime/
 models/laya/
+models/jev/last-train.json
+models/jev/head.candidate.json
 intro/chrome-profile/
 intro/frames/

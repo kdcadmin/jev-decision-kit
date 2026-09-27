@@ -1251,7 +1251,9 @@ async function readToolMemory() {
   status.textContent = "正在读取各家智能体里已完成的工具调用，并重训 JEV。";
   const report = await api("/api/memory/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   const doors = Object.entries(report.doors || {}).map(([name, count]) => name + " " + count).join("，");
-  status.textContent = "留下 " + report.kept + " 条工具记忆" + (doors ? "：" + doors : "") + "。已重训。";
+  status.textContent = "留下 " + report.kept + " 条工具记忆" + (doors ? "：" + doors : "") + "。" + (
+    report.retrained ? "已重训。" : ("未写入权重：" + (report.reason || "回归下降"))
+  );
 }
 
 async function scanSkills() {

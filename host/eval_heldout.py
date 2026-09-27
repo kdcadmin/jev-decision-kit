@@ -39,19 +39,36 @@ def _same(got: list[str], expect: list[str]) -> tuple[bool, bool]:
     return got == expect, not miss and not extra
 
 
-def jev_set_ok(path: Path | None = None) -> tuple[int, int]:
-    payload = json.loads((path or EVAL_FILE).read_text(encoding="utf-8"))
+def jev_case_rows(head_path: Path | None = None) -> list[dict]:
+    import host.jev as jev
+
+    saved = jev.WEIGHTS
+    payload = json.loads(EVAL_FILE.read_text(encoding="utf-8"))
     cases = payload.get("cases") or []
-    hits = 0
-    with patch("host.tool_memory.remembered_doors", return_value=set()), patch(
-        "cabinet.load_memory", return_value={"rules": []}
-    ):
-        for item in cases:
-            got = _route(str(item.get("text") or ""))
-            expect = [str(name) for name in (item.get("expect") or [])]
-            _exact, ok = _same(got, expect)
-            hits += int(ok)
-    return hits, len(cases)
+    rows = []
+    if head_path is not None:
+        jev.WEIGHTS = Path(head_path)
+        jev.cache_clear()
+    try:
+        with patch("host.tool_memory.remembered_doors", return_value=set()), patch(
+            "cabinet.load_memory", return_value={"rules": []}
+        ):
+            for item in cases:
+                text = str(item.get("text") or "")
+                expect = [str(name) for name in (item.get("expect") or [])]
+                got = _route(text)
+                _exact, ok = _same(got, expect)
+                rows.append({"text": text, "expect": expect, "got": got, "ok": ok, "scores": jev.score_task(text)})
+    finally:
+        if head_path is not None:
+            jev.WEIGHTS = saved
+            jev.cache_clear()
+    return rows
+
+
+def jev_set_ok(path: Path | None = None) -> tuple[int, int]:
+    rows = jev_case_rows(path)
+    return sum(int(row["ok"]) for row in rows), len(rows)
 
 
 def _run(name: str, cases: list[dict], gates: list[dict], samples: list[dict]) -> None:
