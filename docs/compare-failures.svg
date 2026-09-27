@@ -53,16 +53,16 @@
 <text x="760" y="386" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 小黑插图</text>
 <rect x="16" y="396" width="1068" height="26" fill="#fff"/>
 <text x="24" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用本机模型把这张图生成视频</text>
-<text x="430" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.45）</text>
-<text x="760" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
-<rect x="16" y="422" width="1068" height="26" fill="#f6e8e4"/>
+<text x="430" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做（0.45）</text>
+<text x="760" y="412" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<rect x="16" y="422" width="1068" height="26" fill="#e7f3ee"/>
 <text x="24" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">做一段背景音乐</text>
-<text x="430" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 出音乐 0.77</text>
-<text x="760" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
-<rect x="16" y="448" width="1068" height="26" fill="#f6e8e4"/>
+<text x="430" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 出音乐 0.77</text>
+<text x="760" y="438" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
+<rect x="16" y="448" width="1068" height="26" fill="#e7f3ee"/>
 <text x="24" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把这张照片做成表情包</text>
-<text x="430" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 表情贴纸 0.81</text>
-<text x="760" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="430" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 表情贴纸 0.81</text>
+<text x="760" y="464" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
 <text x="24" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">按论文工作台写这一章</text>
 <text x="430" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 论文 0.90</text>
 <text x="760" y="490" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 论文</text>
@@ -120,8 +120,8 @@
 <text x="760" y="854" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
 <rect x="16" y="864" width="1068" height="26" fill="#fff"/>
 <text x="24" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用 MiniMax 出一张图</text>
-<text x="430" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做（0.07）</text>
-<text x="760" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
+<text x="430" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做（0.07）</text>
+<text x="760" y="880" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 自己做</text>
 <text x="24" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">把仓库备份到远程</text>
 <text x="430" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 远程备份 0.98</text>
 <text x="760" y="906" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 远程备份</text>
@@ -129,5 +129,5 @@
 <text x="24" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">最近一个月大家在讨论什么</text>
 <text x="430" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#8f3d32">错 · 自己做</text>
 <text x="760" y="932" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">对 · 近三十天</text>
-<text x="24" y="960" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">还没过的 4 句：本机出视频、背景音乐、表情包、MiniMax 出图。这四项技能已不在柜门上。</text>
+<text x="24" y="960" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">本机出视频、背景音乐、表情包、MiniMax 出图没有技能和插件，自己做算对。Laya 当时打开出音乐和表情贴纸，现在算多开。</text>
 </svg>
