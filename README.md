@@ -42,17 +42,17 @@ python -m venv .venv
 
 它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 JEV 去替代它们。
 
-下面几张图对照的是 **Laya 猜门** 和 **JEV 现行**。用的是你们实际踩过的选错技能句，不是规则/记忆的内部对比。Laya 不输出柜门 ID，仓库里也没有它的权重，所以左边那列不是同一 108 条上的实测分数，表示通用模型去选技能时会出现的失败；JEV 列是本机选择器实测。
+下面几张图是这几天实际踩过的坑：**当时怎样，JEV 现在怎样**。跟 Laya 比的是职责（技能选择 vs 通用能力），没有给 Laya 打柜门分——它不输出柜门 ID，仓库里也没有权重。
 
-![Laya 猜门会踩的坑，JEV 现在守不守得住](docs/compare-laya-skill.svg)
+![这几天踩过的技能选择坑](docs/compare-laya-skill.svg)
 
-![以前选错的那些句](docs/compare-failures.svg)
+![这几天实际踩过的坑](docs/compare-failures.svg)
 
-提问误开（「PDF 是什么」）、否定被盖掉（「不要用 Word」）、WordPress 被当成 Word、纪要+Word+幻灯片收成一门、不要 PDF 却漏掉论文、填表导出只开 PDF、股价要 Excel 仍开 Word。这些 JEV 现在挡住了。盲测「在登录页填完再点提交」两边都还漏。
+提问误开（Codex 试用 10 句里 8 句开门）、否定被盖掉、未点名却开、赢家通吃、WordPress 当成 Word、不要 PDF 却漏论文、填表只开 PDF。这些现在挡住了。盲测「在登录页填完再点提交」还漏。一次重训把回归打到 99/108，发布门拒绝了，基线没被覆盖。
 
-![权重和职责](docs/compare-set-match.svg)
+![这几天测到的数](docs/compare-set-match.svg)
 
-![JEV 把技能选准，通用能力仍是 Laya](docs/compare-scope.svg)
+![跟 Laya 比的是职责](docs/compare-scope.svg)
 
 - 训练：`.venv\Scripts\python -m host.train_jev`。候选权重写在 `head.candidate.json` 上评测，回归不下降且提问/否定/核心句不破才替换 `head.json`。对比写在 `models/jev/last-train.json`。要强行覆盖用 `--force`。
 - 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句

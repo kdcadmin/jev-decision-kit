@@ -1,22 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="340" viewBox="0 0 720 340">
-  <rect width="720" height="340" fill="#f7f6f2"/>
-  <text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">权重和职责，不是同一把尺子</text>
-  <text x="80" y="86" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">JEV</text>
-  <text x="400" y="86" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">Laya</text>
-  <text x="24" y="120" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">形态</text>
-  <text x="80" y="120" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">线性 n-gram 头</text>
-  <text x="400" y="120" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">多语 RL 通用模型</text>
-  <text x="24" y="152" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">体积</text>
-  <text x="80" y="152" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">1.1 MB · 39 门 · 3101 词片段</text>
-  <text x="400" y="152" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">远大于选择头（本仓库不发布）</text>
-  <text x="24" y="184" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">样本</text>
-  <text x="80" y="184" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">229 条技能/插件说法</text>
-  <text x="400" y="184" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">通用对话与决策</text>
-  <text x="24" y="216" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">评测</text>
-  <text x="80" y="216" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">回归 108/108，盲测 36/37</text>
-  <text x="400" y="216" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不输出柜门 ID，未跑本集</text>
-  <text x="24" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用途</text>
-  <text x="80" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">开口前选定技能和插件</text>
-  <text x="400" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">开口之后把活做完</text>
-  <text x="24" y="320" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">提升的是技能选择准确率，不是通用智能。两套权重不能互相替代。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="340" viewBox="0 0 960 340">
+<rect width="960" height="340" fill="#f7f6f2"/>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天测到的数</text>
+<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">左边是误开/漏召；右边是集合匹配。没有 Laya 柜门分。</text>
+<rect x="24" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>
+<rect x="488" y="68" width="448" height="230" fill="#fff" stroke="#d5d1c7"/>
+<text x="44" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">技能选错（越低越好）</text>
+<text x="508" y="96" font-size="14" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">集合匹配（越高越好）</text>
+<text x="44" y="118" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">提问误开（试用 10 句）</text>
+<rect x="44" y="126" width="280" height="10" fill="#eceae4"/>
+<rect x="44" y="126" width="224.0" height="10" fill="#1c211c"/>
+<rect x="44" y="140" width="4.0" height="10" fill="#0c6b52"/>
+<text x="336" y="140" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8/10 → 挡住</text>
+<text x="44" y="174" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类旧事故漏掉</text>
+<rect x="44" y="182" width="280" height="10" fill="#eceae4"/>
+<rect x="44" y="182" width="280.0" height="10" fill="#1c211c"/>
+<rect x="44" y="196" width="35.0" height="10" fill="#0c6b52"/>
+<text x="336" y="196" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8/8 → 1/8</text>
+<text x="44" y="230" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">登录页换说法</text>
+<rect x="44" y="238" width="280" height="10" fill="#eceae4"/>
+<rect x="44" y="238" width="280.0" height="10" fill="#1c211c"/>
+<rect x="44" y="252" width="280.0" height="10" fill="#0c6b52"/>
+<text x="336" y="252" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">仍漏</text>
+<text x="508" y="118" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">回归 108 条</text>
+<rect x="508" y="128" width="280" height="12" fill="#eceae4"/>
+<rect x="508" y="128" width="280.0" height="12" fill="#0c6b52"/>
+<text x="800" y="138" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">100.0%</text>
+<text x="508" y="158" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">现行 108/108（含记忆）</text>
+<text x="508" y="174" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">训差候选（未发布）</text>
+<rect x="508" y="184" width="280" height="12" fill="#eceae4"/>
+<rect x="508" y="184" width="256.8" height="12" fill="#0c6b52"/>
+<text x="800" y="194" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">91.7%</text>
+<text x="508" y="214" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">99/108，发布门拒绝</text>
+<text x="508" y="230" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">盲测 37 条</text>
+<rect x="508" y="240" width="280" height="12" fill="#eceae4"/>
+<rect x="508" y="240" width="272.4" height="12" fill="#0c6b52"/>
+<text x="800" y="250" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">97.3%</text>
+<text x="508" y="270" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">36/37，漏登录页</text>
+<text x="44" y="310" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">黑条=当时，绿条=现在。</text>
 </svg>

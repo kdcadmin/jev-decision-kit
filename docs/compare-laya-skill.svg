@@ -1,52 +1,60 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
-  <rect width="960" height="420" fill="#f7f6f2"/>
-  <text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">技能选择：Laya 猜门时会踩的坑，JEV 现在守不守得住</text>
-  <text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴：这类事故是否被挡住（100=挡住）。Laya 列不是同一评测集实测，表示通用模型去选技能时会出现的失败；JEV 列是本机现行选择器（含记忆）。</text>
-  <g font-family="Segoe UI, sans-serif" font-size="11" fill="#5c6560">
-    <line x1="48" y1="86" x2="936" y2="86" stroke="#d5d1c7"/>
-    <text x="40" y="90" text-anchor="end">100</text>
-    <line x1="48" y1="150" x2="936" y2="150" stroke="#d5d1c7"/>
-    <text x="40" y="154" text-anchor="end">75</text>
-    <line x1="48" y1="214" x2="936" y2="214" stroke="#d5d1c7"/>
-    <text x="40" y="218" text-anchor="end">50</text>
-    <line x1="48" y1="278" x2="936" y2="278" stroke="#d5d1c7"/>
-    <text x="40" y="282" text-anchor="end">25</text>
-    <line x1="48" y1="342" x2="936" y2="342" stroke="#d5d1c7"/>
-    <text x="40" y="346" text-anchor="end">0</text>
-  </g>
-  <rect x="64" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="108" y="86" width="40" height="256" fill="#0c6b52"/>
-  <text x="106" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">提问误开</text>
-  <text x="84" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="128" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
-  <rect x="212" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="256" y="86" width="40" height="256" fill="#0c6b52"/>
-  <text x="254" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定仍打开</text>
-  <text x="232" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="276" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
-  <rect x="360" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="404" y="86" width="40" height="256" fill="#0c6b52"/>
-  <text x="402" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">赢家通吃</text>
-  <text x="380" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="424" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
-  <rect x="508" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="552" y="86" width="40" height="256" fill="#0c6b52"/>
-  <text x="550" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">选错技能</text>
-  <text x="528" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="572" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
-  <rect x="656" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="700" y="86" width="40" height="256" fill="#0c6b52"/>
-  <text x="698" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">多门并列</text>
-  <text x="676" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="720" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">100</text>
-  <rect x="804" y="338" width="40" height="4" fill="#1c211c"/>
-  <rect x="848" y="338" width="40" height="4" fill="#0c6b52"/>
-  <text x="846" y="368" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法漏召</text>
-  <text x="824" y="80" text-anchor="middle" font-size="11" fill="#1c211c">0</text>
-  <text x="868" y="80" text-anchor="middle" font-size="11" fill="#0c6b52">0</text>
-  <rect x="48" y="392" width="12" height="12" fill="#1c211c"/>
-  <text x="66" y="403" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 猜门（会踩）</text>
-  <rect x="220" y="392" width="12" height="12" fill="#0c6b52"/>
-  <text x="238" y="403" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 现行</text>
-  <text x="400" y="403" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">换说法漏召=盲测登录页，两边都还没补上。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="440" viewBox="0 0 960 440">
+<rect width="960" height="440" fill="#f7f6f2"/>
+<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这几天踩过的技能选择坑：当时 vs JEV 现在</text>
+<text x="24" y="50" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是这类事故有没有被挡住（100=挡住）。当时=调试时真实出现过的失败，不是给 Laya 在 108 条上打的分。现在=现行选择器。</text>
+<line x1="56" y1="348.0" x2="932" y2="348.0" stroke="#d5d1c7"/>
+<text x="48" y="352.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
+<line x1="56" y1="283.0" x2="932" y2="283.0" stroke="#d5d1c7"/>
+<text x="48" y="287.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">25</text>
+<line x1="56" y1="218.0" x2="932" y2="218.0" stroke="#d5d1c7"/>
+<text x="48" y="222.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">50</text>
+<line x1="56" y1="153.0" x2="932" y2="153.0" stroke="#d5d1c7"/>
+<text x="48" y="157.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">75</text>
+<line x1="56" y1="88.0" x2="932" y2="88.0" stroke="#d5d1c7"/>
+<text x="48" y="92.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">100</text>
+<rect x="86.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="97.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="112.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="123.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="110.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">提问误开</text>
+<rect x="196.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="207.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="222.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="233.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="220.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定仍打开</text>
+<rect x="305.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="316.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="331.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="342.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="329.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">未点名却开</text>
+<rect x="415.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="426.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="441.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="452.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="439.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">赢家通吃</text>
+<rect x="524.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="535.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="550.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="561.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="548.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">选错技能</text>
+<rect x="634.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="645.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="660.2" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="671.2" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="658.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">否定后乱选</text>
+<rect x="743.8" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="754.8" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="769.8" y="88.0" width="22" height="260.0" fill="#0c6b52"/>
+<text x="780.8" y="82.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">100</text>
+<text x="767.8" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">漏掉操作门</text>
+<rect x="853.2" y="344.0" width="22" height="4.0" fill="#1c211c"/>
+<text x="864.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#1c211c">0</text>
+<rect x="879.2" y="344.0" width="22" height="4.0" fill="#0c6b52"/>
+<text x="890.2" y="338.0" text-anchor="middle" font-size="11" font-family="Segoe UI, sans-serif" fill="#0c6b52">0</text>
+<text x="877.2" y="370" text-anchor="middle" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法漏召</text>
+<rect x="48" y="404" width="12" height="12" fill="#1c211c"/>
+<text x="66" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">踩坑当时</text>
+<rect x="168" y="404" width="12" height="12" fill="#0c6b52"/>
+<text x="186" y="415" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">JEV 现在</text>
+<text x="300" y="415" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">8 类里 7 类已挡住。换说法漏召仍是盲测登录页。</text>
 </svg>
