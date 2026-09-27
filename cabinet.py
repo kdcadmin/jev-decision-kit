@@ -1208,7 +1208,7 @@ def _gate_method_probabilities(votes: dict) -> dict:
 
 
 def route_task(task: str, source: str = "web", model=None, record: bool = True) -> dict:
-    from host.gate import available_gates, decision_from_votes, gate_labels, sentence_names, YES_LINE, GATE
+    from host.gate import available_gates, named_skill_gates, decision_from_votes, gate_labels, sentence_names, YES_LINE, GATE
 
     task = task.strip()
     original_length = len(task)
@@ -1231,6 +1231,7 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     from host.plugin_inventory import plugin_gates
 
     gates = available_gates(data) + plugin_gates()
+    gates += named_skill_gates(data, task, gates)
     from host.tool_memory import remembered_doors
 
     probabilities = score_task(task, [gate["id"] for gate in gates])

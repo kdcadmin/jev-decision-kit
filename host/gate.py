@@ -152,6 +152,15 @@ GATE = (
         "skills": ("git-remote-backup",),
         "category": "code",
     },
+    {"id": "code-build", "label": "编程", "blurb": "通过测试驱动实现程序、脚本或爬虫。", "ask": "是否要编写代码或开发程序？", "skills": ("test-driven-development",), "category": "code"},
+    {"id": "backend-build", "label": "后端开发", "blurb": "实现后端服务和 API 接口。", "ask": "是否要开发后端或 API？", "skills": ("fullstack-dev",), "category": "code"},
+    {"id": "frontend-build", "label": "前端开发", "blurb": "实现网页和前端界面。", "ask": "是否要开发前端页面？", "skills": ("frontend-dev",), "category": "web"},
+    {"id": "android-build", "label": "Android 开发", "blurb": "实现 Android 应用。", "ask": "是否要开发 Android 应用？", "skills": ("android-native-dev",), "category": "code"},
+    {"id": "ios-build", "label": "iOS 开发", "blurb": "实现 iOS 应用。", "ask": "是否要开发 iOS 应用？", "skills": ("ios-application-dev",), "category": "code"},
+    {"id": "flutter-build", "label": "Flutter 开发", "blurb": "实现 Flutter 应用。", "ask": "是否要开发 Flutter 应用？", "skills": ("flutter-dev",), "category": "code"},
+    {"id": "react-native-build", "label": "React Native 开发", "blurb": "实现 React Native 应用。", "ask": "是否要开发 React Native 应用？", "skills": ("react-native-dev",), "category": "code"},
+    {"id": "code-debug", "label": "调试", "blurb": "定位并修复程序错误。", "ask": "是否要调试或修复程序错误？", "skills": ("systematic-debugging",), "category": "code"},
+    {"id": "code-refactor", "label": "代码重构", "blurb": "重构代码并保持原有行为。", "ask": "是否要重构代码？", "skills": ("code-refactoring",), "category": "code"},
 )
 
 YES_LINE = 0.4
@@ -211,7 +220,7 @@ WORDS = {
     "office-xlsx": ("表格", "Excel", "excel", "xlsx", "这张表"),
     "web-read": ("网页", "网址", "链接", "http", "https"),
     "web-act": ("点击", "填写", "填表", "提交", "登录", "表单"),
-    "vox-video": ("介绍视频", "介绍片"),
+    "vox-video": ("介绍视频", "介绍片", "vox", "做一个视频", "做个视频", "做一支视频", "制作视频", "生成视频", "视频制作"),
     "openmontage": ("实拍", "剪辑"),
     "xiaohei": ("小黑",),
     "thesis": ("论文",),
@@ -220,6 +229,15 @@ WORDS = {
     "last30days": ("三十天", "30天", "最近一个月"),
     "godot": ("Godot", "godot"),
     "git-backup": ("备份", "推到远程", "远程仓库"),
+    "code-build": ("写代码", "编写代码", "写个代码", "写一个代码", "写一段代码", "爬虫", "脚本", "开发程序", "写程序", "编程"),
+    "backend-build": ("API 接口", "API接口", "后端", "全栈"),
+    "frontend-build": ("前端", "开发网页", "做一个网页", "做个网页", "开发网站", "做一个网站", "做个网站"),
+    "android-build": ("Android", "安卓"),
+    "ios-build": ("iOS",),
+    "flutter-build": ("Flutter",),
+    "react-native-build": ("React Native", "react-native"),
+    "code-debug": ("修复代码", "调试", "debug", "bug", "报错"),
+    "code-refactor": ("重构", "refactor"),
 }
 
 
@@ -227,8 +245,6 @@ def _resolve(skills: list, name: str, category: str | None) -> dict | None:
     matches = []
     for item in skills:
         if item.get("name") != name:
-            continue
-        if category and item.get("category") != category:
             continue
         path = Path(item.get("path") or "")
         if (path / "SKILL.md").is_file():
@@ -260,6 +276,33 @@ def available_gates(catalog: dict) -> list[dict]:
             }
         )
     return ready
+
+
+def named_skill_gates(catalog: dict, task: str, gates: list[dict]) -> list[dict]:
+    """Let installed skills be explicitly addressed without a hardcoded door.
+
+    Only names are aliases here; descriptions are not executable routing rules.
+    Existing doors gain the full skill name, so they aren't selected twice.
+    """
+    covered = set()
+    for gate in gates:
+        names = [item['name'] for item in gate['items'] if item.get('kind', 'skill') == 'skill']
+        covered.update(names)
+        gate['words'] = tuple(dict.fromkeys((*_terms(gate), *names)))
+    extra = []
+    for item in catalog.get('skills') or []:
+        name = str(item.get('name') or '')
+        if not name or name in covered or _named(task, name) < 0:
+            continue
+        resolved = _resolve(catalog['skills'], name, None)
+        if resolved is None:
+            continue
+        covered.add(name)
+        extra.append({'id': 'skill:' + name, 'label': name,
+                      'blurb': str(item.get('summary') or name),
+                      'ask': '是否明确要求使用 ' + name + '？',
+                      'words': (name,), 'items': [resolved]})
+    return extra
 
 
 def noul_questions(gates: list[dict]) -> dict:
@@ -416,6 +459,12 @@ def _item_asking(text: str, index: int, length: int) -> bool:
     clause = text[start:end]
     local = text[max(0, index - 8) : min(len(text), index + length + 8)]
     word = text[index : index + length]
+    # A capability name may itself contain 制作; that is not an action verb
+    # when the user is asking what it means.
+    if any(mark in clause for mark in ("是什么意思", "什么意思", "是什么", "什么是", "有什么用", "干嘛的")):
+        outside_name = text[start:index] + text[index + length:end]
+        if not any(mark in outside_name for mark in _MAKE):
+            return True
     contrast = any(mark in clause for mark in ("区别", "不同", "差异", "对比")) or any(
         mark in local for mark in ("区别", "不同", "差异", "对比")
     )
