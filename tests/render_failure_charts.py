@@ -165,20 +165,30 @@ def table() -> str:
 
 
 def moved() -> str:
-    groups = group_rates()
-    laya = sum(1 for row in ROWS if row[3])
-    jev = sum(1 for row in ROWS if row[5])
-    n = len(ROWS)
-    cats = [("全部 33 句", laya, jev, n)] + [(name, a, b, count) for name, count, a, b in groups]
-    w, h = 960, 420
-    left, right, top, bottom = 56, 920, 86, 318
+    missed = [row for row in ROWS if row[5] and not row[3]]
+    kinds = [
+        ("该开却自己做", ("盯盘今天", "整理成纪要", "写一份 Word", "读一下这个 PDF", "实拍剪", "收进资料库", "最近三十天", "Godot", "推到远程", "最近一个月")),
+        ("多带了一门", ("正文摘出来", "这家公司", "登录页")),
+        ("不该开却开了", ("这段代码什么意思", "背景音乐", "表情包")),
+        ("只留一部分", ("宁德时代", "小黑图、幻灯片")),
+    ]
+    buckets = []
+    for name, marks in kinds:
+        rows = [row for row in missed if any(mark in row[0] for mark in marks)]
+        buckets.append((name, len(rows)))
+    accounted = sum(count for _name, count in buckets)
+    if accounted != len(missed):
+        raise SystemExit(f"missed rows {len(missed)} != grouped {accounted}")
+    cats = [("这 18 句", len(missed))] + buckets
+    w, h = 960, 440
+    left, right, top, bottom = 56, 920, 92, 328
     plot_h = bottom - top
-    bar_w = 36
+    bar_w = 42
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
-        '<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">刚好选对：Laya 当时 vs jev-decision</text>',
-        '<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是刚好选对的比例（%）。同一批 33 句。没有技能和插件时自己做算对。</text>',
+        '<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">以前 Laya 选错、现在 jev-decision 选对</text>',
+        f'<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">只画这 {len(missed)} 句。纵轴是这组里选对的比例。黑柱是 Laya 当时，全是 0。绿柱是 jev-decision，这 18 句都对。</text>',
     ]
     for tick in (0, 25, 50, 75, 100):
         y = bottom - plot_h * tick / 100
@@ -187,25 +197,26 @@ def moved() -> str:
             f'<text x="{left - 8}" y="{y + 4:.1f}" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">{tick}</text>'
         )
     gap = (right - left) / len(cats)
-    for i, (name, a, b, count) in enumerate(cats):
+    for i, (name, count) in enumerate(cats):
         cx = left + gap * (i + 0.5)
-        for dx, value, color in ((-bar_w - 4, 100 * a / count, "#1c211c"), (4, 100 * b / count, "#0c6b52")):
-            bh = plot_h * value / 100
-            if bh < 2:
-                bh = 2
+        for dx, value, color, label in (
+            (-bar_w - 4, 0, "#1c211c", f"0/{count}"),
+            (4, 100, "#0c6b52", f"{count}/{count}"),
+        ):
+            bh = max(3, plot_h * value / 100)
             y = bottom - bh
             parts.append(f'<rect x="{cx + dx:.1f}" y="{y:.1f}" width="{bar_w}" height="{bh:.1f}" fill="{color}"/>')
             parts.append(
-                f'<text x="{cx + dx + bar_w / 2:.1f}" y="{y - 8:.1f}" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="{color}">{a if dx < 0 else b}/{count}</text>'
+                f'<text x="{cx + dx + bar_w / 2:.1f}" y="{y - 8:.1f}" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="{color}">{label}</text>'
             )
         parts.append(
-            f'<text x="{cx:.1f}" y="{bottom + 24}" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
+            f'<text x="{cx:.1f}" y="{bottom + 26}" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
         )
     parts += [
-        '<rect x="48" y="382" width="14" height="14" fill="#1c211c"/>',
-        '<text x="68" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>',
-        '<rect x="180" y="382" width="14" height="14" fill="#0c6b52"/>',
-        '<text x="200" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
+        '<rect x="48" y="396" width="14" height="14" fill="#1c211c"/>',
+        '<text x="68" y="408" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时（这 18 句都错）</text>',
+        '<rect x="280" y="396" width="14" height="14" fill="#0c6b52"/>',
+        '<text x="300" y="408" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision（这 18 句都对）</text>',
         "</svg>",
     ]
     return "\n".join(parts) + "\n"

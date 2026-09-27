@@ -50,7 +50,7 @@ python -m venv .venv
 
 这轮补上的是盯盘提醒、读 PDF、这张表、网页表单、涨了多少进 Excel、最近一个月。回归 108/108，盲测 37/37。「PDF 是什么」和「不要用 Word」仍然自己做。
 
-![刚好选对：Laya 当时 vs jev-decision](docs/compare-set-match.svg)
+![以前 Laya 选错、现在 jev-decision 选对](docs/compare-set-match.svg)
 
 ![这张对比只覆盖技能选择](docs/compare-scope.svg)
 
