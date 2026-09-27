@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from host.plugin_inventory import plugin_gates
-from host.train_jev import BLIND_FILE, EVAL_FILE, MULTI, NONE, POS, held_out_texts
+from host.train_jev import BLIND_FILE, EVAL_FILE, MULTI, NONE, POS, held_out_texts, replace_if_not_worse
 from hosts import upsert_mcp_block, sync_hermes
 
 
@@ -40,6 +40,7 @@ class EvalIsolationTests(unittest.TestCase):
         from host.tool_memory import remembered_doors
 
         self.assertIn("thesis", remembered_doors("不要用 PDF，给我论文", samples))
+        self.assertIn("web-act", remembered_doors("填表提交之后导出成 PDF", samples))
         self.assertEqual(remembered_doors("不要用 Word", samples), set())
 
     def test_asking_sentences_do_not_open_doors(self):
@@ -117,6 +118,38 @@ class HostYamlTests(unittest.TestCase):
             self.assertTrue(backup.is_file())
             self.assertEqual(backup.read_text(encoding="utf-8"), original)
             self.assertIn("jev-skill-kit:", path.read_text(encoding="utf-8"))
+
+
+class TrainPublishTests(unittest.TestCase):
+    def test_replace_if_not_worse_restores_old_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "head.json"
+            path.write_text("old", encoding="utf-8")
+            calls = {"n": 0}
+
+            def score() -> int:
+                calls["n"] += 1
+                return 5 if calls["n"] == 1 else 3
+
+            kept, before, after = replace_if_not_worse(path, {"ok": 1}, score)
+            self.assertFalse(kept)
+            self.assertEqual((before, after), (5, 3))
+            self.assertEqual(path.read_text(encoding="utf-8"), "old")
+
+    def test_replace_if_not_worse_keeps_equal_or_better(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "head.json"
+            path.write_text("old", encoding="utf-8")
+            calls = {"n": 0}
+
+            def score() -> int:
+                calls["n"] += 1
+                return 5
+
+            kept, before, after = replace_if_not_worse(path, {"ok": 1}, score)
+            self.assertTrue(kept)
+            self.assertEqual((before, after), (5, 5))
+            self.assertIn('"ok": 1', path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

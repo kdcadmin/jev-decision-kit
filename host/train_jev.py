@@ -1,7 +1,9 @@
 # Train the local door head from card wording. The twelve exam sentences are held out.
 from __future__ import annotations
 
+import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -216,7 +218,31 @@ def rows() -> list[tuple[str, set[str]]]:
     return found
 
 
-def train() -> None:
+def replace_if_not_worse(path: Path, payload: dict, score) -> tuple[bool, int, int]:
+    before = score()
+    previous = path.read_text(encoding="utf-8") if path.is_file() else None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(path)
+    try:
+        after = score()
+    except Exception:
+        if previous is None:
+            path.unlink(missing_ok=True)
+        else:
+            path.write_text(previous, encoding="utf-8")
+        raise
+    if after < before:
+        if previous is None:
+            path.unlink(missing_ok=True)
+        else:
+            path.write_text(previous, encoding="utf-8")
+        return False, before, after
+    return True, before, after
+
+
+def train(force: bool = False) -> None:
     import torch
 
     torch.manual_seed(0)
@@ -264,12 +290,30 @@ def train() -> None:
         "train_rows": len(data),
         "train_fit": round(fit, 4),
     }
-    WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
-    tmp = WEIGHTS.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(WEIGHTS)
-    print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4))
+    from host.eval_heldout import jev_set_ok
+    from host.jev import cache_clear
+
+    def score() -> int:
+        cache_clear()
+        hits, _total = jev_set_ok()
+        return hits
+
+    if force:
+        tmp = WEIGHTS.with_suffix(".json.tmp")
+        WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(WEIGHTS)
+        cache_clear()
+        print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4), "forced")
+        return
+    kept, before, after = replace_if_not_worse(WEIGHTS, payload, score)
+    cache_clear()
+    if not kept:
+        raise SystemExit("refused head.json: regression " + str(after) + " < " + str(before))
+    print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4), "regression", after)
 
 
 if __name__ == "__main__":
-    train()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true")
+    train(force=parser.parse_args().force)

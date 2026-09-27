@@ -4,11 +4,11 @@
     "doors": ["thesis"]
   },
   {
-    "task": "请写成一份 Word 文档",
-    "doors": ["office-docx"]
+    "task": "填表提交之后导出 PDF",
+    "doors": ["web-act"]
   },
   {
-    "task": "帮我把后台页面打开并登录进去",
-    "doors": ["web-act"]
+    "task": "请写成一份 Word 文档",
+    "doors": ["office-docx"]
   }
 ]

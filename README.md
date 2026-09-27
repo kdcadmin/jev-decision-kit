@@ -48,9 +48,9 @@ python -m venv .venv
 
 选择器是本机训出来的门打分头，不调用 Laya。
 
-- 权重：`models/jev/head.json`
-- 训练：`.venv\Scripts\python -m host.train_jev`
-- 样本按柜门上的说法来写。`tests/eval_cases.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句
+- 权重：`models/jev/head.json`。这是已发布的基线，不要假设 `python -m host.train_jev` 会得到同一份文件。样本表可以比权重新。
+- 训练：`.venv\Scripts\python -m host.train_jev`。训完会跑回归集，只有集合匹配不下降才写入权重。要强行覆盖用 `--force`。
+- 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句
 
 ## 调用记录
 

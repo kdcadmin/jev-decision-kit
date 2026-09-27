@@ -7,7 +7,7 @@ Locked 2026-09-25.
 - JEV scores before the agent speaks. Each door in `host/gate.py` is a separate yes/no on the original sentence. A trained door is kept only when the sentence names that job and its yes-probability is at or above 0.4. Untrained plugin doors can pass on the name alone. A nearby 不要 drops that mention; a later 还是用 can take it back. Every such door is kept. None means do it yourself.
 - The door is the local jobs (data, files, browser, video, thesis, and the other entries in that file). The rest of the cabinet stays browsable and is not an option.
 - The agent receives that decision and follows it. It does not choose whether to ask, and it does not pick again.
-- The scores come from `models/jev/head.json`, trained by `python -m host.train_jev` on door wording. That file is the selector. Laya is not on this path.
+- The scores come from `models/jev/head.json`. That file is the published selector. `python -m host.train_jev` trains from door wording, then keeps the new head only when regression set-match does not fall. POS rows may be ahead of the file on disk. Laya is not on this path.
 
 ## Library
 

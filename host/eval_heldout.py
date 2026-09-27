@@ -39,6 +39,21 @@ def _same(got: list[str], expect: list[str]) -> tuple[bool, bool]:
     return got == expect, not miss and not extra
 
 
+def jev_set_ok(path: Path | None = None) -> tuple[int, int]:
+    payload = json.loads((path or EVAL_FILE).read_text(encoding="utf-8"))
+    cases = payload.get("cases") or []
+    hits = 0
+    with patch("host.tool_memory.remembered_doors", return_value=set()), patch(
+        "cabinet.load_memory", return_value={"rules": []}
+    ):
+        for item in cases:
+            got = _route(str(item.get("text") or ""))
+            expect = [str(name) for name in (item.get("expect") or [])]
+            _exact, ok = _same(got, expect)
+            hits += int(ok)
+    return hits, len(cases)
+
+
 def _run(name: str, cases: list[dict], gates: list[dict], samples: list[dict]) -> None:
     modes = ("rules", "rules_jev", "rules_jev_memory")
     tally = {mode: {"exact": 0, "ok": 0, "miss": 0, "extra": 0} for mode in modes}
