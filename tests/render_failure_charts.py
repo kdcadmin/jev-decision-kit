@@ -15,14 +15,14 @@ DOCS = ROOT / "docs"
 # task, group, laya_got, laya_ok, jev_got, jev_ok
 ROWS = [
     ("帮我看一下贵州茅台现在多少钱", "每道门", "行情 0.83", True, "行情", True),
-    ("盯盘今天有没有提醒", "每道门", "自己做", False, "自己做", False),
+    ("盯盘今天有没有提醒", "每道门", "自己做", False, "盯盘", True),
     ("把刚才的会整理成纪要", "每道门", "自己做（纪要 0.31）", False, "会议纪要", True),
     ("按模板写一份 Word", "每道门", "自己做（Word 0.44）", False, "Word", True),
-    ("读一下这个 PDF", "每道门", "自己做（PDF 0.24）", False, "自己做", False),
+    ("读一下这个 PDF", "每道门", "自己做（PDF 0.24）", False, "PDF", True),
     ("做一套幻灯片文件", "每道门", "幻灯片 0.71", True, "幻灯片", True),
-    ("把这张表算一下", "每道门", "表格 0.58", True, "自己做", False),
+    ("把这张表算一下", "每道门", "表格 0.58", True, "表格", True),
     ("打开这个网页把正文摘出来", "每道门", "操作网页、读网页、Godot", False, "读网页", True),
-    ("在网页上把这个表单填完", "每道门", "操作网页 0.59", True, "自己做", False),
+    ("在网页上把这个表单填完", "每道门", "操作网页 0.59", True, "操作网页", True),
     ("再做一支同样风格的介绍视频", "每道门", "介绍视频 0.52", True, "介绍视频", True),
     ("把这几段实拍剪到一起", "每道门", "自己做（0.29）", False, "实拍剪辑", True),
     ("给这篇文章画一张小黑风格的图", "每道门", "小黑插图 0.81", True, "小黑插图", True),
@@ -40,13 +40,13 @@ ROWS = [
     ("查股价、写成 Word、配小黑图", "一句多门", "行情、Word、小黑", True, "行情、Word、小黑", True),
     ("打开 https://example.com 把正文读出来", "换说法", "读网页 0.86", True, "读网页", True),
     ("打开登录页，填账号密码然后点登录", "换说法", "操作网页、表格", False, "操作网页", True),
-    ("宁德时代今天涨了多少，整理进 Excel", "换说法", "只留行情", False, "只留表格", False),
+    ("宁德时代今天涨了多少，整理进 Excel", "换说法", "只留行情", False, "行情、表格", True),
     ("再来一支大肥鱼的介绍片，剧情换成上班", "换说法", "介绍视频 0.73", True, "介绍视频", True),
     ("股价、Word、小黑图、幻灯片", "超过三道", "丢掉行情（最多 3 道）", False, "四道都留", True),
     ("这段话帮我改得顺一点就行", "换说法", "自己做", True, "自己做", True),
     ("用 MiniMax 出一张图", "换说法", "自己做（0.07）", False, "自己做", False),
     ("把仓库备份到远程", "换说法", "远程备份 0.98", True, "远程备份", True),
-    ("最近一个月大家在讨论什么", "换说法", "自己做", False, "自己做", False),
+    ("最近一个月大家在讨论什么", "换说法", "自己做", False, "近三十天", True),
 ]
 
 
@@ -117,7 +117,7 @@ def overview() -> str:
         '<text x="66" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>',
         '<rect x="168" y="388" width="12" height="12" fill="#0c6b52"/>',
         '<text x="186" y="399" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
-        '<text x="340" y="399" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">出音乐、表情包后来不在门上，所以这两句 jev-decision 记成没选中。</text>',
+        '<text x="340" y="399" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">还没过的 4 句没有可开的技能：出音乐、表情包、本机出视频、MiniMax 出图。</text>',
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
@@ -158,7 +158,7 @@ def table() -> str:
             f'<text x="760" y="{y}" font-size="12" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="{"#0c6b52" if jev_ok else "#8f3d32"}">{svg_escape(("对 · " if jev_ok else "错 · ") + jev_got)}</text>'
         )
     parts.append(
-        f'<text x="24" y="{height - 12}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">绿底：Laya 错、jev-decision 对。红底：Laya 对、jev-decision 错（表格、表单、出音乐、表情包）。</text>'
+        f'<text x="24" y="{height - 12}" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">还没过的 4 句：本机出视频、背景音乐、表情包、MiniMax 出图。这四项技能已不在柜门上。</text>'
     )
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
@@ -180,7 +180,7 @@ def moved() -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
         '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句里谁变了</text>',
-        '<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。现在错的 4 句是「把这张表算一下」「在网页上把这个表单填完」「做一段背景音乐」「把这张照片做成表情包」。</text>',
+        '<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。现在错的 4 句没有可开的技能：本机出视频、背景音乐、表情包、MiniMax 出图。</text>',
     ]
     gap = (900 - 48) / 4
     for i, (name, value, color) in enumerate(items):
@@ -203,11 +203,11 @@ def scope_chart() -> str:
 <rect width="960" height="220" fill="#f7f6f2"/>
 <text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这张对比只覆盖技能选择</text>
 <text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">Laya 当时：通用模型逐门打分，过 0.5，最多 3 道。33 句刚好选对 15 句。</text>
-<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点名才开门，过线的都留。刚好选对 23 句。</text>
-<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">变好的主要是纪要、Word、资料库、Godot、远程备份，以及一句里超过 3 道门。</text>
-<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">变差的 4 句：表格、网页表单，以及后来撤掉的出音乐、表情包。</text>
-<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">写作、推理、没点名的活仍是 Laya 的通用能力。这 33 句没有测那一块。</text>
-<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">两边都还错：盯盘提醒、读 PDF、本机出视频、MiniMax 出图、宁德时代进 Excel、最近一个月。</text>
+<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点了名的门留下。刚好选对 29 句。</text>
+<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">这轮补上的是盯盘、读 PDF、这张表、网页表单、涨了多少进 Excel、最近一个月。</text>
+<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">还没过的 4 句没有柜门：本机出视频、背景音乐、表情包、MiniMax 出图。</text>
+<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">回归 108/108，盲测 37/37。写作和推理不在这 33 句里。</text>
+<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">提问句「PDF 是什么」和「不要用 Word」仍然自己做。</text>
 </svg>
 """
 

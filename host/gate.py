@@ -202,22 +202,22 @@ _MAKE = (
 _TURN = ("还是", "改成", "换成", "改为")
 # A door counts only when the sentence itself names that job.
 WORDS = {
-    "market-data": ("股价", "涨跌", "行情", "多少钱", "现价", "股票"),
+    "market-data": ("股价", "涨跌", "行情", "多少钱", "现价", "股票", "涨了多少"),
     "market-watch": ("盯盘", "盯着", "自选股"),
     "meeting-minutes": ("纪要", "会议"),
     "office-docx": ("Word", "word", "docx"),
     "office-pdf": ("PDF", "pdf"),
     "office-pptx": ("幻灯片", "ppt", "PPT", "pptx", "演示文稿"),
-    "office-xlsx": ("表格", "Excel", "excel", "xlsx"),
+    "office-xlsx": ("表格", "Excel", "excel", "xlsx", "这张表"),
     "web-read": ("网页", "网址", "链接", "http", "https"),
-    "web-act": ("点击", "填写", "填表", "提交", "登录"),
+    "web-act": ("点击", "填写", "填表", "提交", "登录", "表单"),
     "vox-video": ("介绍视频", "介绍片"),
     "openmontage": ("实拍", "剪辑"),
     "xiaohei": ("小黑",),
     "thesis": ("论文",),
     "company-intel": ("公司情报", "这家公司"),
     "knowledge": ("资料库", "知识库"),
-    "last30days": ("三十天", "30天"),
+    "last30days": ("三十天", "30天", "最近一个月"),
     "godot": ("Godot", "godot"),
     "git-backup": ("备份", "推到远程", "远程仓库"),
 }

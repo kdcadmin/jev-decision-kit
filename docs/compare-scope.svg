@@ -2,9 +2,9 @@
 <rect width="960" height="220" fill="#f7f6f2"/>
 <text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">这张对比只覆盖技能选择</text>
 <text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">Laya 当时：通用模型逐门打分，过 0.5，最多 3 道。33 句刚好选对 15 句。</text>
-<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点名才开门，过线的都留。刚好选对 23 句。</text>
-<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">变好的主要是纪要、Word、资料库、Godot、远程备份，以及一句里超过 3 道门。</text>
-<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">变差的 4 句：表格、网页表单，以及后来撤掉的出音乐、表情包。</text>
-<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">写作、推理、没点名的活仍是 Laya 的通用能力。这 33 句没有测那一块。</text>
-<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">两边都还错：盯盘提醒、读 PDF、本机出视频、MiniMax 出图、宁德时代进 Excel、最近一个月。</text>
+<text x="24" y="78" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">jev-decision：同一 33 句，点了名的门留下。刚好选对 29 句。</text>
+<text x="24" y="102" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#1c211c">这轮补上的是盯盘、读 PDF、这张表、网页表单、涨了多少进 Excel、最近一个月。</text>
+<text x="24" y="126" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#8f3d32">还没过的 4 句没有柜门：本机出视频、背景音乐、表情包、MiniMax 出图。</text>
+<text x="24" y="162" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="13" fill="#5c6560">回归 108/108，盲测 37/37。写作和推理不在这 33 句里。</text>
+<text x="24" y="196" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">提问句「PDF 是什么」和「不要用 Word」仍然自己做。</text>
 </svg>

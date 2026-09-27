@@ -224,6 +224,19 @@ class GateTests(unittest.TestCase):
         declared = {entry["id"] for entry in GATE}
         self.assertTrue(declared <= ids)
 
+    def test_named_jobs_from_the_laya_set_stay_open(self):
+        expect = {
+            "盯盘今天有没有提醒": "盯盘",
+            "读一下这个 PDF": "PDF",
+            "把这张表算一下": "表格",
+            "在网页上把这个表单填完": "操作网页",
+            "宁德时代今天涨了多少，整理进 Excel": "行情、表格",
+            "最近一个月大家在讨论什么": "近三十天",
+        }
+        for text, label in expect.items():
+            routed = cabinet.route_task(text, "test", record=False)
+            self.assertEqual(routed["label"], label, text)
+
 
 if __name__ == "__main__":
     unittest.main()

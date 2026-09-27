@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="220" viewBox="0 0 960 220">
 <rect width="960" height="220" fill="#f7f6f2"/>
 <text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句里谁变了</text>
-<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。现在错的 4 句是「把这张表算一下」「在网页上把这个表单填完」「做一段背景音乐」「把这张照片做成表情包」。</text>
-<rect x="48.0" y="130.0" width="70" height="30.0" fill="#0c6b52"/>
-<text x="83.0" y="122.0" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">11</text>
+<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。现在错的 4 句没有可开的技能：本机出视频、背景音乐、表情包、MiniMax 出图。</text>
+<rect x="48.0" y="124.5" width="70" height="35.5" fill="#0c6b52"/>
+<text x="83.0" y="116.5" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">13</text>
 <text x="83.0" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">两边都对</text>
-<rect x="261.0" y="127.3" width="70" height="32.7" fill="#0c6b52"/>
-<text x="296.0" y="119.3" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">12</text>
+<rect x="261.0" y="116.4" width="70" height="43.6" fill="#0c6b52"/>
+<text x="296.0" y="108.4" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">16</text>
 <text x="296.0" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 错，现在对</text>
-<rect x="474.0" y="149.1" width="70" height="10.9" fill="#8f3d32"/>
-<text x="509.0" y="141.1" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">4</text>
+<rect x="474.0" y="154.5" width="70" height="5.5" fill="#8f3d32"/>
+<text x="509.0" y="146.5" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">2</text>
 <text x="509.0" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 对，现在错</text>
-<rect x="687.0" y="143.6" width="70" height="16.4" fill="#1c211c"/>
-<text x="722.0" y="135.6" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">6</text>
+<rect x="687.0" y="154.5" width="70" height="5.5" fill="#1c211c"/>
+<text x="722.0" y="146.5" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">2</text>
 <text x="722.0" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">两边都错</text>
 </svg>

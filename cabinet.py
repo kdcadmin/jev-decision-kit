@@ -1208,7 +1208,7 @@ def _gate_method_probabilities(votes: dict) -> dict:
 
 
 def route_task(task: str, source: str = "web", model=None, record: bool = True) -> dict:
-    from host.gate import available_gates, decision_from_votes, gate_labels, sentence_names
+    from host.gate import available_gates, decision_from_votes, gate_labels, sentence_names, YES_LINE, GATE
 
     task = task.strip()
     original_length = len(task)
@@ -1235,6 +1235,8 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
 
     probabilities = score_task(task, [gate["id"] for gate in gates])
     trained = set(load_head().get("labels") or [])
+    # web-read stays on the score: 「网页」也出现在填表、点击里，不能单靠点名就打开。
+    name_is_enough = {entry["id"] for entry in GATE if entry["id"] != "web-read"}
     habits = remembered_doors(task)
     for gate in gates:
         named = sentence_names(task, gate)
@@ -1246,6 +1248,9 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
             continue
         if gate["id"] not in trained:
             probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), 0.75)
+            continue
+        if gate["id"] in name_is_enough:
+            probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), YES_LINE)
     memory = load_memory()
     matched = best_matching_rule(task, memory, None)
     by_name = {item["name"]: item for item in data["skills"] if item.get("name")}
