@@ -1,4 +1,6 @@
 .venv/
+.env
+**/.env
 skills/
 catalog.json
 calls.json
