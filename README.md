@@ -8,23 +8,15 @@ JEV 选的是技能和能点名的插件。MCP 只在柜子里查看和管理，
 
 ## 展示
 
-走一遍柜子（1920×1080）：
-
-![柜子走一遍](docs/tour.gif)
-
-GitHub 点开 `docs/tour.mp4` 不会播，这是网页文件页的限制。要看 mp4：下载后用播放器打开，或把 [docs/play-tour.html](docs/play-tour.html) 和 `tour.mp4` 放在一起用浏览器打开。完整介绍片仍是本机 `jev-skill-kit-intro.mp4`，约 44MB，网页预览打不开。
-
 ![柜子](docs/cabinet.png)
 
-![一句话选出会议纪要和 Word](docs/decision.png)
-
-![插件](docs/plugins.png)
+![调用记录](docs/calls.png)
 
 ![MCP 只查看，不挑选](docs/mcp.png)
 
-![设置里的技能文件夹和 JEV 权重](docs/settings.png)
+![插件](docs/plugins.png)
 
-![调用记录](docs/calls.png)
+![设置里的技能文件夹和 JEV 权重](docs/settings.png)
 
 ![技能库](docs/library.png)
 
@@ -79,6 +71,8 @@ JEV 在模型开口之前打一遍分。门上每一项单独问要不要用，�
 
 ## 龙虾、Hermes、Codex、Harness
 
-Hermes 用 `pre_llm_call`，龙虾用 `before_prompt_build`，在模型开口前要这段前言。关掉选择器后，它们不再把这句话交给 JEV。
+接上之后，这几家不再自己在柜子里翻技能、猜该用哪一份。模型开口前（Hermes `pre_llm_call`、龙虾 `before_prompt_build`）先把原句交给本机 JEV：该自己做还是该用哪几份技能、哪几个点了名的插件，结果已经写在前言里。原句不拆、否定项会关掉、解释类问题不会当成操作。模型只执行这个结果。
 
-Codex 和 DeepSeek Harness 目前走 MCP 补读：把 `jev-skill-kit` 加进各自的 MCP 列表，`get_skill` 必须带前言里的 `decision_id`。它们还没有和 Hermes 一样的开口前钩子，所以完整「先选再开口」仍要宿主自己接 [INTEGRATION.md](INTEGRATION.md) 里的前言服务。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和龙虾的 MCP 读写项。
+因此宿主侧少了三件常见事故：把「不要 Word」又打开成 Word、把「PDF 是什么」当成导出 PDF、把一句里的会议纪要和 Word 收成只留一个赢家。技能正文来自本机副本，原来的技能文件夹不会被删。MCP 只补读已经选定的正文，不能改选。
+
+Codex 和 DeepSeek Harness 目前走 MCP 补读：把 `jev-skill-kit` 加进各自的 MCP 列表，`get_skill` 必须带前言里的 `decision_id`。它们还没有开口前钩子，完整「先选再开口」仍要宿主自己接 [INTEGRATION.md](INTEGRATION.md) 里的前言服务。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和龙虾的 MCP 读写项。关掉选择器后，Hermes 和龙虾不再把这句话交给 JEV。
