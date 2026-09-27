@@ -205,15 +205,15 @@ def _scan_harness(root: Path | None) -> list[dict]:
 
 
 def default_harness_home() -> Path | None:
-    env = os.environ.get("DSH_HOME")
-    if env:
-        return Path(env)
-    preferred = Path(r"D:\dsh")
-    if preferred.is_dir():
-        return preferred
+    preferred = os.environ.get("DSH_HOME")
+    if preferred:
+        return Path(preferred)
     local = Path.home() / ".dsh"
     if local.is_dir():
         return local
+    fallback = Path("D:/dsh")
+    if fallback.is_dir():
+        return fallback
     return None
 
 

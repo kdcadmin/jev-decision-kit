@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import math
-from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,9 +28,23 @@ def _sigmoid(value: float) -> float:
     return 1.0 / (1.0 + math.exp(-value))
 
 
-@lru_cache(maxsize=1)
+_HEAD = None
+_HEAD_STAMP = None
+
+
 def load_head() -> dict:
-    return json.loads(WEIGHTS.read_text(encoding="utf-8"))
+    global _HEAD, _HEAD_STAMP
+    stamp = WEIGHTS.stat().st_mtime_ns if WEIGHTS.is_file() else 0
+    if _HEAD is None or stamp != _HEAD_STAMP:
+        _HEAD = json.loads(WEIGHTS.read_text(encoding="utf-8"))
+        _HEAD_STAMP = stamp
+    return _HEAD
+
+
+def cache_clear() -> None:
+    global _HEAD, _HEAD_STAMP
+    _HEAD = None
+    _HEAD_STAMP = None
 
 
 def score_task(task: str, gate_ids: list[str] | None = None) -> dict[str, float]:

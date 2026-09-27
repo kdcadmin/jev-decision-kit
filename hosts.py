@@ -71,7 +71,7 @@ def sync_openclaw(enabled: bool) -> dict:
         return {"name": "openclaw", "present": True, "enabled": enabled, "warning": "找不到 openclaw 命令"}
     payload = mcp_command()
     payload["enabled"] = enabled
-    line = subprocess.list2cmdline([command, "mcp", "set", "jev-skill-kit", json.dumps(payload, ensure_ascii=False)])
+    line = [command, "mcp", "set", "jev-skill-kit", json.dumps(payload, ensure_ascii=False)]
     try:
         completed = subprocess.run(
             line,
@@ -80,7 +80,6 @@ def sync_openclaw(enabled: bool) -> dict:
             encoding="utf-8",
             errors="replace",
             timeout=90,
-            shell=True,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return {"name": "openclaw", "present": True, "enabled": enabled, "warning": str(exc)}

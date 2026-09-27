@@ -5,6 +5,7 @@ from pathlib import Path
 
 MARKER = "【技能柜】"
 SKILL_TEXT_LIMIT = 8000
+PREFACE_TEXT_LIMIT = 24000
 
 GATE = (
     {
@@ -154,15 +155,18 @@ GATE = (
 )
 
 YES_LINE = 0.4
-NEGATION = ("不要", "别", "不用", "勿")
+NEGATION = ("不要", "别", "不用", "勿", "不是")
+_NEGATION_FALSE = ("特别", "分别", "别的", "别人", "别处", "别家", "别管", "别名")
+_ASK = ("什么意思", "是什么意思", "区别", "不同", "差异", "解释", "为什么叫", "变量")
+_MAKE = ("制作", "做一份", "做一页", "做成", "改成", "写成", "整理成", "导出", "生成")
 # A door counts only when the sentence itself names that job.
 WORDS = {
     "market-data": ("股价", "涨跌", "行情", "多少钱", "现价", "股票"),
-    "market-watch": ("盯盘",),
+    "market-watch": ("盯盘", "盯着", "自选股"),
     "meeting-minutes": ("纪要", "会议"),
     "office-docx": ("Word", "word", "docx"),
     "office-pdf": ("PDF", "pdf"),
-    "office-pptx": ("幻灯片", "ppt", "PPT"),
+    "office-pptx": ("幻灯片", "ppt", "PPT", "演示文稿"),
     "office-xlsx": ("表格", "Excel", "excel", "xlsx"),
     "web-read": ("网页", "网址", "链接", "http", "https"),
     "web-act": ("点击", "填写", "填表", "提交", "登录"),
@@ -246,22 +250,82 @@ def _terms(gate: dict) -> tuple:
 
 
 def _named(task: str, word: str) -> int:
+    text = task or ""
+    needle = word
+    hay = text
     if word.isascii():
-        return task.lower().find(word.lower())
-    return task.find(word)
+        hay = text.lower()
+        needle = word.lower()
+        index = 0
+        while True:
+            pos = hay.find(needle, index)
+            if pos < 0:
+                return -1
+            before = hay[pos - 1] if pos else ""
+            after = hay[pos + len(needle)] if pos + len(needle) < len(hay) else ""
+            if (not before.isalnum()) and (not after.isalnum()):
+                return pos
+            index = pos + 1
+    return text.find(word)
+
+
+def _false_negation(text: str, index: int) -> bool:
+    for phrase in _NEGATION_FALSE:
+        start = text.find(phrase)
+        while start >= 0:
+            if start <= index < start + len(phrase):
+                return True
+            start = text.find(phrase, start + 1)
+    return False
+
+
+def _clause_span(text: str, index: int) -> tuple[int, int]:
+    start = 0
+    end = len(text)
+    for mark in ("，", ",", "。", "；", ";", "！", "!", "？", "?", "、"):
+        left = text.rfind(mark, 0, index)
+        if left >= start:
+            start = left + 1
+        right = text.find(mark, index)
+        if right >= 0 and right < end:
+            end = right
+    return start, end
+
+
+def _clause_negated(text: str, index: int, length: int) -> bool:
+    if _false_negation(text, index):
+        return False
+    start, end = _clause_span(text, index)
+    clause = text[start:end]
+    relative = index - start
+    for flag in NEGATION:
+        pos = clause.find(flag)
+        while pos >= 0:
+            abs_pos = start + pos
+            if not _false_negation(text, abs_pos):
+                return True
+            pos = clause.find(flag, pos + 1)
+    del relative
+    return False
+
+
+def _asking_about(task: str) -> bool:
+    text = task or ""
+    return any(mark in text for mark in _ASK) and not any(mark in text for mark in _MAKE)
 
 
 def sentence_names(task: str, gate: dict) -> bool:
     """True when the sentence names this job and does not tell us to skip it."""
     text = task or ""
+    if _asking_about(text):
+        return False
     found = False
     for word in _terms(gate):
         index = _named(text, word)
         if index < 0:
             continue
-        window = text[max(0, index - 8) : index]
-        if any(flag in window for flag in NEGATION):
-            return False
+        if _clause_negated(text, index, len(word)):
+            continue
         found = True
     return found
 
@@ -369,7 +433,10 @@ def format_preface(routed: dict, texts: dict[str, str]) -> str:
             where = host + " 上的" if host else ""
             body = "使用" + where + "插件 " + name + "。" + str(skill.get("summary") or "")
         if len(body) > SKILL_TEXT_LIMIT:
-            body = body[:SKILL_TEXT_LIMIT] + "\n…（后面已截断）"
+            body = body[:SKILL_TEXT_LIMIT] + "\n…（后面已截断，用 get_skill 按 offset 续读。）"
         title = "插件 " + name if skill.get("kind") == "plugin" else name
         chunks.append("## " + title + "\n" + body)
-    return "\n\n".join(chunks)
+    joined = "\n\n".join(chunks)
+    if len(joined) <= PREFACE_TEXT_LIMIT:
+        return joined
+    return joined[:PREFACE_TEXT_LIMIT] + "\n…（前言已截断，用 get_skill 续读选定技能。）"

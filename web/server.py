@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 import socket
 import sys
 import traceback
@@ -17,11 +18,29 @@ import cabinet
 WEB = Path(__file__).resolve().parent
 HOST = "127.0.0.1"
 PORT = 8765
+TOKEN = secrets.token_urlsafe(24)
 
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
         print("[kit] " + (fmt % args), flush=True)
+
+    def _local(self) -> bool:
+        host = (self.headers.get("Host") or "").split(":")[0]
+        return host in {"127.0.0.1", "localhost"}
+
+    def _origin_ok(self) -> bool:
+        origin = (self.headers.get("Origin") or "").strip()
+        if not origin:
+            return True
+        return origin.startswith("http://127.0.0.1") or origin.startswith("http://localhost")
+
+    def _allowed_write(self) -> bool:
+        return (
+            self._local()
+            and self._origin_ok()
+            and (self.headers.get("X-Kit-Token") or "") == TOKEN
+        )
 
     def _json(self, code: int, payload: dict) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -44,8 +63,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         try:
+            if not self._local():
+                self._json(403, {"error": "local only"})
+                return
             if parsed.path == "/":
                 self._file(WEB / "index.html", "text/html; charset=utf-8")
+                return
+            if parsed.path == "/api/token":
+                self._json(200, {"token": TOKEN})
                 return
             if parsed.path == "/api/catalog":
                 self._json(200, cabinet.catalog_view())
@@ -85,6 +110,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         try:
+            if not self._allowed_write():
+                self._json(403, {"error": "local page only"})
+                return
             body = self._read_json()
             if parsed.path == "/api/move":
                 self._json(200, cabinet.move_skill(str(body.get("name", "")), str(body.get("category", ""))))
@@ -108,13 +136,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, cabinet.scan_skills())
                 return
             if parsed.path == "/api/memory/tools":
-                from host.jev import load_head
+                from host.jev import cache_clear, load_head
                 from host.tool_memory import extract_tool_memory
                 from host.train_jev import train
 
                 report = extract_tool_memory()
                 train()
-                load_head.cache_clear()
+                cache_clear()
+                load_head()
                 report["retrained"] = True
                 self._json(200, report)
                 return
@@ -197,6 +226,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _file(self, path: Path, content_type: str) -> None:
         data = path.read_bytes()
+        if path.name == "index.html":
+            data = data.replace(b"__KIT_TOKEN__", TOKEN.encode("ascii"))
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
@@ -235,12 +266,7 @@ def _refresh_library() -> None:
 
 def main() -> None:
     import threading
-    from hosts import sync_hosts
 
-    threading.Thread(
-        target=lambda: sync_hosts(cabinet.load_config()["selectorEnabled"]),
-        daemon=True,
-    ).start()
     threading.Thread(target=_warm_model, daemon=True).start()
     threading.Thread(target=_refresh_library, daemon=True).start()
     class KitServer(ThreadingHTTPServer):

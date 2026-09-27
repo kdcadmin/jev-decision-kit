@@ -8,9 +8,9 @@ JEV 选的是技能和能点名的插件。MCP 只在柜子里查看和管理，
 
 ## 展示
 
-介绍片：[jev-skill-kit-intro.mp4](jev-skill-kit-intro.mp4)
+介绍片太大，GitHub 网页播不了，看仓库里的页面走一遍：[docs/tour.mp4](docs/tour.mp4)
 
-页面走一遍：[docs/tour.mp4](docs/tour.mp4)
+本机完整介绍片仍是 `jev-skill-kit-intro.mp4`，不在网页预览里打开。
 
 ![柜子](docs/cabinet.png)
 
@@ -75,6 +75,8 @@ JEV 在模型开口之前打一遍分。门上每一项单独问要不要用，�
 
 推荐在页面最上。仓库名和里面的技能都能点开原链接。贴 GitHub 链接的输入框在标题那一行。柜会把里面的 SKILL.md 复制进来，不运行脚本。龙虾和 Hermes 已经接在这个柜上时，下次任务直接用这份副本。
 
-## 龙虾和 Hermes
+## 龙虾、Hermes、Codex、Harness
 
-设置里的开关打开时，会把读取技能的 MCP 写进 OpenClaw 和 Hermes。真正选技能的是两个宿主插件：Hermes 的 `pre_llm_call`，龙虾的 `before_prompt_build`。关掉选择器后，它们不再把这句话交给 JEV。Cursor 和 Codex 先不接入。
+Hermes 用 `pre_llm_call`，龙虾用 `before_prompt_build`，在模型开口前要这段前言。关掉选择器后，它们不再把这句话交给 JEV。
+
+Codex 和 DeepSeek Harness 目前走 MCP 补读：把 `jev-skill-kit` 加进各自的 MCP 列表，`get_skill` 必须带前言里的 `decision_id`。它们还没有和 Hermes 一样的开口前钩子，所以完整「先选再开口」仍要宿主自己接 [INTEGRATION.md](INTEGRATION.md) 里的前言服务。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和龙虾的 MCP 读写项。

@@ -529,8 +529,12 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 }
 
+const KIT_TOKEN = "__KIT_TOKEN__";
+
 async function api(path, options) {
-  const response = await fetch(path, options);
+  const headers = { ...(options && options.headers ? options.headers : {}) };
+  if (options && options.method && options.method !== "GET") headers["X-Kit-Token"] = KIT_TOKEN;
+  const response = await fetch(path, { ...(options || {}), headers });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || response.statusText);
   return data;

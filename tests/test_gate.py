@@ -156,6 +156,26 @@ class GateTests(unittest.TestCase):
         )
         self.assertEqual([skill["name"] for skill in decided["skills"]], ["xlsx"])
 
+    def test_trailing_negation_and_not_a_false_friend(self):
+        from host.gate import sentence_names
+
+        pdf = {"id": "office-pdf", "words": ("PDF", "pdf")}
+        docx = {"id": "office-docx", "words": ("Word", "word", "docx")}
+        self.assertFalse(sentence_names("给我 Word 就行，PDF 不要", pdf))
+        self.assertTrue(sentence_names("请特别做一份 PDF 报告", pdf))
+        self.assertTrue(sentence_names("分别导出 PDF 和 Word", pdf))
+        self.assertFalse(sentence_names("这段代码里的 word 变量是什么意思", docx))
+        self.assertFalse(sentence_names("请解释 PDF 和 Word 的区别", docx))
+        self.assertFalse(sentence_names("我说的是WordPress建站，不是Word文档", docx))
+
+    def test_clause_negation_does_not_cancel_the_next_job(self):
+        from host.gate import sentence_names
+
+        read = {"id": "web-read", "words": ("网页", "网址", "链接", "http", "https")}
+        act = {"id": "web-act", "words": ("点击", "填写", "填表", "提交", "登录")}
+        self.assertFalse(sentence_names("不要读网页，只要点击登录", read))
+        self.assertTrue(sentence_names("不要读网页，只要点击登录", act))
+
     def test_route_uses_the_door(self):
         routed = cabinet.route_task("看一下茅台现在多少钱", "test", record=False)
         names = [skill["name"] for skill in routed["skills"]]

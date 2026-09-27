@@ -88,10 +88,15 @@ def load_catalog() -> dict:
     return data
 
 
+def _atomic_write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
+
+
 def save_catalog(data: dict) -> None:
-    tmp = CATALOG_PATH.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(CATALOG_PATH)
+    _atomic_write(CATALOG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def safe_name(name: str) -> str:
@@ -333,7 +338,7 @@ def save_config(updates: dict) -> dict:
         _loaded_from = None
     if "extraScanRoots" in updates and isinstance(updates["extraScanRoots"], list):
         data["extraScanRoots"] = [str(item).strip() for item in updates["extraScanRoots"] if str(item).strip()]
-    CONFIG_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
     from hosts import sync_hosts
 
     hosts = sync_hosts(bool(data["selectorEnabled"]))
@@ -398,7 +403,7 @@ def ensure_laya_weights() -> Path:
     stored = load_config()
     if not weights_ready(Path(str(stored.get("layaModelDir") or ""))):
         stored["layaModelDir"] = str(directory)
-        CONFIG_PATH.write_text(json.dumps(stored, ensure_ascii=False, indent=2), encoding="utf-8")
+        _atomic_write(CONFIG_PATH, json.dumps(stored, ensure_ascii=False, indent=2))
     return directory
 
 
@@ -414,31 +419,32 @@ def load_memory() -> dict:
 
 
 def save_memory(data: dict) -> None:
-    CALLS_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write(CALLS_PATH, json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def record_call(task: str, category: str, skills: list[dict], source: str, method: str = "skill", passed: list | None = None, label: str | None = None) -> dict:
-    memory = load_memory()
-    shown = label or ("自主思考" if method == "think" else LABELS.get(category, category))
-    entry = {
-        "id": datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f"),
-        "at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "task": task,
-        "method": method,
-        "category": category,
-        "label": shown,
-        "skills": [item["name"] for item in skills],
-        "source": source,
-    }
-    if passed:
-        entry["passed"] = [
-            {"name": item.get("name"), "probability": item.get("probability")}
-            for item in passed
-            if item.get("name")
-        ]
-    memory["calls"].insert(0, entry)
-    memory["calls"] = memory["calls"][:200]
-    save_memory(memory)
+    with lock:
+        memory = load_memory()
+        shown = label or ("自主思考" if method == "think" else LABELS.get(category, category))
+        entry = {
+            "id": datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f"),
+            "at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "task": task,
+            "method": method,
+            "category": category,
+            "label": shown,
+            "skills": [item["name"] for item in skills],
+            "source": source,
+        }
+        if passed:
+            entry["passed"] = [
+                {"name": item.get("name"), "probability": item.get("probability")}
+                for item in passed
+                if item.get("name")
+            ]
+        memory["calls"].insert(0, entry)
+        memory["calls"] = memory["calls"][:200]
+        save_memory(memory)
     return entry
 
 
@@ -867,7 +873,7 @@ def _child(root: Path, rel: str) -> Path:
     return target
 
 
-def _mirror(source: Path, dest: Path) -> bool:
+def _mirror(source: Path, dest: Path, delete_extra: bool = False) -> bool:
     if not source.is_dir():
         raise FileNotFoundError(str(source))
     dest.mkdir(parents=True, exist_ok=True)
@@ -881,11 +887,12 @@ def _mirror(source: Path, dest: Path) -> bool:
         target = _child(dest, rel)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(_child(source, rel), target)
-    for rel in current:
-        if rel not in wanted:
-            target = _child(dest, rel)
-            if target.is_file():
-                target.unlink()
+    if delete_extra:
+        for rel in current:
+            if rel not in wanted:
+                target = _child(dest, rel)
+                if target.is_file():
+                    target.unlink()
     return True
 
 
@@ -915,9 +922,9 @@ def sync_skills(direction: str, name: str | None = None, preview: bool = False) 
             if preview:
                 changed = _fingerprint(kit_dir if direction == "push" else origin) != _fingerprint(origin if direction == "push" else kit_dir)
             elif direction == "push":
-                changed = _mirror(kit_dir, origin)
+                changed = _mirror(kit_dir, origin, delete_extra=False)
             else:
-                changed = _mirror(origin, kit_dir)
+                changed = _mirror(origin, kit_dir, delete_extra=True)
                 skill_file = kit_dir / "SKILL.md"
                 text = skill_file.read_text(encoding="utf-8", errors="replace") if skill_file.is_file() else ""
                 item["summary"] = frontmatter_description(text)
@@ -945,7 +952,7 @@ def sync_skills(direction: str, name: str | None = None, preview: bool = False) 
 def _write_roots(paths: list[str]) -> list[str]:
     data = load_config()
     data["extraScanRoots"] = paths
-    CONFIG_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write(CONFIG_PATH, json.dumps(data, ensure_ascii=False, indent=2))
     return paths
 
 
@@ -1148,10 +1155,12 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     from host.gate import available_gates, decision_from_votes, gate_labels, sentence_names
 
     task = task.strip()
+    clipped = False
     if not task:
         raise ValueError("task is empty")
     if len(task) > 2000:
-        raise ValueError("task is too long")
+        task = task[:2000]
+        clipped = True
     config = load_config()
     if not config["selectorEnabled"]:
         return {
@@ -1179,13 +1188,17 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
             continue
         if gate["id"] not in trained:
             probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), 0.75)
+            continue
+        if float(probabilities.get(gate["id"]) or 0) < 0.4:
+            probabilities[gate["id"]] = 0.75
     memory = load_memory()
     matched = best_matching_rule(task, memory, None)
     by_name = {item["name"]: item for item in data["skills"] if item.get("name")}
     decided = decision_from_votes(probabilities, gates, matched, by_name, task, habits)
     remembered = {"task": matched["task"]} if matched else None
+    call = None
     if record:
-        record_call(
+        call = record_call(
             task,
             decided["gate"],
             decided["skills"],
@@ -1219,6 +1232,8 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
         "model": "jev",
         "task": task,
         "remembered": remembered,
+        "decisionId": call["id"] if record else None,
+        "clipped": clipped,
     }
 
 
@@ -1233,9 +1248,20 @@ def host_preface(task: str, source: str = "host") -> str:
     for skill in routed.get("skills") or []:
         name = skill.get("name") or ""
         path = skill.get("path") or ""
-        if name and path:
-            texts[name] = read_skill_text(Path(path))
-    return format_preface(routed, texts)
+        if not name:
+            continue
+        if path:
+            try:
+                texts[name] = read_skill(name).get("content") or ""
+            except (OSError, ValueError, FileNotFoundError, KeyError):
+                texts[name] = ""
+    preface = format_preface(routed, texts)
+    decision = routed.get("decisionId") or ""
+    if decision and preface:
+        preface += "\n\ndecision_id=" + str(decision)
+    if routed.get("clipped") and preface:
+        preface += "\n原句超过 2000 字，已截断后再选。"
+    return preface
 
 
 LIBRARY_PATH = ROOT / "library.json"
@@ -1500,7 +1526,7 @@ def parse_github(url: str) -> tuple[str, str, str | None, str]:
         path = "/".join(parts[4:])
     if path.endswith("SKILL.md"):
         path = path.rsplit("/", 1)[0]
-    if ".." in path.split("/"):
+    if ".." in path.replace("\\", "/").split("/"):
         raise ValueError("链接里的路径不能用")
     return owner, repo, branch, path
 

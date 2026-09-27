@@ -94,13 +94,23 @@ stdio 配置：
 }
 ```
 
-宿主如果已经把前言放进这一轮，模型按前言做就够了。只有前言里的正文被截断、需要再读同一份选定技能时，才用 `get_skill`。
+宿主如果已经把前言放进这一轮，模型按前言做就够了。只有前言里的正文被截断、需要再读同一份选定技能时，才用 `get_skill`。调用时必须带前言末尾的 `decision_id`，超长正文用 `offset` 续读。
 
 ## 已经接上的宿主
 
 选择器开着时，Hermes 用 `pre_llm_call`，龙虾用 `before_prompt_build`。两个插件都在模型开口前要这段前言。关掉选择器之后，它们不再把原句交过来。
 
-Cursor 和 Codex 没有接这条前言。不要假设它们会先问柜子。
+Codex 把下面这段加进 `~/.codex/config.toml` 的 MCP 列表，DeepSeek Harness 把同一组绝对路径写进它的 MCP 配置（Harness 要求 `command` 是绝对路径）。这两边目前只能补读已经选定的技能，还不会在模型开口前自动问柜。
+
+```toml
+[mcp_servers.jev-skill-kit]
+command = "项目目录\\.venv\\Scripts\\python.exe"
+args = ["项目目录\\mcp_server.py"]
+```
+
+Cursor 没有接这条前言。不要假设它会先问柜子。
+
+打开网页不会改 Hermes 或龙虾的配置。只有在设置里保存选择器开关时才会同步那两项 MCP。
 
 ## 不要做的事
 

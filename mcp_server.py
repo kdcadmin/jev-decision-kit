@@ -17,13 +17,15 @@ KNOWN_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 TOOLS = [
     {
         "name": "get_skill",
-        "description": "读取 JEV 这次已经选定的技能正文。不能用来浏览或改选技能。",
+        "description": "读取 JEV 这次已经选定的技能正文。必须带 decision_id。不能用来浏览或改选技能。",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "JEV 选定的技能目录名"}
+                "name": {"type": "string", "description": "JEV 选定的技能目录名"},
+                "decision_id": {"type": "string", "description": "前言里的 decision_id"},
+                "offset": {"type": "integer", "description": "从第几个字符继续读", "minimum": 0},
             },
-            "required": ["name"],
+            "required": ["name", "decision_id"],
             "additionalProperties": False,
         },
     },
@@ -67,15 +69,18 @@ def tool_result(text: str, is_error: bool = False) -> dict:
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
 
 
-def allowed_skill_names() -> set[str]:
+def allowed_skill_names(decision_id: str) -> set[str]:
+    wanted = (decision_id or "").strip()
+    if not wanted:
+        return set()
     memory = cabinet.load_memory()
-    calls = memory.get("calls") or []
-    if not calls:
-        return set()
-    latest = calls[0]
-    if latest.get("method") != "skill":
-        return set()
-    return {str(name) for name in (latest.get("skills") or []) if name}
+    for latest in memory.get("calls") or []:
+        if str(latest.get("id") or "") != wanted:
+            continue
+        if latest.get("method") != "skill":
+            return set()
+        return {str(name) for name in (latest.get("skills") or []) if name}
+    return set()
 
 
 def call_tool(name: str, arguments: dict) -> dict:
@@ -83,22 +88,31 @@ def call_tool(name: str, arguments: dict) -> dict:
         arguments = {}
     if name == "get_skill":
         requested = str(arguments.get("name", "")).strip()
-        allowed = allowed_skill_names()
+        decision_id = str(arguments.get("decision_id") or arguments.get("decisionId") or "").strip()
+        try:
+            offset = max(0, int(arguments.get("offset") or 0))
+        except (TypeError, ValueError):
+            offset = 0
+        allowed = allowed_skill_names(decision_id)
+        if not decision_id:
+            return tool_result("缺少 decision_id。用前言里的那一次决定来读。", is_error=True)
         if requested not in allowed:
             return tool_result("JEV 这次没有选定这个技能。不要改选。", is_error=True)
         skill = cabinet.read_skill(requested)
         content = skill.get("content") or ""
-        truncated = len(content) > CONTENT_LIMIT
-        if truncated:
-            content = content[:CONTENT_LIMIT]
+        chunk = content[offset : offset + CONTENT_LIMIT]
         payload = {
             "name": skill["name"],
             "category": skill["category"],
             "summary": skill.get("summary") or "",
             "path": skill.get("path") or "",
             "scripts": skill.get("scripts") or [],
-            "truncated": truncated,
-            "content": content,
+            "decisionId": decision_id,
+            "offset": offset,
+            "nextOffset": offset + len(chunk) if offset + len(chunk) < len(content) else None,
+            "truncated": offset + len(chunk) < len(content),
+            "totalChars": len(content),
+            "content": chunk,
         }
         return tool_result(json.dumps(payload, ensure_ascii=False))
     raise ValueError(f"unknown tool {name}")
@@ -120,7 +134,7 @@ def handle(message: dict) -> dict | None:
                 "protocolVersion": version,
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "jev-skill-kit", "version": "0.1.0"},
-                "instructions": "选技能的是 JEV，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 只能读取已经选定的名字。",
+                "instructions": "选技能的是 JEV，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 必须带前言里的 decision_id，只能读取已经选定的名字，超长正文用 offset 续读。",
             },
         }
     if method == "ping":
