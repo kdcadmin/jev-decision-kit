@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 MARKER = "【技能柜】"
 SKILL_TEXT_LIMIT = 8000
@@ -164,7 +165,7 @@ GATE = (
 )
 
 YES_LINE = 0.4
-NEGATION = ("不要", "别", "不用", "勿", "不是")
+NEGATION = ("不要", "别", "不用", "勿", "不是", "不需要")
 _NEGATION_FALSE = ("特别", "分别", "别的", "别人", "别处", "别家", "别管", "别名")
 _ASK = (
     "什么意思",
@@ -220,7 +221,7 @@ WORDS = {
     "office-xlsx": ("表格", "Excel", "excel", "xlsx", "这张表"),
     "web-read": ("网页", "网址", "链接", "http", "https"),
     "web-act": ("点击", "填写", "填表", "提交", "登录", "表单"),
-    "vox-video": ("介绍视频", "介绍片", "vox", "做一个视频", "做个视频", "做一支视频", "制作视频", "生成视频", "视频制作"),
+    "vox-video": ("介绍视频", "介绍片", "vox", "视频", "视频制作"),
     "openmontage": ("实拍", "剪辑"),
     "xiaohei": ("小黑",),
     "thesis": ("论文",),
@@ -229,16 +230,26 @@ WORDS = {
     "last30days": ("三十天", "30天", "最近一个月"),
     "godot": ("Godot", "godot"),
     "git-backup": ("备份", "推到远程", "远程仓库"),
-    "code-build": ("写代码", "编写代码", "写个代码", "写一个代码", "写一段代码", "爬虫", "脚本", "开发程序", "写程序", "编程"),
-    "backend-build": ("API 接口", "API接口", "后端", "全栈"),
-    "frontend-build": ("前端", "开发网页", "做一个网页", "做个网页", "开发网站", "做一个网站", "做个网站"),
+    "code-build": ("代码", "爬虫", "脚本", "程序", "编程", "Python", "JavaScript", "TypeScript", "算法"),
+    "backend-build": ("API", "后端", "全栈"),
+    "frontend-build": ("前端", "开发网页", "做一个网页", "做个网页", "开发网站", "做一个网站", "做个网站", "React", "Vue", "HTML", "CSS"),
     "android-build": ("Android", "安卓"),
     "ios-build": ("iOS",),
     "flutter-build": ("Flutter",),
     "react-native-build": ("React Native", "react-native"),
-    "code-debug": ("修复代码", "调试", "debug", "bug", "报错"),
+    "code-debug": ("代码的错误", "修复代码", "调试", "debug", "bug", "报错"),
     "code-refactor": ("重构", "refactor"),
 }
+
+_DEVELOPMENT_GATES = {
+    "code-build", "backend-build", "frontend-build", "android-build",
+    "ios-build", "flutter-build", "react-native-build", "code-debug", "code-refactor",
+}
+_ACTION = re.compile(r"编写|开发|实现|修复|修一下|排查|调试|重构|优化|制作|生成|搭建|写|做|改|build|implement|create|fix|debug|refactor", re.I)
+
+
+def _operation_request(clause: str) -> bool:
+    return bool(_ACTION.search(clause))
 
 
 def _resolve(skills: list, name: str, category: str | None) -> dict | None:
@@ -459,6 +470,10 @@ def _item_asking(text: str, index: int, length: int) -> bool:
     clause = text[start:end]
     local = text[max(0, index - 8) : min(len(text), index + length + 8)]
     word = text[index : index + length]
+    # Polite requests are actions, while "怎么写" and "是什么" remain questions.
+    questions = [mark for mark in _ASK if mark in clause]
+    if questions and all(mark in {"能不能", "可以吗"} for mark in questions) and _operation_request(clause):
+        return False
     # A capability name may itself contain 制作; that is not an action verb
     # when the user is asking what it means.
     if any(mark in clause for mark in ("是什么意思", "什么意思", "是什么", "什么是", "有什么用", "干嘛的")):
@@ -485,6 +500,35 @@ def _item_asking(text: str, index: int, length: int) -> bool:
 def sentence_names(task: str, gate: dict) -> bool:
     """True when the sentence names this job and the last mention still wants it."""
     text = task or ""
+    explicit = any(_named(text, str(item.get("name") or "")) >= 0
+                   for item in gate.get("items", []) if item.get("name"))
+    if not explicit and gate['id'] in _DEVELOPMENT_GATES:
+        # Mentioning a platform in conversation isn't a development request.
+        active = False
+        for index, _length in _hits(text, gate):
+            start, end = _clause_span(text, index)
+            if _operation_request(text[start:end]):
+                active = True
+        if not active:
+            return False
+        if gate['id'] == 'code-build':
+            # Debugging/refactoring and frontend code have their own workflow.
+            if not any(mark in text for mark in ('爬虫', '脚本')) and any(
+                sentence_names(text, {'id': other, 'words': WORDS[other]})
+                for other in ('code-debug', 'code-refactor', 'frontend-build')
+            ):
+                return False
+    if not explicit and gate['id'] == 'vox-video' and _named(text, 'vox') < 0 and not any(
+        word in text for word in ('介绍视频', '介绍片')
+    ):
+        if not _operation_request(text):
+            return False
+        if any(word in text for word in WORDS['openmontage']):
+            return False
+    if not explicit and gate['id'] == 'frontend-build' and 'React Native' in text:
+        # React Native is a mobile framework, not the React web workflow.
+        if not any(word in text for word in ('前端', '网页', '网站', 'HTML', 'CSS', 'Vue')):
+            return False
     hits = _hits(text, gate)
     if not hits:
         return False
