@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
 PORT_FILE = RUNTIME / "preface.port"
 LOCK_FILE = RUNTIME / "preface.lock"
+TOKEN_FILE = RUNTIME / "preface.token"
 PYTHON = ROOT / ".venv" / "Scripts" / "python.exe"
 WORKER = ROOT / "host" / "preface_worker.py"
 POST_TIMEOUT = 170
@@ -43,6 +44,13 @@ def _pid_alive(pid: int) -> bool:
     except OSError:
         return False
     return True
+
+
+def _token() -> str:
+    try:
+        return TOKEN_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
 
 
 def _read_port() -> int | None:
@@ -128,7 +136,7 @@ def preface_for(task: str, source: str) -> str:
     request = urllib.request.Request(
         f"http://127.0.0.1:{port}/preface",
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "X-Kit-Token": _token()},
         method="POST",
     )
     try:

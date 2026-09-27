@@ -45,6 +45,8 @@ POS = {
         "打开我设好的盯盘",
         "看一下盯盘里的标的",
         "盯盘现在怎么样",
+        "盯着我的自选股，跌了叫我",
+        "看着自选股",
     ],
     "meeting-minutes": [
         "把会议内容写成纪要",
@@ -58,6 +60,8 @@ POS = {
         "导出成 word 文档",
         "整理成 docx",
         "做一份 Word 文档",
+        "用Word写一份报告",
+        "只要 Word",
     ],
     "office-pdf": [
         "写成一份 PDF",
@@ -69,12 +73,15 @@ POS = {
         "再做一份幻灯片",
         "做一份 ppt",
         "整理成 PPT 去讲",
+        "帮我制作一份演示文稿",
+        "做一份演示文稿",
     ],
     "office-xlsx": [
         "把数字放进 Excel",
         "记成一份表格",
         "写成 xlsx",
         "做一份 excel 表",
+        "做一个表格对比 PDF 和 Word 的区别",
     ],
     "web-read": [
         "打开 https://example.org 把正文读出来",
@@ -108,6 +115,8 @@ POS = {
         "按论文工作台写这一章",
         "继续写论文的这一节",
         "论文这一章按工作台来",
+        "写一下这篇论文的第三章",
+        "这篇论文的第三章",
     ],
     "company-intel": [
         "做一份公司情报",
@@ -245,7 +254,10 @@ def train() -> None:
         "train_rows": len(data),
         "train_fit": round(fit, 4),
     }
-    WEIGHTS.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    WEIGHTS.parent.mkdir(parents=True, exist_ok=True)
+    tmp = WEIGHTS.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(WEIGHTS)
     print("saved", WEIGHTS, "rows", len(data), "fit", round(fit, 4))
 
 

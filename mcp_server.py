@@ -93,9 +93,13 @@ def call_tool(name: str, arguments: dict) -> dict:
             offset = max(0, int(arguments.get("offset") or 0))
         except (TypeError, ValueError):
             offset = 0
-        allowed = allowed_skill_names(decision_id)
         if not decision_id:
             return tool_result("缺少 decision_id。用前言里的那一次决定来读。", is_error=True)
+        memory = cabinet.load_memory()
+        known = {str(item.get("id") or "") for item in memory.get("calls") or []}
+        if decision_id not in known:
+            return tool_result("决定已过期。不要改选，也不要猜别的技能。", is_error=True)
+        allowed = allowed_skill_names(decision_id)
         if requested not in allowed:
             return tool_result("JEV 这次没有选定这个技能。不要改选。", is_error=True)
         skill = cabinet.read_skill(requested)

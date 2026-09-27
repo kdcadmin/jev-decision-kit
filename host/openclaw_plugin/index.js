@@ -8,6 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const python = join(root, ".venv", "Scripts", "python.exe");
 const worker = join(root, "host", "preface_worker.py");
 const portFile = join(root, "runtime", "preface.port");
+const tokenFile = join(root, "runtime", "preface.token");
 
 async function readPort() {
   try {
@@ -56,7 +57,7 @@ async function prefaceFor(task) {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/preface`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Kit-Token": await readFile(tokenFile, "utf8").then((text) => text.trim()).catch(() => "") },
       body: JSON.stringify({ task, source: "openclaw" }),
       signal: AbortSignal.timeout(170000),
     });

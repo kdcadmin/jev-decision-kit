@@ -652,7 +652,16 @@ function renderTicket(result, error, waiting) {
   const remembered = result.remembered && result.remembered.task
     ? `<p class="note">沿用了你对「${esc(result.remembered.task)}」的调整。</p>`
     : "";
-  ticketEl.innerHTML = `<div class="ticket-card">${methodPick}<div class="pick"><div class="k">柜门</div><strong>${esc(result.label)}</strong><span>${esc(result.category)}</span></div>${picks}<button type="button" id="ticket-add">再加一个</button>${remembered}${passedLine(result.passed)}<div class="bars">${bars}</div></div>`;
+  const clipped = result.clipped
+    ? `<p class="note">原句超过 2000 字，后面没参与选择。</p>`
+    : "";
+  const why = (result.reasons || []).slice(0, 8).map((item) => {
+    const mark = item.kept ? "留下" : "没留";
+    const pct = typeof item.probability === "number" ? " " + Math.round(item.probability * 100) : "";
+    return `${esc(item.label || item.id)} ${mark}${pct} · ${esc(item.reason || "")}`;
+  }).join("<br>");
+  const whyLine = why ? `<p class="note">${why}</p>` : "";
+  ticketEl.innerHTML = `<div class="ticket-card">${methodPick}<div class="pick"><div class="k">柜门</div><strong>${esc(result.label)}</strong><span>${esc(result.category)}</span></div>${picks}<button type="button" id="ticket-add">再加一个</button>${remembered}${clipped}${passedLine(result.passed)}${whyLine}<div class="bars">${bars}</div></div>`;
 }
 
 function passedLine(passed) {

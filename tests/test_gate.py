@@ -60,7 +60,7 @@ class GateTests(unittest.TestCase):
         )
         self.assertIn("## docx", skill)
         self.assertIn("按模板写", skill)
-        self.assertIn("下面这些技能。", skill)
+        self.assertIn("已选定：docx。", skill)
 
     def test_several_doors_stay_and_low_ones_drop(self):
         gates = [
@@ -175,6 +175,27 @@ class GateTests(unittest.TestCase):
         act = {"id": "web-act", "words": ("点击", "填写", "填表", "提交", "登录")}
         self.assertFalse(sentence_names("不要读网页，只要点击登录", read))
         self.assertTrue(sentence_names("不要读网页，只要点击登录", act))
+
+    def test_word_next_to_chinese_and_reclaim(self):
+        from host.gate import format_preface, sentence_names
+
+        docx = {"id": "office-docx", "words": ("Word", "word", "docx")}
+        pdf = {"id": "office-pdf", "words": ("PDF", "pdf")}
+        xlsx = {"id": "office-xlsx", "words": ("表格", "Excel", "excel", "xlsx")}
+        self.assertTrue(sentence_names("用Word写一份报告", docx))
+        self.assertTrue(sentence_names("不要 PDF 只要 Word", docx))
+        self.assertFalse(sentence_names("不要 PDF 只要 Word", pdf))
+        self.assertTrue(sentence_names("不要用 Word，还是用 Word 吧", docx))
+        self.assertTrue(sentence_names("先解释 PDF 和 Word 的区别，然后导出 Word", docx))
+        self.assertFalse(sentence_names("先解释 PDF 和 Word 的区别，然后导出 Word", pdf))
+        self.assertTrue(sentence_names("做一个表格对比 PDF 和 Word 的区别", xlsx))
+        preface = format_preface(
+            {"enabled": True, "method": "skill", "skills": [{"name": "docx"}, {"name": "pdf"}]},
+            {"docx": "x" * 30000, "pdf": "y" * 30000},
+        )
+        self.assertTrue(preface.startswith("【技能柜】已选定：docx、pdf。"))
+        self.assertIn("docx", preface[:80])
+        self.assertIn("pdf", preface[:80])
 
     def test_route_uses_the_door(self):
         routed = cabinet.route_task("看一下茅台现在多少钱", "test", record=False)

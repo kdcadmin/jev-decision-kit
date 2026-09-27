@@ -158,7 +158,8 @@ YES_LINE = 0.4
 NEGATION = ("不要", "别", "不用", "勿", "不是")
 _NEGATION_FALSE = ("特别", "分别", "别的", "别人", "别处", "别家", "别管", "别名")
 _ASK = ("什么意思", "是什么意思", "区别", "不同", "差异", "解释", "为什么叫", "变量")
-_MAKE = ("制作", "做一份", "做一页", "做成", "改成", "写成", "整理成", "导出", "生成")
+_MAKE = ("制作", "做一份", "做一页", "做成", "做一个", "做张", "做一张", "改成", "写成", "整理成", "整理一下", "导出", "生成", "给我一份", "用")
+_TURN = ("还是", "改成", "换成", "改为")
 # A door counts only when the sentence itself names that job.
 WORDS = {
     "market-data": ("股价", "涨跌", "行情", "多少钱", "现价", "股票"),
@@ -249,24 +250,30 @@ def _terms(gate: dict) -> tuple:
     return tuple(gate.get("words") or WORDS.get(gate["id"], ()))
 
 
+def _cjk(ch: str) -> bool:
+    return bool(ch) and "\u4e00" <= ch <= "\u9fff"
+
+
 def _named(task: str, word: str) -> int:
     text = task or ""
-    needle = word
-    hay = text
-    if word.isascii():
-        hay = text.lower()
-        needle = word.lower()
-        index = 0
-        while True:
-            pos = hay.find(needle, index)
-            if pos < 0:
-                return -1
-            before = hay[pos - 1] if pos else ""
-            after = hay[pos + len(needle)] if pos + len(needle) < len(hay) else ""
-            if (not before.isalnum()) and (not after.isalnum()):
-                return pos
+    if not word.isascii():
+        return text.find(word)
+    hay = text.lower()
+    needle = word.lower()
+    index = 0
+    while True:
+        pos = hay.find(needle, index)
+        if pos < 0:
+            return -1
+        before = hay[pos - 1] if pos else ""
+        after = hay[pos + len(needle)] if pos + len(needle) < len(hay) else ""
+        if before.isalnum() and not _cjk(text[pos - 1] if pos else ""):
             index = pos + 1
-    return text.find(word)
+            continue
+        if after.isalnum() and not _cjk(text[pos + len(word)] if pos + len(word) < len(text) else ""):
+            index = pos + 1
+            continue
+        return pos
 
 
 def _false_negation(text: str, index: int) -> bool:
@@ -292,42 +299,118 @@ def _clause_span(text: str, index: int) -> tuple[int, int]:
     return start, end
 
 
-def _clause_negated(text: str, index: int, length: int) -> bool:
+def _hits(task: str, gate: dict) -> list[tuple[int, int]]:
+    found = []
+    text = task or ""
+    for word in _terms(gate):
+        start = 0
+        while True:
+            piece = text[start:]
+            relative = _named(piece, word)
+            if relative < 0:
+                break
+            index = start + relative
+            found.append((index, len(word)))
+            start = index + max(len(word), 1)
+    found.sort()
+    uniq = []
+    seen = set()
+    for index, length in found:
+        if (index, length) in seen:
+            continue
+        seen.add((index, length))
+        uniq.append((index, length))
+    return uniq
+
+
+def _item_span(text: str, index: int, length: int) -> tuple[int, int]:
+    start = index
+    end = index + length
+    stops = "，,。；;！!？?、 "
+    while start > 0 and text[start - 1] not in stops:
+        start -= 1
+        if index - start > 10:
+            break
+    while end < len(text) and text[end] not in stops:
+        end += 1
+        if end - (index + length) > 6:
+            break
+    return start, end
+
+
+def _item_negated(text: str, index: int, length: int) -> bool:
     if _false_negation(text, index):
         return False
-    start, end = _clause_span(text, index)
-    clause = text[start:end]
-    relative = index - start
+    left = text[max(0, index - 6) : index]
+    cut = max(left.rfind(ch) for ch in "，,。；;！!？?")
+    if cut >= 0:
+        left = left[cut + 1 :]
+    if "只要" in left or "就用" in left or "还是用" in left:
+        return False
+    right = text[index + length : min(len(text), index + length + 4)]
+    rcut = min((i for i, ch in enumerate(right) if ch in "，,。；;！!？?"), default=-1)
+    if rcut >= 0:
+        right = right[:rcut]
     for flag in NEGATION:
-        pos = clause.find(flag)
-        while pos >= 0:
-            abs_pos = start + pos
-            if not _false_negation(text, abs_pos):
-                return True
-            pos = clause.find(flag, pos + 1)
-    del relative
+        if flag in left and not _false_negation(text, max(0, index - 6)):
+            between = left[left.rfind(flag) + len(flag) :]
+            if any(other in between for other in ("只要", "Word", "word", "PDF", "pdf", "Excel", "表格", "网页")):
+                continue
+            return True
+        if flag in right and not _false_negation(text, index + length):
+            return True
     return False
 
 
-def _asking_about(task: str) -> bool:
-    text = task or ""
-    return any(mark in text for mark in _ASK) and not any(mark in text for mark in _MAKE)
+def _later_reclaim(text: str, gate: dict, index: int) -> bool:
+    for later, length in _hits(text, gate):
+        if later <= index:
+            continue
+        before = text[max(0, later - 8) : later]
+        if any(mark in before for mark in _TURN) and not _item_negated(text, later, length):
+            return True
+    return False
+
+
+def _item_asking(text: str, index: int, length: int) -> bool:
+    start, end = _clause_span(text, index)
+    clause = text[start:end]
+    local = text[max(0, index - 8) : min(len(text), index + length + 8)]
+    word = text[index : index + length]
+    contrast = any(mark in local for mark in ("区别", "不同", "差异", "对比"))
+    export = any(mark in local for mark in ("导出", "写成", "做成", "改成", "只要"))
+    if contrast and not export and word.lower() in {"word", "pdf", "docx", "ppt", "pptx"}:
+        return True
+    if word.lower() in {"表格", "excel", "xlsx"}:
+        return False
+    if any(mark in local for mark in _MAKE) and not contrast:
+        return False
+    if any(mark in clause for mark in _MAKE) and not any(mark in clause for mark in _ASK):
+        return False
+    return any(mark in clause for mark in _ASK)
 
 
 def sentence_names(task: str, gate: dict) -> bool:
-    """True when the sentence names this job and does not tell us to skip it."""
+    """True when the sentence names this job and the last mention still wants it."""
     text = task or ""
-    if _asking_about(text):
+    hits = _hits(text, gate)
+    if not hits:
         return False
-    found = False
-    for word in _terms(gate):
-        index = _named(text, word)
-        if index < 0:
+    last_index, last_length = hits[-1]
+    if _item_negated(text, last_index, last_length) and not _later_reclaim(text, gate, last_index):
+        return False
+    if _item_asking(text, last_index, last_length):
+        return False
+    kept = False
+    for index, length in hits:
+        if _item_asking(text, index, length):
             continue
-        if _clause_negated(text, index, len(word)):
+        if _item_negated(text, index, length):
+            if _later_reclaim(text, gate, index):
+                kept = True
             continue
-        found = True
-    return found
+        kept = True
+    return kept
 
 
 def decision_from_votes(
@@ -344,11 +427,23 @@ def decision_from_votes(
     ranked = [(_vote(probabilities, gate["id"]), index, gate) for index, gate in enumerate(gates)]
     ranked.sort(key=lambda item: (-item[0], item[1]))
     remembered = remembered or set()
-    chosen = [
-        gate
-        for vote, _index, gate in ranked
-        if vote >= YES_LINE and (sentence_names(task, gate) or gate["id"] in remembered)
-    ]
+    chosen = []
+    reasons = []
+    for vote, _index, gate in ranked:
+        named = sentence_names(task, gate) or gate["id"] in remembered
+        if named and gate["id"] in remembered:
+            why = "沿用你改过的说法"
+        elif named and vote >= YES_LINE:
+            why = "点了名，分数 " + str(round(vote, 2))
+        elif named:
+            why = "点了名，分数 " + str(round(vote, 2)) + " 没过 0.4"
+        else:
+            why = "没点名" if vote < YES_LINE else "没点名，虽然分数 " + str(round(vote, 2))
+        if vote >= YES_LINE and named:
+            chosen.append(gate)
+            reasons.append({"id": gate["id"], "label": gate["label"], "kept": True, "probability": round(vote, 4), "reason": why})
+        else:
+            reasons.append({"id": gate["id"], "label": gate["label"], "kept": False, "probability": round(vote, 4), "reason": why})
     chosen_ids = {gate["id"] for gate in chosen}
     ordered = []
     seen = set()
@@ -405,6 +500,7 @@ def decision_from_votes(
         "label": label,
         "skills": ordered,
         "passed": passed,
+        "reasons": reasons,
     }
 
 
@@ -415,13 +511,15 @@ def format_preface(routed: dict, texts: dict[str, str]) -> str:
         return MARKER + "JEV 已选定：自己做。不要读取技能，不要再挑选。"
     chosen = routed.get("skills") or []
     kinds = {str(item.get("kind") or "skill") for item in chosen}
+    names = [str(skill.get("name") or "") for skill in chosen if skill.get("name")]
+    lead = MARKER + "已选定：" + "、".join(names) + "。读完照做，不要再挑选。"
     if kinds == {"plugin"}:
-        lead = "JEV 已选定下面这些插件。按插件做，不要再挑选。"
+        lead = MARKER + "已选定插件：" + "、".join(names) + "。按插件做，不要再挑选。"
     elif "plugin" in kinds:
-        lead = "JEV 已选定下面这些技能和插件。读完照做，不要再挑选，也不要改用别的技能。"
-    else:
-        lead = "JEV 已选定下面这些技能。读完照做，不要再挑选，也不要改用别的技能。"
-    chunks = [MARKER + lead]
+        lead = MARKER + "已选定技能和插件：" + "、".join(names) + "。读完照做，不要再挑选。"
+    chunks = [lead]
+    if routed.get("clipped"):
+        chunks.append("原句超过 2000 字，后面没参与选择。")
     remembered = (routed.get("remembered") or {}).get("task")
     if remembered:
         chunks.append("沿用了你对「" + str(remembered) + "」的调整。")

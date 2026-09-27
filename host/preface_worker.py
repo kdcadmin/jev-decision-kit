@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
 PORT_FILE = RUNTIME / "preface.port"
 LOCK_FILE = RUNTIME / "preface.lock"
+TOKEN_FILE = RUNTIME / "preface.token"
 sys.path.insert(0, str(ROOT))
 
 import cabinet
@@ -46,6 +48,15 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/preface":
             self._send(404, {"ok": False})
             return
+        wanted = ""
+        try:
+            wanted = TOKEN_FILE.read_text(encoding="utf-8").strip()
+        except OSError:
+            wanted = ""
+        got = (self.headers.get("X-Kit-Token") or "").strip()
+        if not wanted or got != wanted:
+            self._send(403, {"preface": "【技能柜】这次没能完成选择。自己做，不要翻技能柜。"})
+            return
         length = int(self.headers.get("Content-Length", "0") or "0")
         raw = self.rfile.read(length) if length else b"{}"
         try:
@@ -60,6 +71,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     RUNTIME.mkdir(parents=True, exist_ok=True)
+    TOKEN_FILE.write_text(secrets.token_urlsafe(24), encoding="utf-8")
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     port = server.server_address[1]
     PORT_FILE.write_text(str(port), encoding="utf-8")

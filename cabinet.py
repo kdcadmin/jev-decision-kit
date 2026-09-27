@@ -410,7 +410,10 @@ def ensure_laya_weights() -> Path:
 def load_memory() -> dict:
     if not CALLS_PATH.is_file():
         return {"calls": [], "rules": {}}
-    data = json.loads(CALLS_PATH.read_text(encoding="utf-8-sig"))
+    try:
+        data = json.loads(CALLS_PATH.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError, UnicodeError):
+        return {"calls": [], "rules": {}}
     if not isinstance(data, dict):
         return {"calls": [], "rules": {}}
     data.setdefault("calls", [])
@@ -1155,6 +1158,7 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     from host.gate import available_gates, decision_from_votes, gate_labels, sentence_names
 
     task = task.strip()
+    original_length = len(task)
     clipped = False
     if not task:
         raise ValueError("task is empty")
@@ -1188,9 +1192,6 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
             continue
         if gate["id"] not in trained:
             probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), 0.75)
-            continue
-        if float(probabilities.get(gate["id"]) or 0) < 0.4:
-            probabilities[gate["id"]] = 0.75
     memory = load_memory()
     matched = best_matching_rule(task, memory, None)
     by_name = {item["name"]: item for item in data["skills"] if item.get("name")}
@@ -1229,11 +1230,13 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
         "gateLabels": gate_labels(gates),
         "skills": decided["skills"],
         "passed": decided["passed"],
+        "reasons": decided.get("reasons") or [],
         "model": "jev",
         "task": task,
         "remembered": remembered,
         "decisionId": call["id"] if record else None,
         "clipped": clipped,
+        "originalLength": original_length if clipped else None,
     }
 
 
