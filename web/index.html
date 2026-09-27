@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技能柜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e4e1d8;
+    --sheet: #f7f6f2;
+    --ink: #1c211c;
+    --muted: #5c6560;
+    --line: #d5d1c7;
+    --accent: #0c6b52;
+    --accent-ink: #f3faf6;
+    --fill: #e7f3ee;
+    --warn: #8f3d32;
+    --stamp: var(--accent);
+    --moss: var(--accent);
+    --moss-ink: var(--accent-ink);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Noto Sans SC", "Segoe UI", sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .app {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  header {
+    display: grid;
+    grid-template-columns: auto minmax(280px, 1fr);
+    gap: 28px;
+    align-items: end;
+    padding: 16px 20px 12px;
+  }
+  .mark { display: flex; flex-direction: column; gap: 2px; }
+  .mark h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0;
+    line-height: 1.1;
+  }
+  .mark p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .route label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .route input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--sheet);
+    padding: 8px 10px;
+    outline: none;
+    font-size: 14px;
+  }
+  .route input:focus { border-color: var(--accent); }
+  .go {
+    border: 0;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 8px 14px;
+  }
+  .go:disabled { opacity: 0.45; cursor: wait; }
+  .ticket {
+    margin: 0 28px 12px;
+    min-height: 0;
+  }
+  .ticket:empty { display: none; }
+  .ticket-card, .ticket-error {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 18px;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .ticket-error { color: var(--warn); }
+  .ticket-wait { color: var(--muted); }
+  .pick-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .pick-actions button, .ticket-card > button {
+    border: 1px solid var(--ink);
+    background: transparent;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  .changed { color: var(--stamp); font-style: normal; margin-left: 6px; }
+  .add-results { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow: auto; }
+  .add-results button { width: 100%; text-align: left; border: 1px solid var(--ink); background: transparent; padding: 10px 12px; }
+  #add-card-query { width: 100%; border: 0; border-bottom: 1.5px solid var(--ink); background: transparent; padding: 6px 0; margin-bottom: 12px; outline: none; }
+  .pick {
+    min-width: 180px;
+    border-left: 3px solid var(--moss);
+    padding-left: 10px;
+  }
+  .pick button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .pick .k { font-size: 12px; color: var(--muted); }
+  .pick strong { display: block; font-size: 18px; margin-top: 2px; }
+  .pick span { color: var(--muted); font-size: 13px; }
+  .bars { flex: 1; min-width: 220px; display: grid; gap: 4px; align-content: center; }
+  .bar { display: grid; grid-template-columns: 72px 1fr 42px; gap: 8px; align-items: center; font-size: 12px; }
+  .bar i { display: block; height: 6px; background: rgba(27,22,18,.08); }
+  .bar i b { display: block; height: 100%; background: var(--accent); }
+  .passed { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+  main {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 180px 300px minmax(0, 1fr);
+    gap: 10px;
+    padding: 0 20px 16px;
+  }
+  .pane {
+    min-height: 0;
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+  .pane h2, .sheet h2, .lib-head h2, .calls-head h2 {
+    margin: 0;
+    padding: 10px 12px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .cats, .list { overflow: auto; padding: 0 8px 10px; }
+  .cat, .skill {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 8px 8px;
+    border-bottom: 1px solid transparent;
+  }
+  .cat.active, .skill.active { background: var(--fill); box-shadow: inset 3px 0 0 var(--accent); }
+  .cat.over { outline: 2px dashed var(--accent); outline-offset: -2px; }
+  .cat em, .skill small { font-style: normal; color: var(--muted); font-size: 12px; }
+  .cat.active em, .skill.active small { color: var(--muted); }
+  .skill { align-items: baseline; }
+  .skill b { font-weight: 700; }
+  .search, .lib-install input, .settings input[type="text"], .settings input[type="number"], #add-card-query {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--sheet);
+    padding: 6px 8px;
+    outline: none;
+  }
+  .search { margin: 0 12px 8px; }
+  .search:focus, .lib-install input:focus, .settings input:focus, #add-card-query:focus { border-color: var(--accent); }
+  .detail { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .detail-head, .tools, .scripts {
+    padding: 12px 16px;
+  }
+  .detail-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+  .detail-head h3 { margin: 0; font-size: 20px; line-height: 1.2; }
+  .detail-head p { margin: 6px 0 0; color: var(--muted); font-size: 14px; max-width: 62ch; }
+  .meta { font-size: 12px; color: var(--muted); text-align: right; }
+  .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .sync-card[hidden] { display: none; }
+  .sync-card {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(27, 22, 18, 0.32);
+  }
+  .sync-card article {
+    width: min(420px, 100%);
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(28, 33, 28, 0.16);
+    padding: 18px;
+  }
+  .sync-card h3 { margin: 0; font-size: 18px; line-height: 1.2; }
+  .sync-card p { margin: 8px 0 16px; color: var(--muted); font-size: 14px; }
+  .sync-card .choices { display: flex; flex-direction: column; gap: 10px; }
+  .sync-card .choices button {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--ink);
+    background: transparent;
+    padding: 14px 14px;
+  }
+  .sync-card .choices button:hover { background: var(--ink); color: var(--sheet); }
+  .sync-card.wide article { width: min(720px, 100%); }
+  .sync-card pre, textarea, .scripts code, .doc pre { font-family: "Cascadia Code", "Consolas", monospace; }
+  .sync-card pre { white-space: pre-wrap; border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; font-size: 12px; margin: 0 0 14px; }
+  .sync-card .choices select { width: 100%; border: 1px solid var(--ink); background: transparent; padding: 10px; }
+  .calls-head { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; }
+  .calls-head h2 { margin: 0; }
+  .calls-head button, .chip button, .chip-add {
+    border: 1px solid var(--ink);
+    background: transparent;
+    padding: 2px 8px;
+    font-size: 13px;
+  }
+  select, .tools button, .save {
+    border: 1px solid var(--ink);
+    background: transparent;
+    padding: 7px 10px;
+  }
+  .save { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  textarea {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    border: 0;
+    background: transparent;
+    padding: 14px 16px 20px;
+    outline: none;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .scripts { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+  .scripts code { font-size: 12px; }
+  .empty { padding: 28px 16px; color: var(--muted); }
+  .status { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .views { display: flex; gap: 4px; margin-top: 8px; }
+  .views button, .row button, .settings button, .calls-head button, .chip button, .chip-add, .tools button, select, .pick-actions button, .ticket-card > button, .lib-install button, #refresh-library, .lib-detail .go-install, a.lib-jump small, .lib-jump button {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--sheet);
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  .views button.on { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+  .sheet { display: none; min-height: 0; overflow: auto; margin: 0 20px 16px; background: var(--sheet); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px 18px; }
+  .sheet.on { display: block; grid-row: 3; }
+  main.off { display: none; }
+  #library-view .note { max-width: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
+  #calls-view td:first-child { white-space: nowrap; }
+  #calls-view td:last-child { white-space: normal; }
+  #calls-view .skill-line {
+    display: grid;
+    grid-template-columns: minmax(10em, 1fr) 4.5em 4.5em 6.5em;
+    align-items: center;
+    column-gap: 8px;
+  }
+  #calls-view .skill-line + .skill-line { margin-top: 6px; }
+  #calls-view .skill-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #calls-view .skill-line button { width: 100%; height: 26px; padding: 0 8px; line-height: 24px; box-sizing: border-box; }
+  button.switch {
+    width: 36px; height: 20px; padding: 0; border-radius: 999px; border: 1px solid var(--line);
+    background: #e4ded4; position: relative; flex: 0 0 auto;
+  }
+  button.switch.on { background: var(--accent); border-color: var(--accent); }
+  button.switch i {
+    position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  }
+  button.switch.on i { left: 18px; }
+  .row-tools { display: flex; align-items: center; gap: 8px; }
+  #source-card input { width: 100%; margin: 0 0 12px; }
+  #source-kinds { display: flex; gap: 8px; margin-bottom: 12px; }
+  #source-kinds button.on { background: var(--ink); color: var(--sheet); }
+  th { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .chip { display: inline-flex; gap: 4px; align-items: center; margin: 0 6px 4px 0; }
+  .settings label { display: block; margin: 12px 0 4px; font-size: 13px; font-weight: 700; }
+  .settings .path-row, .settings .action-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .settings .path-row input { flex: 1; min-width: 220px; height: 32px; box-sizing: border-box; }
+  .settings .path-row button, .settings .action-row button { height: 32px; box-sizing: border-box; }
+  .settings input[type="text"], .settings input[type="number"] { width: min(100%, 640px); }
+  .settings a, .lib-actions a, a.lib-jump small, .lib-jump a { color: var(--accent); }
+  .note { color: var(--muted); font-size: 14px; max-width: 68ch; }
+  #library-view.on { display: block; overflow: auto; }
+  .lib-center { width: 100%; }
+  .lib-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .lib-head h2 { margin: 0; padding: 0; }
+  .lib-days { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+  .lib-days button.on { background: var(--fill); box-shadow: inset 3px 0 0 var(--accent); }
+  .calls-head h2 { padding: 0; }
+  .lib-stage { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  #library-view.picked .lib-stage { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .lib-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 4px; }
+  #library-view.picked .lib-cards { grid-template-columns: 1fr; margin-top: 0; }
+  .lib-card {
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 10px;
+    row-gap: 4px;
+    text-align: left;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--sheet);
+    padding: 10px 12px;
+  }
+  .lib-card:hover { background: #fbfaf7; }
+  .lib-card strong, .lib-row b { font-weight: 700; }
+  .lib-card em, .lib-row small { font-style: normal; font-size: 12px; color: var(--muted); }
+  .lib-card p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .lib-card.on { background: var(--fill); box-shadow: inset 3px 0 0 var(--accent); }
+  .lib-card.on p, .lib-card.on em { color: var(--muted); }
+  .lib-index { margin-top: 6px; }
+  .lib-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    padding: 9px 4px;
+  }
+  .lib-row span {
+    grid-column: 1 / -1;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lib-install { display: flex; gap: 8px; align-items: center; }
+  .lib-install input { width: 220px; }
+  .lib-install button, #refresh-library, .lib-detail .go-install, .lib-jump button { white-space: nowrap; }
+  .lib-card a { color: inherit; text-decoration: none; }
+  .lib-card a:hover { color: var(--accent); }
+  .lib-detail { display: none; min-width: 0; }
+  #library-view.picked .lib-detail {
+    display: block;
+    min-width: 0;
+    padding: 4px 8px 8px 0;
+    animation: lib-slide-in 0.46s cubic-bezier(.22, .8, .24, 1);
+  }
+  @keyframes lib-slide-in {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: none; }
+  }
+  .lib-detail h3 { margin: 8px 0 0; font-size: 22px; line-height: 1.2; }
+  .lib-kicker { margin: 12px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+  .lib-detail .intro { margin: 8px 0 0; max-width: 68ch; }
+  .lib-detail .intro p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; }
+  .lib-back { border: 0; background: transparent; padding: 0; color: var(--accent); font-size: 13px; }
+  .lib-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+  .lib-actions span { color: var(--muted); font-size: 12px; }
+  .lib-actions a { text-decoration: none; font-size: 13px; }
+  .lib-actions a:hover { text-decoration: underline; }
+  .lib-skills { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; }
+  #library-view.picked .lib-jump { animation: lib-row 0.4s ease both; }
+  @keyframes lib-row {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  .lib-jump {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--sheet);
+  }
+  .lib-jump a { color: inherit; text-decoration: none; font-weight: 700; }
+  .lib-jump a:hover { color: var(--accent); }
+  .lib-jump span { display: flex; gap: 6px; align-items: center; flex: none; }
+  .lib-jump span a { font-weight: 400; font-size: 12px; color: var(--accent); }
+  .doc { margin: 8px 0 18px; }
+  .doc pre { white-space: pre-wrap; border: 1px solid var(--line); padding: 10px 12px; font-family: "IBM Plex Mono", monospace; font-size: 12px; max-width: 78ch; }
+  @media (max-width: 1100px) {
+    header { grid-template-columns: 1fr; gap: 10px; padding: 14px 14px 8px; }
+    .mark h1 { font-size: 20px; }
+    main {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(148px, 30vh) minmax(0, 1fr);
+      padding: 0 12px 12px;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .cats { display: flex; flex-wrap: wrap; gap: 6px; max-height: 96px; }
+    .cat { width: auto; padding: 4px 8px; border: 1px solid var(--line); }
+  }
+  @media (max-width: 760px) {
+    .lib-cards, #library-view.picked .lib-stage { grid-template-columns: 1fr; }
+    .lib-install input { width: min(100%, 220px); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="mark">
+      <h1>技能柜</h1>
+      <p id="count">JEV · …</p>
+      <div class="views">
+        <button class="on" type="button" data-view="cabinet">柜</button>
+        <button type="button" data-view="calls">调用</button>
+        <button type="button" data-view="mcp">MCP</button>
+        <button type="button" data-view="plugins">插件</button>
+        <button type="button" data-view="settings">设置</button>
+        <button type="button" data-view="library">库</button>
+      </div>
+    </div>
+    <form class="route" id="route-form">
+      <div>
+        <label for="task">自己想，或调用技能</label>
+        <input id="task" name="task" placeholder="例如：把这份纪要整理成一页周报" autocomplete="off">
+      </div>
+      <button class="go" id="go" type="submit">选择</button>
+    </form>
+  </header>
+  <div class="ticket" id="ticket"></div>
+  <main>
+    <section class="pane">
+      <h2>分类</h2>
+      <div class="cats" id="cats"></div>
+    </section>
+    <section class="pane">
+      <h2>技能</h2>
+      <input class="search" id="search" placeholder="搜名称或摘要">
+      <div class="list" id="list"></div>
+    </section>
+    <section class="pane detail" id="detail">
+      <div class="empty">点开一个技能。这里改的是项目里的副本，原来的技能目录不会删。</div>
+    </section>
+  </main>
+  <section class="sheet" id="calls-view"></section>
+  <section class="sheet" id="mcp-view"></section>
+  <section class="sheet" id="plugin-view"></section>
+  <section class="sheet settings" id="settings-view"></section>
+  <section class="sheet" id="library-view"></section>
+  <div class="sync-card" id="sync-card" hidden>
+    <article>
+      <h3 id="sync-card-title">同步</h3>
+      <p id="sync-card-note"></p>
+      <div class="choices">
+        <button type="button" data-sync="push">同步旧文件与现文件一致</button>
+        <button type="button" data-sync="revert">撤销所有修改与旧文件一致</button>
+      </div>
+    </article>
+  </div>
+  <div class="sync-card" id="source-card" hidden>
+    <article>
+      <h3 id="source-title">添加</h3>
+      <p id="source-note"></p>
+      <div id="source-kinds"></div>
+      <input id="source-input" type="text" autocomplete="off">
+      <p><button id="source-pick" type="button" hidden>选择文件夹</button> <button id="source-save" class="save" type="button">安装</button></p>
+    </article>
+  </div>
+  <div class="sync-card" id="add-card" hidden>
+    <article>
+      <h3>添加技能</h3>
+      <p id="add-card-note"></p>
+      <input id="add-card-query" type="text" placeholder="搜技能名称或摘要">
+      <div class="add-results" id="add-card-list"></div>
+    </article>
+  </div>
+  <div class="sync-card wide" id="mcp-card" hidden>
+    <article>
+      <h3>接入 MCP</h3>
+      <p>选技能的是本机 JEV。Hermes 和龙虾在模型开口之前把这句话交给它。它选定自己做，或选定柜门上的哪几份。模型只执行这个结果，不再挑选。下面的配置只用来读取已经选定的技能正文。</p>
+      <pre id="mcp-config"></pre>
+      <p><button id="copy-mcp" type="button">复制配置</button></p>
+    </article>
+  </div>
+</div>
+<script>
+const state = { categories: [], skills: [], filter: "all", query: "", current: null, dirty: false, libQuery: "", libSearch: null, libDay: null, libHistoryOpen: false, libPick: null, libRepo: null, libraryFeed: null, libraryStatus: "", githubDraft: "", repoCache: {} };
+
+const catsEl = document.getElementById("cats");
+const listEl = document.getElementById("list");
+const detailEl = document.getElementById("detail");
+const ticketEl = document.getElementById("ticket");
+
+function formatWhen(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return value || "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || response.statusText);
+  return data;
+}
+
+function visibleSkills() {
+  const q = state.query.trim().toLowerCase();
+  return state.skills.filter((skill) => {
+    if (state.filter !== "all" && skill.category !== state.filter) return false;
+    if (!q) return true;
+    const blob = `${skill.name} ${skill.summary || ""} ${skill.excerpt || ""}`.toLowerCase();
+    return blob.includes(q);
+  });
+}
+
+function renderCats() {
+  const total = state.skills.length;
+  const items = [{ id: "all", label: "全部", count: total }, ...state.categories.filter((cat) => cat.count > 0)];
+  catsEl.innerHTML = items.map((cat) => `
+    <button class="cat ${state.filter === cat.id ? "active" : ""}" data-cat="${esc(cat.id)}" type="button">
+      <span>${esc(cat.label)}</span><em>${cat.count}</em>
+    </button>`).join("");
+}
+
+function renderList() {
+  const rows = visibleSkills();
+  listEl.innerHTML = rows.map((skill) => `
+    <button class="skill ${state.current && state.current.name === skill.name ? "active" : ""}" draggable="true" data-name="${esc(skill.name)}" type="button">
+      <b>${esc(skill.name)}</b>
+      <small>${esc(skill.category)}${skill.changed ? '<em class="changed">已改</em>' : ""}</small>
+    </button>`).join("") || `<div class="empty">这个分类里没有匹配的技能。</div>`;
+}
+
+function renderDetail() {
+  const skill = state.current;
+  if (!skill) return;
+  const options = state.categories.map((cat) =>
+    `<option value="${esc(cat.id)}" ${cat.id === skill.category ? "selected" : ""}>${esc(cat.label)}</option>`
+  ).join("");
+  const scripts = (skill.scripts || []).length
+    ? skill.scripts.map((item) => `<code>${esc(item)}</code>`).join(" · ")
+    : "这个技能没有自带 scripts/";
+  detailEl.innerHTML = `
+    <div class="detail-head">
+      <div>
+        <h3>${esc(skill.name)}</h3>
+        <p>${esc(skill.summary || "还没有摘要。保存带 description 的 frontmatter 后，这里会更新。")}</p>
+      </div>
+      <div class="meta">${esc(skill.category)}<br>${esc(skill.source || "")}${skill.changed ? "<br>正文和旧文件不一致" : ""}</div>
+    </div>
+    <div class="tools">
+      <select id="move-to">${options}</select>
+      <button id="move" type="button">移动</button>
+      <span class="status" id="status"></span>
+      <button id="sync-one" type="button">同步</button>
+      <button class="save" id="save" type="button">保存正文</button>
+    </div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div class="scripts">${scripts}</div>`;
+  const editor = document.getElementById("editor");
+  editor.value = skill.content || "";
+  editor.addEventListener("input", () => { state.dirty = true; });
+  document.getElementById("move").addEventListener("click", () => moveSkill(skill.name, document.getElementById("move-to").value));
+  document.getElementById("save").addEventListener("click", saveSkill);
+  document.getElementById("sync-one").addEventListener("click", () => openSyncCard(skill.name));
+}
+
+function renderTicket(result, error, waiting) {
+  if (waiting) {
+    ticketEl.innerHTML = `<div class="ticket-card ticket-wait">${esc(waiting)}</div>`;
+    return;
+  }
+  if (error) {
+    ticketEl.innerHTML = `<div class="ticket-error">${esc(error)}</div>`;
+    return;
+  }
+  if (!result) { ticketEl.innerHTML = ""; return; }
+  if (result.task) state.lastRoute = result;
+  const probs = Object.entries(result.categoryProbabilities || {}).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const bars = probs.map(([key, value]) => {
+    const label = (result.gateLabels || {})[key] || (key === "think" ? "自主思考" : ((state.categories.find((cat) => cat.id === key) || {}).label || key));
+    return `<div class="bar"><span>${esc(label)}</span><i><b style="width:${Math.round(value * 100)}%"></b></i><span>${Math.round(value * 100)}</span></div>`;
+  }).join("");
+  const think = Math.round(((result.methodProbabilities || {}).think || 0) * 100);
+  const skillPct = Math.round(((result.methodProbabilities || {}).skill || 0) * 100);
+  const kinds = new Set((result.skills || []).map((item) => item.kind || "skill"));
+  const methodName = result.method === "think"
+    ? "自主思考"
+    : kinds.has("plugin") && kinds.has("skill")
+      ? "调用技能和插件"
+      : kinds.has("plugin")
+        ? "调用插件"
+        : "调用技能";
+  const methodPick = `<div class="pick"><div class="k">做法</div><strong>${methodName}</strong><span>自己想 ${think} · 技能 ${skillPct}</span></div>`;
+  if (result.method === "think") {
+    ticketEl.innerHTML = `<div class="ticket-card">${methodPick}<p class="note">${esc(result.message || "")}</p></div>`;
+    return;
+  }
+  const picks = (result.skills || []).map((skill) => {
+    const prob = typeof skill.probability === "number" ? ` · ${Math.round(skill.probability * 100)}` : "";
+    const title = skill.kind === "plugin"
+      ? `<strong>${esc(skill.name)}</strong>`
+      : `<button type="button" data-open="${esc(skill.name)}"><strong>${esc(skill.name)}</strong></button>`;
+    const where = skill.kind === "plugin" && skill.host ? `${esc(skill.host)} · ` : "";
+    return `<div class="pick">
+      <div class="k">${skill.kind === "plugin" ? "插件" : "调用"}${prob}</div>
+      ${title}
+      <span>${where}${esc(skill.summary || "")}</span>
+      <div class="pick-actions">
+        <button type="button" data-swap="${esc(skill.name)}">换掉</button>
+        <button type="button" data-drop-now="${esc(skill.name)}">去掉</button>
+      </div>
+    </div>`;
+  }).join("");
+  const remembered = result.remembered && result.remembered.task
+    ? `<p class="note">沿用了你对「${esc(result.remembered.task)}」的调整。</p>`
+    : "";
+  ticketEl.innerHTML = `<div class="ticket-card">${methodPick}<div class="pick"><div class="k">柜门</div><strong>${esc(result.label)}</strong><span>${esc(result.category)}</span></div>${picks}<button type="button" id="ticket-add">再加一个</button>${remembered}${passedLine(result.passed)}<div class="bars">${bars}</div></div>`;
+}
+
+function passedLine(passed) {
+  const items = passed || [];
+  if (!items.length) return "";
+  const text = items.map((item) => {
+    const pct = typeof item.probability === "number" ? " " + Math.round(item.probability * 100) : "";
+    return esc(item.name) + pct;
+  }).join("、");
+  return `<p class="passed">没带上：${text}</p>`;
+}
+
+async function openSkill(name) {
+  if (state.dirty && !confirm("正文还没保存，仍要打开另一个技能吗？")) return;
+  const skill = await api("/api/skill?name=" + encodeURIComponent(name));
+  state.current = skill;
+  state.dirty = false;
+  state.filter = skill.category;
+  renderCats();
+  renderList();
+  renderDetail();
+  const row = listEl.querySelector(`[data-name="${CSS.escape(name)}"]`);
+  if (row) row.scrollIntoView({ block: "nearest" });
+}
+
+async function moveSkill(name, category) {
+  const status = document.getElementById("status");
+  if (status) status.textContent = "正在移动…";
+  await api("/api/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, category })
+  });
+  const skill = state.skills.find((item) => item.name === name);
+  if (skill) skill.category = category;
+  recount();
+  if (state.current && state.current.name === name) state.current.category = category;
+  renderCats();
+  renderList();
+  renderDetail();
+  const next = document.getElementById("status");
+  if (next) next.textContent = "已移到 " + category;
+}
+
+async function saveSkill() {
+  const skill = state.current;
+  const content = document.getElementById("editor").value;
+  const status = document.getElementById("status");
+  status.textContent = "正在保存…";
+  const saved = await api("/api/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: skill.name, content })
+  });
+  skill.content = content;
+  skill.changed = true;
+  const listed = state.skills.find((item) => item.name === skill.name);
+  if (listed) {
+    listed.changed = true;
+    if (saved.summary) listed.summary = saved.summary;
+  }
+  if (saved.summary) skill.summary = saved.summary;
+  state.dirty = false;
+  renderList();
+  status.textContent = "已保存";
+  renderDetail();
+  document.getElementById("status").textContent = "已保存";
+}
+
+function recount() {
+  const counts = {};
+  for (const skill of state.skills) counts[skill.category] = (counts[skill.category] || 0) + 1;
+  for (const cat of state.categories) cat.count = counts[cat.id] || 0;
+  document.getElementById("count").textContent = "JEV · " + state.skills.length;
+}
+
+catsEl.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-cat]");
+  if (!button) return;
+  state.filter = button.dataset.cat;
+  renderCats();
+  renderList();
+});
+
+catsEl.addEventListener("dragover", (event) => {
+  const button = event.target.closest("[data-cat]");
+  if (!button || button.dataset.cat === "all") return;
+  event.preventDefault();
+  button.classList.add("over");
+});
+catsEl.addEventListener("dragleave", (event) => {
+  const button = event.target.closest("[data-cat]");
+  if (button) button.classList.remove("over");
+});
+catsEl.addEventListener("drop", async (event) => {
+  const button = event.target.closest("[data-cat]");
+  if (!button || button.dataset.cat === "all") return;
+  event.preventDefault();
+  button.classList.remove("over");
+  const name = event.dataTransfer.getData("text/plain");
+  if (name) await moveSkill(name, button.dataset.cat);
+});
+
+listEl.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-name]");
+  if (button) openSkill(button.dataset.name).catch((error) => alert(error.message));
+});
+listEl.addEventListener("dragstart", (event) => {
+  const button = event.target.closest("[data-name]");
+  if (!button) return;
+  event.dataTransfer.setData("text/plain", button.dataset.name);
+});
+
+document.getElementById("search").addEventListener("input", (event) => {
+  state.query = event.target.value;
+  renderList();
+});
+
+ticketEl.addEventListener("click", (event) => {
+  const open = event.target.closest("[data-open]");
+  const swap = event.target.closest("[data-swap]");
+  const drop = event.target.closest("[data-drop-now]");
+  const add = event.target.closest("#ticket-add");
+  if (open) openSkill(open.dataset.open).catch((error) => alert(error.message));
+  if (!state.lastRoute) return;
+  const target = { task: state.lastRoute.task, category: state.lastRoute.category, from: "ticket" };
+  if (swap) openAddCard({ ...target, replace: swap.dataset.swap });
+  if (add) openAddCard(target);
+  if (drop) saveTaskRule({ task: target.task, category: target.category, remove: drop.dataset.dropNow }).catch((error) => alert(error.message));
+});
+
+document.getElementById("route-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = document.getElementById("go");
+  const task = document.getElementById("task").value.trim();
+  if (!task) return;
+  button.disabled = true;
+  button.textContent = "在选";
+  state.routeTask = task;
+  let waiting = "正在用 JEV 打分，请等这一次完成，不要重复点。";
+  try {
+    const health = await api("/api/health");
+    if (health.modelReady) waiting = "正在选择…";
+  } catch (error) {
+    waiting = "正在选择…";
+  }
+  renderTicket(null, null, waiting);
+  try {
+    const result = await api("/api/route", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task })
+    });
+    result.task = result.task || task;
+    renderTicket(result);
+    if (result.category) {
+      state.filter = result.category;
+      renderCats();
+      renderList();
+    }
+  } catch (error) {
+    renderTicket(null, error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "选择";
+  }
+});
+
+document.querySelectorAll(".views button").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".views button").forEach((item) => item.classList.toggle("on", item === button));
+    const view = button.dataset.view;
+    document.querySelector("main").classList.toggle("off", view !== "cabinet");
+    document.getElementById("calls-view").classList.toggle("on", view === "calls");
+    document.getElementById("mcp-view").classList.toggle("on", view === "mcp");
+    document.getElementById("plugin-view").classList.toggle("on", view === "plugins");
+    document.getElementById("settings-view").classList.toggle("on", view === "settings");
+    document.getElementById("library-view").classList.toggle("on", view === "library");
+    if (view === "calls") loadCalls().catch((error) => alert(error.message));
+    if (view === "mcp") loadMcp().catch((error) => alert(error.message));
+    if (view === "plugins") loadPlugins().catch((error) => alert(error.message));
+    if (view === "settings") loadSettings().catch((error) => alert(error.message));
+    if (view === "library") loadLibrary().catch((error) => alert(error.message));
+  });
+});
+
+async function loadMcp() {
+  const data = await api("/api/mcp");
+  const rows = (data.servers || []).map((item) => `
+    <tr>
+      <td>${esc(item.host)}</td>
+      <td>${esc(item.name)}</td>
+      ${toolCells("mcp", item)}
+    </tr>`).join("");
+  document.getElementById("mcp-view").innerHTML = `
+    <div class="calls-head">
+      <h2>MCP</h2>
+      <button id="add-mcp" type="button">添加 MCP</button>
+    </div>
+    <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的配置。</p>
+    <table>
+      <thead><tr><th>宿主</th><th>服务</th><th>操作</th></tr></thead>
+      <tbody>${rows || "<tr><td colspan=\"3\">没有读到 MCP 服务。</td></tr>"}</tbody>
+    </table>`;
+  document.getElementById("add-mcp").addEventListener("click", () => openSource({
+    title: "添加 MCP",
+    note: "可以是一个链接、GitHub 仓库，或本机上的目录。只记在这里查看，JEV 不会挑选 MCP，也不会写入宿主配置。",
+    kinds: [
+      ["link", "链接", "https://example.com/mcp"],
+      ["github", "GitHub", "https://github.com/作者/仓库"],
+      ["local", "本地目录", "D:\\mcp\\my-server"]
+    ],
+    path: "/api/mcp/add",
+    after: loadMcp
+  }));
+}
+
+document.getElementById("mcp-view").addEventListener("click", (event) => {
+  handleBoardClick(event, loadMcp).catch((error) => alert(error.message));
+});
+
+function toolCells(kind, item) {
+  const on = item.enabled ? " on" : "";
+  const pressed = item.enabled ? "true" : "false";
+  return `<td><span class="row-tools">
+      <button class="switch${on}" type="button" data-toggle="${kind}" data-host="${esc(item.host)}" data-name="${esc(item.name)}" data-enabled="${item.enabled ? "1" : "0"}" aria-pressed="${pressed}"><i></i></button>
+      <button type="button" data-remove="${kind}" data-host="${esc(item.host)}" data-name="${esc(item.name)}">删除</button>
+    </span></td>`;
+}
+
+async function loadPlugins() {
+  const data = await api("/api/plugins");
+  const rows = (data.plugins || []).map((item) => `
+    <tr>
+      <td>${esc(item.host)}</td>
+      <td>${esc(item.name)}</td>
+      <td>${item.selectable ? "会选" : "不选"}</td>
+      ${toolCells("plugin", item)}
+    </tr>`).join("");
+  document.getElementById("plugin-view").innerHTML = `
+    <div class="calls-head">
+      <h2>插件</h2>
+      <button id="add-plugin" type="button">添加插件</button>
+    </div>
+    <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的文件。关掉之后 JEV 不再选它。</p>
+    <table>
+      <thead><tr><th>宿主</th><th>插件</th><th>JEV</th><th>操作</th></tr></thead>
+      <tbody>${rows || "<tr><td colspan=\"4\">没有读到插件。</td></tr>"}</tbody>
+    </table>`;
+  document.getElementById("add-plugin").addEventListener("click", () => openSource({
+    title: "添加插件",
+    note: "写下包名、GitHub 仓库，或本机上的插件目录。装进名单后，JEV 可以按名字选它。不会运行插件，也不会改 Harness 的安装。",
+    kinds: [
+      ["package", "包名", "@deepseek-ai/dsh-plugin"],
+      ["github", "GitHub", "https://github.com/作者/仓库"],
+      ["local", "本地目录", "D:\\plugins\\my-plugin"]
+    ],
+    path: "/api/plugins/add",
+    after: loadPlugins
+  }));
+}
+
+document.getElementById("plugin-view").addEventListener("click", (event) => {
+  handleBoardClick(event, loadPlugins).catch((error) => alert(error.message));
+});
+
+async function loadCalls() {
+  const data = await api("/api/calls");
+  state.calls = data.calls || [];
+  state.taskRules = Array.isArray(data.rules) ? data.rules : [];
+  const rules = state.taskRules.map((rule, index) => {
+    const added = (rule.add || []).map((name) => `<span class="chip">${esc(name)} <button type="button" data-rule-act="unadd" data-rule="${index}" data-skill="${esc(name)}">去掉</button></span>`).join("");
+    const removed = (rule.remove || []).map((name) => `<span class="chip">${esc(name)} <button type="button" data-rule-act="unremove" data-rule="${index}" data-skill="${esc(name)}">恢复</button></span>`).join("");
+    return `<p>「${esc(rule.task)}」下次跳过：${removed || "无"}。下次带上：${added || "无"}。</p>`;
+  }).join("") || "<p class=\"note\">还没有按某句话记住的调整。</p>";
+  const rows = state.calls.map((call) => {
+    const thinking = call.method === "think";
+    const forget = `<button type="button" data-forget="${esc(call.id)}">删掉记录</button>`;
+    const names = call.skills || [];
+    const skills = thinking
+      ? `<div class="skill-line"><span class="skill-name">没有调用技能</span><span></span><span></span>${forget}</div>`
+      : (names.length ? names : [""]).map((name, index) => `<div class="skill-line"><span class="skill-name">${esc(name)}</span>${name ? `<button type="button" data-drop-call="${esc(call.id)}" data-skill="${esc(name)}">删除</button>` : "<span></span>"}${index === 0 ? `<button class="chip-add" type="button" data-open-add="${esc(call.id)}">添加</button>${forget}` : "<span></span><span></span>"}</div>`).join("") + passedLine(call.passed);
+    return `<tr>
+      <td>${esc(formatWhen(call.at))}<br>${esc(call.sourceLabel || call.source || "")}</td>
+      <td>${esc(call.task || "")}</td>
+      <td>${thinking ? "自主思考" : "调用技能"}</td>
+      <td>${esc(call.label || call.category || "")}</td>
+      <td>${skills}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="5">还没有调用记录。</td></tr>`;
+  state.mcpText = (data.mcp || {}).configText || "";
+  document.getElementById("calls-view").innerHTML = `
+    <div class="calls-head">
+      <h2>调用记录</h2>
+      <button id="open-mcp" type="button">接入教程</button>
+    </div>
+    <p class="note">「删除」和「添加」只记住这一句话，以及以后很像的说法，不会让整个分类跟着变。点「删掉记录」只去掉这一行。选了自主思考的那次不套技能。</p>
+    ${rules}
+    <table><thead><tr><th>时间</th><th>任务</th><th>做法</th><th>类型</th><th>调用的技能</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById("open-mcp").addEventListener("click", openMcpCard);
+}
+
+document.getElementById("calls-view").addEventListener("click", async (event) => {
+  const drop = event.target.closest("[data-drop-call]");
+  const openAdd = event.target.closest("[data-open-add]");
+  const forget = event.target.closest("[data-forget]");
+  const ruleBtn = event.target.closest("[data-rule-act]");
+  try {
+    if (forget) {
+      await api("/api/calls/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: forget.dataset.forget }) });
+      await loadCalls();
+      return;
+    }
+    if (drop) {
+      const call = (state.calls || []).find((item) => item.id === drop.dataset.dropCall);
+      if (!call) return;
+      await saveTaskRule({ task: call.task, category: call.category, remove: drop.dataset.skill });
+      await loadCalls();
+      return;
+    }
+    if (ruleBtn) {
+      const rule = (state.taskRules || [])[Number(ruleBtn.dataset.rule)];
+      if (!rule) return;
+      const body = { task: rule.task, category: rule.category };
+      body[ruleBtn.dataset.ruleAct] = ruleBtn.dataset.skill;
+      await saveTaskRule(body);
+      await loadCalls();
+      return;
+    }
+    if (openAdd) {
+      const call = (state.calls || []).find((item) => item.id === openAdd.dataset.openAdd);
+      if (!call || call.method === "think") return;
+      openAddCard({ task: call.task, category: call.category, from: "calls" });
+    }
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+async function loadSettings() {
+  const config = await api("/api/settings");
+  document.getElementById("settings-view").innerHTML = `
+    <h2>设置</h2>
+    <label><input id="selector-enabled" type="checkbox" ${config.selectorEnabled ? "checked" : ""}> 启动技能选择器</label>
+    <label for="skill-dir">技能文件夹</label>
+    <input id="skill-dir" type="text" readonly value="${esc(config.skillDir || "")}">
+    <ul id="skill-roots">${(config.extraScanRoots || []).map((item) => `<li>${esc(item)} <button type="button" data-root="${esc(item)}">移除</button></li>`).join("")}</ul>
+    <div class="path-row"><input id="skill-root" type="text" placeholder="或粘贴文件夹路径"> <button id="add-root" type="button">添加</button> <button id="pick-root" type="button">选择文件夹</button></div>
+    <label for="jev-path">JEV 权重</label>
+    <input id="jev-path" type="text" readonly value="${esc(config.jevWeights || "")}">
+    <div class="action-row"><button id="save-settings" type="button">保存设置</button> <button id="scan-skills" type="button">全局搜索技能</button> <button id="read-tools" type="button">读取工具记忆</button> <button id="sync-origins" type="button">全局同步</button></div>
+    <p class="note" id="settings-status"></p>`;
+  document.getElementById("save-settings").addEventListener("click", saveSettings);
+  document.getElementById("scan-skills").addEventListener("click", scanSkills);
+  document.getElementById("read-tools").addEventListener("click", readToolMemory);
+  document.getElementById("sync-origins").addEventListener("click", () => openSyncCard(""));
+  document.getElementById("add-root").addEventListener("click", () => addSkillRoot(document.getElementById("skill-root").value));
+  document.getElementById("pick-root").addEventListener("click", pickSkillRoot);
+  document.getElementById("skill-roots").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-root]");
+    if (button) removeSkillRoot(button.dataset.root);
+  });
+}
+
+async function saveSettings() {
+  const status = document.getElementById("settings-status");
+  status.textContent = "正在保存，并同步龙虾和 Hermes…";
+  const saved = await api("/api/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      selectorEnabled: document.getElementById("selector-enabled").checked
+    })
+  });
+  const hosts = (saved.hosts || []).map((item) => `${item.name}:${item.present ? (item.enabled ? "开" : "关") : "没有安装"}${item.warning ? " " + item.warning : ""}`).join("；");
+  status.textContent = "已保存。" + hosts;
+}
+
+function applyCatalog(catalog, status, report) {
+  state.categories = catalog.categories;
+  state.skills = catalog.skills;
+  document.getElementById("count").textContent = "JEV · " + catalog.total;
+  renderCats();
+  renderList();
+  if (report) status.textContent = `新复制 ${report.copied.length} 个，已按名称分类。重复跳过 ${report.skippedDuplicates} 个。`;
+}
+
+async function addSkillRoot(path) {
+  const folder = (path || "").trim();
+  if (!folder) return;
+  const status = document.getElementById("settings-status");
+  status.textContent = "正在从该文件夹复制技能，原目录不会删。";
+  const report = await api("/api/folders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: folder }) });
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, report);
+  await loadSettings();
+  document.getElementById("settings-status").textContent = `已加入。新复制 ${report.copied.length} 个，重复跳过 ${report.skippedDuplicates} 个。`;
+}
+
+async function pickSkillRoot() {
+  const status = document.getElementById("settings-status");
+  status.textContent = "请在弹出的窗口里选择技能文件夹。";
+  const report = await api("/api/folders/pick", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  if (report.cancelled) {
+    status.textContent = "没有选择文件夹。";
+    return;
+  }
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, report);
+  await loadSettings();
+  document.getElementById("settings-status").textContent = `已从 ${report.path} 复制。新复制 ${report.copied.length} 个，重复跳过 ${report.skippedDuplicates} 个。`;
+}
+
+async function removeSkillRoot(path) {
+  await api("/api/folders/remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path }) });
+  await loadSettings();
+  document.getElementById("settings-status").textContent = "已从列表移除。项目里已复制的技能还在，原文件夹也还在。";
+}
+
+function openSyncCard(name) {
+  state.syncName = name || "";
+  document.getElementById("sync-card-title").textContent = name ? "同步" : "全局同步";
+  document.getElementById("sync-card-note").textContent = name
+    ? name + "。只处理这一个技能。"
+    : "处理柜里全部技能。分类保持不动。";
+  document.getElementById("sync-card").hidden = false;
+}
+
+function closeSyncCard() {
+  document.getElementById("sync-card").hidden = true;
+}
+
+function renderAddChoices() {
+  const query = (document.getElementById("add-card-query").value || "").trim().toLowerCase();
+  const rows = state.skills.filter((skill) => {
+    if (!query) return true;
+    return `${skill.name} ${skill.summary || ""}`.toLowerCase().includes(query);
+  }).slice(0, 8);
+  document.getElementById("add-card-list").innerHTML = rows.map((skill) =>
+    `<button type="button" data-pick="${esc(skill.name)}">${esc(skill.name)}</button>`
+  ).join("") || `<p>没有匹配的技能。</p>`;
+}
+
+function openAddCard(target) {
+  state.addTarget = target;
+  document.getElementById("add-card-note").textContent = target.replace
+    ? `换掉 ${target.replace}。只记住这句话，以及以后很像的说法。`
+    : "选一个技能。只记住这句话，以及以后很像的说法。";
+  document.getElementById("add-card-query").value = "";
+  renderAddChoices();
+  document.getElementById("add-card").hidden = false;
+  document.getElementById("add-card-query").focus();
+}
+
+async function saveTaskRule(body) {
+  const report = await api("/api/rules", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (state.lastRoute && state.lastRoute.task === body.task && state.lastRoute.category === body.category) {
+    state.lastRoute.skills = report.skills || [];
+    renderTicket(state.lastRoute);
+  }
+  return report;
+}
+
+function openMcpCard() {
+  document.getElementById("mcp-config").textContent = state.mcpText || "";
+  document.getElementById("copy-mcp").textContent = "复制配置";
+  document.getElementById("mcp-card").hidden = false;
+}
+
+document.getElementById("sync-card").addEventListener("click", (event) => {
+  if (event.target.id === "sync-card") {
+    closeSyncCard();
+    return;
+  }
+  const button = event.target.closest("[data-sync]");
+  if (!button) return;
+  const name = state.syncName;
+  closeSyncCard();
+  runSync(button.dataset.sync, name).catch((error) => alert(error.message));
+});
+document.getElementById("add-card").addEventListener("click", async (event) => {
+  if (event.target.id === "add-card") {
+    document.getElementById("add-card").hidden = true;
+    return;
+  }
+  const pick = event.target.closest("[data-pick]");
+  if (!pick || !state.addTarget) return;
+  const target = state.addTarget;
+  document.getElementById("add-card").hidden = true;
+  try {
+    const body = { task: target.task, category: target.category, add: pick.dataset.pick };
+    if (target.replace) body.remove = target.replace;
+    await saveTaskRule(body);
+    if (target.from === "calls") await loadCalls();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+document.getElementById("add-card-query").addEventListener("input", renderAddChoices);
+document.getElementById("mcp-card").addEventListener("click", (event) => {
+  if (event.target.id === "mcp-card") document.getElementById("mcp-card").hidden = true;
+});
+document.getElementById("copy-mcp").addEventListener("click", async () => {
+  const node = document.getElementById("mcp-config");
+  const button = document.getElementById("copy-mcp");
+  const text = node.textContent;
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  try {
+    await navigator.clipboard.writeText(text);
+    button.textContent = "已复制";
+  } catch (error) {
+    button.textContent = "已选中，请再复制";
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  closeSyncCard();
+  document.getElementById("add-card").hidden = true;
+  document.getElementById("mcp-card").hidden = true;
+});
+
+function syncStatus(report) {
+  const names = (report.updated || []).map((item) => item.name).slice(0, 8).join("、");
+  const verb = report.direction === "push" ? "旧文件已改成和现在一样" : "已撤销，与旧文件一致";
+  if (!(report.updated || []).length) return `已经一致。未改动 ${report.unchanged} 个，找不到旧文件 ${report.missingCount} 个。`;
+  return `${verb}：${report.updated.length} 个${names ? "（" + names + "）" : ""}。未改动 ${report.unchanged} 个，找不到旧文件 ${report.missingCount} 个。`;
+}
+
+async function runSync(direction, name) {
+  const one = Boolean(name);
+  const status = one ? document.getElementById("status") : document.getElementById("settings-status");
+  if (!one) {
+    status.textContent = "正在对比全部技能…";
+    const preview = await api("/api/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction, name: "", preview: true })
+    });
+    const differ = (preview.updated || []).length;
+    if (!differ) {
+      status.textContent = `已经一致。未改动 ${preview.unchanged} 个，找不到旧文件 ${preview.missingCount} 个。`;
+      return;
+    }
+    const action = direction === "push" ? "把旧文件改成和现在一样" : "撤销这些修改，让现在的文件回到旧文件";
+    const ok = window.confirm(`柜里 ${state.skills.length} 个技能，有 ${differ} 个和旧文件不一样。\n确定${action}？找不到旧文件的会跳过。`);
+    if (!ok) {
+      status.textContent = "已取消。";
+      return;
+    }
+  }
+  status.textContent = direction === "push" ? "正在把旧文件改成和现在一样…" : "正在撤销，使现文件与旧文件一致…";
+  if (direction === "push" && state.dirty && state.current && document.getElementById("editor") && (!name || name === state.current.name)) {
+    const content = document.getElementById("editor").value;
+    await api("/api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: state.current.name, content }) });
+    state.current.content = content;
+    state.dirty = false;
+  }
+  if (direction === "revert") state.dirty = false;
+  const report = await api("/api/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ direction, name: name || "" })
+  });
+  if (one) {
+    await openSkill(name);
+    const line = document.getElementById("status");
+    if (line) line.textContent = syncStatus(report);
+    return;
+  }
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, null);
+  if (state.current) await openSkill(state.current.name);
+  const settingsLine = document.getElementById("settings-status");
+  if (settingsLine) settingsLine.textContent = syncStatus(report);
+}
+
+async function readToolMemory() {
+  const status = document.getElementById("settings-status");
+  status.textContent = "正在读取各家智能体里已完成的工具调用，并重训 JEV。";
+  const report = await api("/api/memory/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  const doors = Object.entries(report.doors || {}).map(([name, count]) => name + " " + count).join("，");
+  status.textContent = "留下 " + report.kept + " 条工具记忆" + (doors ? "：" + doors : "") + "。已重训。";
+}
+
+async function scanSkills() {
+  const status = document.getElementById("settings-status");
+  status.textContent = "正在搜索。已有的技能会跳过，原目录不会删。";
+  const report = await api("/api/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, report);
+}
+
+function visibleLibrary() {
+  if (state.libSearch) return state.libSearch;
+  const feed = state.libraryFeed || { items: [], note: "", fetchedAt: "", days: [] };
+  if (!state.libDay) return feed;
+  const day = (feed.days || []).find((item) => item.date === state.libDay);
+  if (!day) return feed;
+  return { items: day.items || [], note: feed.note, fetchedAt: day.fetchedAt, date: day.date, days: feed.days };
+}
+
+function freshRepoNames(items) {
+  const days = (state.libraryFeed && state.libraryFeed.days) || [];
+  const latest = days[0] && days[0].date;
+  if (state.libSearch || (state.libDay && state.libDay !== latest) || days.length < 2) return new Set();
+  const previous = new Set((days[1].items || []).map((item) => item.fullName || item.url));
+  return new Set(items.filter((item) => !previous.has(item.fullName || item.url)).map((item) => item.fullName || item.url));
+}
+
+function formatStars(value) {
+  const count = Number(value) || 0;
+  if (count >= 10000) {
+    const wan = count / 10000;
+    return (wan >= 10 ? Math.round(wan) : wan.toFixed(1).replace(/\.0$/, "")) + " 万星";
+  }
+  return count + " 星";
+}
+
+function renderLibrary() {
+  const view = document.getElementById("library-view");
+  const feed = visibleLibrary();
+  const fresh = freshRepoNames(feed.items || []);
+  const cards = (feed.items || []).map((item, index) => `
+    <article class="lib-card" data-repo="${index}">
+      <a href="${esc(item.url)}" target="_blank" rel="noreferrer"><strong>${esc(item.fullName || item.name)}</strong></a>
+      <em>${fresh.has(item.fullName || item.url) ? "新上榜 · " : ""}${esc(formatStars(item.stars))}</em>
+      <p>${esc(item.description || "没有简介")}</p>
+    </article>`).join("") || `<p class="note">${state.libSearch ? "没有搜到。" : "今天还没有推荐。"}</p>`;
+  const days = (state.libraryFeed && state.libraryFeed.days) || [];
+  const latestDay = days[0] && days[0].date;
+  const dayButtons = days.map((day) => `<button class="lib-day${day.date === (state.libDay || latestDay) ? " on" : ""}" type="button" data-day="${esc(day.date)}">${esc(day.date)}</button>`).join("");
+  const history = state.libHistoryOpen && !state.libSearch
+    ? `<div class="lib-days">${dayButtons || `<span class="note">还没有留下推荐。</span>`}</div>`
+    : "";
+  const heading = state.libSearch ? "搜索结果" : (state.libDay && state.libDay !== latestDay ? `${state.libDay} 的推荐` : "今日推荐");
+  view.classList.toggle("picked", !!(state.libPick && state.libPick.kind === "repo"));
+  view.innerHTML = `
+    <div class="lib-center">
+      <div class="lib-head">
+        <h2>${esc(heading)}</h2>
+        ${state.libSearch ? "" : `<button id="lib-history" type="button">${state.libHistoryOpen ? "收起历史" : "历史推荐"}</button>`}
+        <form id="lib-search" class="lib-install">
+          <input id="lib-query" type="text" placeholder="搜网上的仓库" value="${esc(state.libQuery || "")}">
+          <button type="submit">搜索</button>
+          ${state.libSearch ? `<button id="lib-clear" type="button">回到推荐</button>` : ""}
+        </form>
+        <form id="lib-install" class="lib-install">
+          <input id="github-url" type="text" placeholder="GitHub 链接" value="${esc(state.githubDraft || "")}">
+          <button type="submit">安装</button>
+          <button id="lib-local" type="button">本地文件夹</button>
+        </form>
+        <button id="refresh-library" type="button">重新获取</button>
+      </div>
+      <p class="note">${esc(state.libSearch ? (feed.note || "") : "按 GitHub 星标，话题是 agent-skills 的仓库。每天留一份，以前的推荐还能翻。不会自动装进柜。")}${feed.fetchedAt ? " · 更新于\u00a0" + esc(formatWhen(feed.fetchedAt)) : ""}</p>
+      ${history}
+      <p class="note" id="library-status">${esc(state.libraryStatus || "点一张卡片，右边是中文介绍。可以整仓装进柜，也可以只装其中一个。")}</p>
+      <div class="lib-stage" id="lib-stage">
+        <div class="lib-cards">${cards}</div>
+        <aside class="lib-detail" id="lib-detail"></aside>
+      </div>
+    </div>`;
+  document.getElementById("refresh-library").addEventListener("click", () => refreshLibrary().catch((error) => alert(error.message)));
+  document.getElementById("lib-search").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = document.getElementById("lib-query");
+    state.libQuery = input.value;
+    searchLibrary(input.value).catch((error) => alert(error.message));
+  });
+  const clearSearch = document.getElementById("lib-clear");
+  if (clearSearch) clearSearch.addEventListener("click", () => {
+    state.libSearch = null;
+    state.libQuery = "";
+    state.libPick = null;
+    renderLibrary();
+  });
+  const historyButton = document.getElementById("lib-history");
+  if (historyButton) historyButton.addEventListener("click", () => {
+    state.libHistoryOpen = !state.libHistoryOpen;
+    renderLibrary();
+  });
+  document.getElementById("lib-local").addEventListener("click", () => installLocal().catch((error) => alert(error.message)));
+  document.getElementById("lib-install").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = document.getElementById("github-url");
+    state.githubDraft = input.value;
+    installGithub(input.value).catch((error) => alert(error.message));
+  });
+  document.getElementById("github-url").addEventListener("input", (event) => {
+    state.githubDraft = event.target.value;
+  });
+  renderLibDetail();
+  markLibrarySelection();
+}
+
+function markLibrarySelection() {
+  document.querySelectorAll("#library-view .lib-card.on, #library-view .lib-row.on").forEach((item) => item.classList.remove("on"));
+  const pick = state.libPick;
+  if (!pick) return;
+  const url = pick.kind === "repo" ? pick.url : (state.libRepo && state.libRepo.url);
+  const index = (visibleLibrary().items || []).findIndex((item) => item.url === url);
+  const card = document.querySelector(`#library-view [data-repo="${index}"]`);
+  if (card) card.classList.add("on");
+}
+
+function closeLibraryPick() {
+  const view = document.getElementById("library-view");
+  state.libPick = null;
+  view.classList.remove("picked");
+  markLibrarySelection();
+  renderLibDetail();
+}
+
+function renderLibDetail() {
+  const pane = document.getElementById("lib-detail");
+  if (!pane) return;
+  const pick = state.libPick;
+  if (!pick || pick.kind !== "repo") {
+    pane.innerHTML = "";
+    return;
+  }
+  const skills = (pick.skills || []).map((skill, index) => `
+    <div class="lib-jump" style="animation-delay:${Math.min(index, 14) * 28}ms">
+      <a href="${esc(skill.url)}" target="_blank" rel="noreferrer">${esc(skill.name)}</a>
+      <span>
+        <a href="${esc(skill.url)}" target="_blank" rel="noreferrer">原链接</a>
+        <button type="button" data-install="${esc(skill.url)}">装这个</button>
+      </span>
+    </div>`).join("");
+  const waiting = pick.loading ? `<p class="note">正在读这个项目的介绍…</p>` : "";
+  const failed = pick.error ? `<p class="note">${esc(pick.error)}</p>` : "";
+  const more = pick.truncated ? `<p class="note">仓库里还有更多，这里先列 ${(pick.skills || []).length} 个。</p>` : "";
+  const count = pick.loading ? "" : ` · ${(pick.skills || []).length} 个`;
+  const installAll = pick.loading ? "" : `<button class="go-install" type="button" data-install="${esc(pick.url)}">整仓装进柜</button>`;
+  const about = (pick.about || "").trim();
+  const intro = about
+    ? about.split(/\n\n+/).map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")
+    : `<p>${esc(pick.description || "这个仓库没有项目介绍。")}</p>`;
+  pane.innerHTML = `
+    <button class="lib-back" id="lib-back" type="button">返回</button>
+    <h3>${esc(pick.fullName || pick.name)}</h3>
+    <p class="lib-kicker">项目介绍</p>
+    <div class="intro">${waiting && !about ? `<p>正在读这个项目的介绍…</p>` : intro}</div>
+    <p class="lib-actions"><span>里面的技能${esc(count)}</span>
+      <a href="${esc(pick.url)}" target="_blank" rel="noreferrer">仓库原链接</a>
+      ${installAll}</p>
+    <div class="lib-skills">${failed}${skills}${more}</div>`;
+}
+
+async function searchLibrary(query) {
+  const text = (query || "").trim();
+  if (!text) return;
+  const status = document.getElementById("library-status");
+  if (status) status.textContent = "正在搜…";
+  state.libSearch = await api("/api/library/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ q: text })
+  });
+  state.libPick = null;
+  state.libraryStatus = "";
+  renderLibrary();
+}
+
+async function openRepo(index) {
+  const item = (visibleLibrary().items || [])[index];
+  if (!item) return;
+  const view = document.getElementById("library-view");
+  const cached = state.repoCache[item.url];
+  state.libPick = {
+    kind: "repo",
+    ...item,
+    skills: cached ? cached.skills || [] : [],
+    about: cached ? cached.about || "" : "",
+    loading: !cached,
+    error: "",
+    truncated: cached ? cached.truncated : false
+  };
+  state.libRepo = state.libPick;
+  view.classList.add("picked");
+  markLibrarySelection();
+  renderLibDetail();
+  const picked = document.querySelector("#library-view .lib-card.on");
+  if (picked) picked.scrollIntoView({ block: "nearest" });
+  if (cached) return;
+  try {
+    const peeked = state.repoCache[item.url] || await api("/api/library/peek", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: item.url })
+    });
+    state.repoCache[item.url] = peeked;
+    state.libPick = { kind: "repo", ...item, skills: peeked.skills || [], about: peeked.about || "", loading: false, truncated: peeked.truncated, error: peeked.error || "" };
+    state.libRepo = state.libPick;
+  } catch (error) {
+    state.libPick = { kind: "repo", ...item, skills: [], loading: false, error: error.message };
+    state.libRepo = state.libPick;
+  }
+  renderLibDetail();
+  markLibrarySelection();
+}
+
+async function loadLibrary() {
+  const view = document.getElementById("library-view");
+  view.innerHTML = `<h2>今日推荐</h2><p class="note">正在取今日推荐…</p>`;
+  state.libraryFeed = await api("/api/library");
+  renderLibrary();
+}
+
+document.getElementById("library-view").addEventListener("click", (event) => {
+  if (event.target.closest("#lib-back")) {
+    closeLibraryPick();
+    return;
+  }
+  const dayButton = event.target.closest("[data-day]");
+  if (dayButton) {
+    const days = (state.libraryFeed && state.libraryFeed.days) || [];
+    const latest = days[0] && days[0].date;
+    state.libSearch = null;
+    state.libQuery = "";
+    state.libPick = null;
+    state.libDay = dayButton.dataset.day === latest ? null : dayButton.dataset.day;
+    renderLibrary();
+    return;
+  }
+  if (event.target.closest("a")) return;
+  const install = event.target.closest("[data-install]");
+  if (install) {
+    installGithub(install.dataset.install).catch((error) => alert(error.message));
+    return;
+  }
+  const repo = event.target.closest("[data-repo]");
+  if (repo) openRepo(Number(repo.dataset.repo)).catch((error) => alert(error.message));
+});
+
+async function refreshLibrary() {
+  state.libSearch = null;
+  state.libQuery = "";
+  state.libDay = null;
+  const status = document.getElementById("library-status");
+  if (status) status.textContent = "正在向 GitHub 取星标前 10…";
+  await api("/api/library/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  await loadLibrary();
+}
+
+const sourceState = { path: "", after: null, kind: "" };
+
+function openSource(options) {
+  sourceState.path = options.path;
+  sourceState.after = options.after;
+  sourceState.kind = options.kinds[0][0];
+  document.getElementById("source-title").textContent = options.title;
+  document.getElementById("source-note").textContent = options.note;
+  document.getElementById("source-kinds").innerHTML = options.kinds.map(([id, label, placeholder], index) =>
+    `<button type="button" data-source-kind="${esc(id)}" data-placeholder="${esc(placeholder)}" class="${index === 0 ? "on" : ""}">${esc(label)}</button>`
+  ).join("");
+  const input = document.getElementById("source-input");
+  input.value = "";
+  input.placeholder = options.kinds[0][2];
+  document.getElementById("source-pick").hidden = options.kinds[0][0] !== "local";
+  document.getElementById("source-card").hidden = false;
+  input.focus();
+}
+
+document.getElementById("source-kinds").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-source-kind]");
+  if (!button) return;
+  sourceState.kind = button.dataset.sourceKind;
+  document.querySelectorAll("#source-kinds button").forEach((item) => item.classList.toggle("on", item === button));
+  document.getElementById("source-input").placeholder = button.dataset.placeholder || "";
+  document.getElementById("source-pick").hidden = sourceState.kind !== "local";
+});
+
+document.getElementById("source-card").addEventListener("click", (event) => {
+  if (event.target.id === "source-card") document.getElementById("source-card").hidden = true;
+});
+
+document.getElementById("source-pick").addEventListener("click", async () => {
+  const picked = await api("/api/pick-folder", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  if (!picked.cancelled && picked.path) document.getElementById("source-input").value = picked.path;
+});
+
+document.getElementById("source-save").addEventListener("click", async () => {
+  try {
+    await api(sourceState.path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: sourceState.kind, source: document.getElementById("source-input").value })
+    });
+    document.getElementById("source-card").hidden = true;
+    if (sourceState.after) await sourceState.after();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+async function handleBoardClick(event, reload) {
+  const toggle = event.target.closest("[data-toggle]");
+  const remove = event.target.closest("[data-remove]");
+  if (!toggle && !remove) return;
+  const item = toggle || remove;
+  const kind = item.dataset.toggle || item.dataset.remove;
+  const path = kind === "plugin" ? "/api/plugins" : "/api/mcp";
+  if (remove) {
+    await api(path + "/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host: item.dataset.host, name: item.dataset.name })
+    });
+  } else {
+    await api(path + "/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host: item.dataset.host, name: item.dataset.name, enabled: item.dataset.enabled !== "1" })
+    });
+  }
+  await reload();
+}
+
+async function installLocal() {
+  const status = document.getElementById("library-status");
+  if (status) status.textContent = "选择一个里面有 SKILL.md 的文件夹…";
+  const picked = await api("/api/pick-folder", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  if (picked.cancelled || !picked.path) {
+    if (status) status.textContent = state.libraryStatus || "没有选择文件夹。";
+    return;
+  }
+  if (status) status.textContent = "正在复制本地技能，不运行脚本…";
+  const report = await api("/api/library/local", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: picked.path })
+  });
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, null);
+  state.libraryStatus = report.message + " " + (report.copied || []).map((item) => item.name).join("、");
+  const line = document.getElementById("library-status");
+  if (line) line.textContent = state.libraryStatus;
+}
+
+async function installGithub(url) {
+  const status = document.getElementById("library-status");
+  if (!url) return;
+  if (status) status.textContent = "正在复制这个仓库里的技能，不运行脚本…";
+  const report = await api("/api/library/install", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url })
+  });
+  const catalog = await api("/api/catalog");
+  applyCatalog(catalog, status, null);
+  state.libraryStatus = report.message + " " + (report.copied || []).map((item) => item.name).join("、");
+  const line = document.getElementById("library-status");
+  if (line) line.textContent = state.libraryStatus;
+}
+
+api("/api/catalog").then((data) => {
+  state.categories = data.categories;
+  state.skills = data.skills;
+  document.getElementById("count").textContent = "JEV · " + data.total;
+  renderCats();
+  renderList();
+}).catch((error) => {
+  listEl.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+});
+</script>
+</body>
+</html>

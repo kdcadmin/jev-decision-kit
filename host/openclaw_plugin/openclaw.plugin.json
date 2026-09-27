@@ -1,0 +1,6 @@
+{
+  "id": "jev-skill-kit",
+  "name": "技能柜",
+  "activation": { "onStartup": true },
+  "configSchema": { "type": "object", "additionalProperties": false }
+}

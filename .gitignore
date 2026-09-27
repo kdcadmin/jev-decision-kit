@@ -1,0 +1,13 @@
+.venv/
+skills/
+catalog.json
+calls.json
+config.json
+library.json
+import-report.json
+__pycache__/
+*.pyc
+runtime/
+models/laya/
+intro/chrome-profile/
+intro/frames/

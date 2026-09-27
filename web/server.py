@@ -1,0 +1,260 @@
+# Local skill cabinet page. Edits and moves stay inside this project.
+from __future__ import annotations
+
+import json
+import socket
+import sys
+import traceback
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+import cabinet
+
+WEB = Path(__file__).resolve().parent
+HOST = "127.0.0.1"
+PORT = 8765
+
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, fmt: str, *args) -> None:
+        print("[kit] " + (fmt % args), flush=True)
+
+    def _json(self, code: int, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _read_json(self) -> dict:
+        length = int(self.headers.get("Content-Length", "0"))
+        if length > 1_500_000:
+            raise ValueError("body too large")
+        raw = self.rfile.read(length) if length else b"{}"
+        data = json.loads(raw.decode("utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("json object required")
+        return data
+
+    def do_GET(self) -> None:
+        parsed = urlparse(self.path)
+        try:
+            if parsed.path == "/":
+                self._file(WEB / "index.html", "text/html; charset=utf-8")
+                return
+            if parsed.path == "/api/catalog":
+                self._json(200, cabinet.catalog_view())
+                return
+            if parsed.path == "/api/skill":
+                name = parse_qs(parsed.query).get("name", [""])[0]
+                self._json(200, cabinet.read_skill(name))
+                return
+            if parsed.path == "/api/health":
+                from host.jev import WEIGHTS
+
+                self._json(200, {"ok": True, "modelReady": WEIGHTS.is_file()})
+                return
+            if parsed.path == "/api/settings":
+                self._json(200, cabinet.public_config())
+                return
+            if parsed.path == "/api/calls":
+                self._json(200, cabinet.calls_view())
+                return
+            if parsed.path == "/api/mcp":
+                from host.mcp_inventory import list_mcp_servers
+
+                self._json(200, list_mcp_servers())
+                return
+            if parsed.path == "/api/plugins":
+                from host.plugin_inventory import list_plugins
+
+                self._json(200, list_plugins())
+                return
+            if parsed.path == "/api/library":
+                self._json(200, cabinet.library_view())
+                return
+            self._json(404, {"error": "not found"})
+        except Exception as exc:
+            self._json(400, {"error": str(exc)})
+
+    def do_POST(self) -> None:
+        parsed = urlparse(self.path)
+        try:
+            body = self._read_json()
+            if parsed.path == "/api/move":
+                self._json(200, cabinet.move_skill(str(body.get("name", "")), str(body.get("category", ""))))
+                return
+            if parsed.path == "/api/save":
+                self._json(200, cabinet.save_skill(str(body.get("name", "")), body.get("content")))
+                return
+            if parsed.path == "/api/route":
+                self._json(200, cabinet.route_task(str(body.get("task", "")), "web"))
+                return
+            if parsed.path == "/api/settings":
+                self._json(200, cabinet.save_config(body))
+                return
+            if parsed.path == "/api/rules":
+                self._json(200, cabinet.update_rule(body))
+                return
+            if parsed.path == "/api/calls/delete":
+                self._json(200, cabinet.delete_call(str(body.get("id") or "")))
+                return
+            if parsed.path == "/api/scan":
+                self._json(200, cabinet.scan_skills())
+                return
+            if parsed.path == "/api/memory/tools":
+                from host.jev import load_head
+                from host.tool_memory import extract_tool_memory
+                from host.train_jev import train
+
+                report = extract_tool_memory()
+                train()
+                load_head.cache_clear()
+                report["retrained"] = True
+                self._json(200, report)
+                return
+            if parsed.path == "/api/sync":
+                chosen = str(body.get("direction") or "")
+                skill_name = str(body.get("name") or "").strip() or None
+                self._json(200, cabinet.sync_skills(chosen, skill_name, preview=bool(body.get("preview"))))
+                return
+            if parsed.path == "/api/folders/pick":
+                chosen = cabinet.pick_folder()
+                if not chosen:
+                    self._json(200, {"path": "", "cancelled": True, "extraScanRoots": cabinet.load_config().get("extraScanRoots") or []})
+                    return
+                report = cabinet.import_folder(chosen)
+                report["path"] = chosen
+                report["cancelled"] = False
+                self._json(200, report)
+                return
+            if parsed.path == "/api/folders":
+                report = cabinet.import_folder(str(body.get("path", "")).strip())
+                report["cancelled"] = False
+                self._json(200, report)
+                return
+            if parsed.path == "/api/library/refresh":
+                self._json(200, cabinet.refresh_library())
+                return
+            if parsed.path == "/api/library/search":
+                self._json(200, cabinet.search_library(str(body.get("q") or "")))
+                return
+            if parsed.path == "/api/library/install":
+                self._json(200, cabinet.install_github(str(body.get("url") or "")))
+                return
+            if parsed.path == "/api/library/local":
+                self._json(200, cabinet.install_local(str(body.get("path") or "")))
+                return
+            if parsed.path == "/api/pick-folder":
+                chosen = cabinet.pick_folder()
+                self._json(200, {"path": chosen, "cancelled": not bool(chosen)})
+                return
+            if parsed.path in {"/api/plugins/toggle", "/api/mcp/toggle"}:
+                from host.board import set_enabled
+
+                kind = "plugin" if "plugins" in parsed.path else "mcp"
+                set_enabled(kind, str(body.get("host") or ""), str(body.get("name") or ""), bool(body.get("enabled")))
+                self._json(200, _listed(kind))
+                return
+            if parsed.path in {"/api/plugins/delete", "/api/mcp/delete"}:
+                from host.board import hide_row
+
+                kind = "plugin" if "plugins" in parsed.path else "mcp"
+                hide_row(kind, str(body.get("host") or ""), str(body.get("name") or ""))
+                self._json(200, _listed(kind))
+                return
+            if parsed.path == "/api/plugins/add":
+                from host.board import add_row, plugin_from_source
+
+                add_row("plugin", plugin_from_source(str(body.get("kind") or ""), str(body.get("source") or "")))
+                self._json(200, _listed("plugin"))
+                return
+            if parsed.path == "/api/mcp/add":
+                from host.board import add_row, mcp_from_source
+
+                add_row("mcp", mcp_from_source(str(body.get("kind") or ""), str(body.get("source") or "")))
+                self._json(200, _listed("mcp"))
+                return
+            if parsed.path == "/api/library/peek":
+                self._json(200, cabinet.peek_github(str(body.get("url") or "")))
+                return
+            if parsed.path == "/api/library/read":
+                self._json(200, cabinet.read_github_skill(str(body.get("url") or ""), str(body.get("path") or "")))
+                return
+            if parsed.path == "/api/folders/remove":
+                roots = cabinet.forget_root(str(body.get("path", "")).strip())
+                self._json(200, {"extraScanRoots": roots})
+                return
+            self._json(404, {"error": "not found"})
+        except Exception as exc:
+            traceback.print_exc()
+            self._json(400, {"error": str(exc)})
+
+    def _file(self, path: Path, content_type: str) -> None:
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+
+def _listed(kind: str) -> dict:
+    if kind == "plugin":
+        from host.plugin_inventory import list_plugins
+
+        return list_plugins()
+    from host.mcp_inventory import list_mcp_servers
+
+    return list_mcp_servers()
+
+
+def _warm_model() -> None:
+    try:
+        from host.jev import load_head
+
+        load_head()
+        print("[kit] jev ready", flush=True)
+    except Exception as exc:
+        print("[kit] jev warmup skipped: " + str(exc), flush=True)
+
+
+def _refresh_library() -> None:
+    try:
+        if cabinet.library_is_stale():
+            cabinet.refresh_library()
+            print("[kit] library refreshed", flush=True)
+    except Exception as exc:
+        print("[kit] library refresh skipped: " + str(exc), flush=True)
+
+
+def main() -> None:
+    import threading
+    from hosts import sync_hosts
+
+    threading.Thread(
+        target=lambda: sync_hosts(cabinet.load_config()["selectorEnabled"]),
+        daemon=True,
+    ).start()
+    threading.Thread(target=_warm_model, daemon=True).start()
+    threading.Thread(target=_refresh_library, daemon=True).start()
+    class KitServer(ThreadingHTTPServer):
+        allow_reuse_address = False
+
+        def server_bind(self) -> None:
+            if sys.platform == "win32":
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            super().server_bind()
+
+    server = KitServer((HOST, PORT), Handler)
+    print(f"skill cabinet http://{HOST}:{PORT}", flush=True)
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

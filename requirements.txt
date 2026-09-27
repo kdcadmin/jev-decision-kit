@@ -1,0 +1,2 @@
+# Door scores live in models/jev/head.json. Retrain with: python -m host.train_jev
+# That command needs torch, which this environment already has.

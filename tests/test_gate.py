@@ -1,0 +1,178 @@
+import json
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from host.gate import GATE, available_gates, decision_from_votes, format_preface, noul_questions
+import cabinet
+
+
+class GateTests(unittest.TestCase):
+    def test_door_is_short_and_present(self):
+        catalog = cabinet.load_catalog()
+        gates = available_gates(catalog)
+        ids = {gate["id"] for gate in gates}
+        self.assertGreaterEqual(len(gates), 18)
+        self.assertLess(len(gates), 30)
+        self.assertIn("market-data", ids)
+        self.assertIn("vox-video", ids)
+        self.assertNotIn("github-project-video", ids)
+        self.assertNotIn("minimax-gen", ids)
+        self.assertNotIn("minimax-music", ids)
+        self.assertNotIn("gif-sticker", ids)
+        questions = noul_questions(gates)
+        self.assertNotIn("swot-analysis", questions)
+        self.assertNotIn("think", questions)
+        self.assertIn("market-data", questions)
+        self.assertEqual(questions["market-data"]["type"], "noul")
+
+    def test_choice_returns_the_door_skill(self):
+        catalog = {"skills": []}
+        gates = [
+            {
+                "id": "market-data",
+                "label": "行情",
+                "blurb": "查股价",
+                "items": [{"name": "china-stock-data", "path": "D:\\kit\\china-stock-data", "summary": "dirty"}],
+            }
+        ]
+        decided = decision_from_votes({"market-data": 0.7}, gates, None, {}, task="现在多少钱")
+        self.assertEqual(decided["method"], "skill")
+        self.assertEqual(decided["skills"][0]["name"], "china-stock-data")
+        self.assertEqual(decided["skills"][0]["summary"], "查股价")
+
+    def test_added_skill_survives_think(self):
+        by_name = {"meeting-minutes": {"name": "meeting-minutes", "summary": "纪要", "path": "D:\\kit\\meeting-minutes"}}
+        decided = decision_from_votes({}, [], {"add": ["meeting-minutes"], "remove": []}, by_name)
+        self.assertEqual(decided["method"], "skill")
+        self.assertEqual(decided["skills"][0]["name"], "meeting-minutes")
+
+    def test_preface_for_think_and_skill(self):
+        think = format_preface({"enabled": True, "method": "think", "skills": []}, {})
+        self.assertIn("自己做", think)
+        self.assertIn("【技能柜】", think)
+        skill = format_preface(
+            {"enabled": True, "method": "skill", "skills": [{"name": "docx"}]},
+            {"docx": "按模板写"},
+        )
+        self.assertIn("## docx", skill)
+        self.assertIn("按模板写", skill)
+        self.assertIn("下面这些技能。", skill)
+
+    def test_several_doors_stay_and_low_ones_drop(self):
+        gates = [
+            {"id": "market-data", "label": "行情", "blurb": "查股价", "items": [{"name": "china-stock-data", "path": "a"}]},
+            {"id": "office-docx", "label": "Word", "blurb": "写文档", "items": [{"name": "docx", "path": "b"}]},
+            {"id": "xiaohei", "label": "小黑插图", "blurb": "配图", "items": [{"name": "xiaohei-illustration", "path": "c"}]},
+            {"id": "thesis", "label": "论文", "blurb": "写论文", "items": [{"name": "chinese-thesis-workbench", "path": "d"}]},
+        ]
+        decided = decision_from_votes(
+            {"market-data": 0.91, "office-docx": 0.72, "xiaohei": 0.61, "thesis": 0.16},
+            gates,
+            None,
+            {},
+            task="查股价，写成 Word，再配一张小黑风格的图",
+        )
+        self.assertEqual(
+            [skill["name"] for skill in decided["skills"]],
+            ["china-stock-data", "docx", "xiaohei-illustration"],
+        )
+        self.assertEqual(decided["label"], "行情、Word、小黑插图")
+
+    def test_one_door_can_bring_two_skills(self):
+        gates = [
+            {
+                "id": "godot",
+                "label": "Godot",
+                "blurb": "改游戏",
+                "items": [
+                    {"name": "godot-gamedev", "path": "a"},
+                    {"name": "godot-ai-mcp", "path": "b"},
+                ],
+            }
+        ]
+        decided = decision_from_votes({"godot": 0.8}, gates, None, {}, task="改一下 Godot")
+        self.assertEqual([skill["name"] for skill in decided["skills"]], ["godot-gamedev", "godot-ai-mcp"])
+
+    def test_unnamed_high_score_is_dropped_and_five_named_doors_stay(self):
+        gates = [
+            {"id": "knowledge", "label": "资料库", "blurb": "建库", "items": [{"name": "knowledge-pipeline", "path": "a"}]},
+            {"id": "git-backup", "label": "远程备份", "blurb": "备份", "items": [{"name": "git-remote-backup", "path": "b"}]},
+            {"id": "market-data", "label": "行情", "blurb": "查股价", "items": [{"name": "china-stock-data", "path": "c"}]},
+            {"id": "web-read", "label": "读网页", "blurb": "读网页", "items": [{"name": "web-access", "path": "d"}]},
+            {"id": "office-docx", "label": "Word", "blurb": "写文档", "items": [{"name": "docx", "path": "e"}]},
+            {"id": "office-pptx", "label": "幻灯片", "blurb": "做片子", "items": [{"name": "pptx", "path": "f"}]},
+            {"id": "xiaohei", "label": "小黑插图", "blurb": "配图", "items": [{"name": "xiaohei-illustration", "path": "g"}]},
+        ]
+        decided = decision_from_votes(
+            {
+                "knowledge": 0.9,
+                "git-backup": 0.88,
+                "market-data": 0.83,
+                "web-read": 0.81,
+                "office-docx": 0.8,
+                "office-pptx": 0.75,
+                "xiaohei": 0.65,
+            },
+            gates,
+            None,
+            {},
+            task="查股价和涨跌，写成一份 Word，配一张小黑风格的配图，再做一份幻灯片，并打开 https://example.com",
+        )
+        self.assertEqual(
+            [skill["name"] for skill in decided["skills"]],
+            ["china-stock-data", "web-access", "docx", "pptx", "xiaohei-illustration"],
+        )
+
+    def test_named_door_can_pass_at_point_four(self):
+        gates = [
+            {"id": "office-docx", "label": "Word", "blurb": "写文档", "items": [{"name": "docx", "path": "a"}]},
+            {"id": "xiaohei", "label": "小黑插图", "blurb": "配图", "items": [{"name": "xiaohei-illustration", "path": "b"}]},
+            {"id": "knowledge", "label": "资料库", "blurb": "建库", "items": [{"name": "knowledge-pipeline", "path": "c"}]},
+        ]
+        decided = decision_from_votes(
+            {"office-docx": 0.45, "xiaohei": 0.3, "knowledge": 0.9},
+            gates,
+            None,
+            {},
+            task="写成 Word，再配一张小黑风格的图",
+        )
+        self.assertEqual([skill["name"] for skill in decided["skills"]], ["docx"])
+
+    def test_negation_drops_the_named_door(self):
+        gates = [
+            {"id": "office-docx", "label": "Word", "blurb": "写文档", "items": [{"name": "docx", "path": "a"}]},
+            {"id": "office-xlsx", "label": "表格", "blurb": "表格", "items": [{"name": "xlsx", "path": "b"}]},
+        ]
+        decided = decision_from_votes(
+            {"office-docx": 0.9, "office-xlsx": 0.8},
+            gates,
+            None,
+            {},
+            task="把数字放进 Excel，不要写 Word",
+        )
+        self.assertEqual([skill["name"] for skill in decided["skills"]], ["xlsx"])
+
+    def test_route_uses_the_door(self):
+        routed = cabinet.route_task("看一下茅台现在多少钱", "test", record=False)
+        names = [skill["name"] for skill in routed["skills"]]
+        self.assertEqual(routed["method"], "skill")
+        self.assertEqual(names, ["china-stock-data"])
+        self.assertEqual(routed["category"], "market-data")
+
+    def test_answer_key_matches_the_door(self):
+        catalog = cabinet.load_catalog()
+        ids = {gate["id"] for gate in available_gates(catalog)} | {"think"}
+        tasks = json.loads((ROOT / "tests" / "gate_tasks.json").read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(tasks), 20)
+        for item in tasks:
+            self.assertIn(item["expect"], ids)
+        declared = {entry["id"] for entry in GATE}
+        self.assertTrue(declared <= ids)
+
+
+if __name__ == "__main__":
+    unittest.main()
