@@ -42,9 +42,15 @@ python -m venv .venv
 
 它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 JEV 去替代它们。
 
-![柜门集合匹配](docs/compare-set-match.svg)
+下面几张图用的是你们实际踩过的事故句，不是抽象总分。
 
-![漏选与误开](docs/compare-errors.svg)
+![以前选错的那些句](docs/compare-failures.svg)
+
+提问误开（「PDF 是什么」）、否定被盖掉（「不要用 Word」）、WordPress 被当成 Word、纪要+Word+幻灯片收成一门、不要 PDF 却漏掉论文、填表导出只开 PDF、股价要 Excel 仍开 Word、登录页换一种说法就没了。规则仍会把 WordPress 误开成建站；JEV 单独会漏论文和网页操作；记忆补上这两句；盲测「在登录页填完再点提交」现在还漏。
+
+![旧事故覆盖](docs/compare-errors.svg)
+
+![柜门集合匹配](docs/compare-set-match.svg)
 
 ![JEV 与 Laya 的职责](docs/compare-scope.svg)
 
