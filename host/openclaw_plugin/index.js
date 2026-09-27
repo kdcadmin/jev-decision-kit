@@ -30,12 +30,14 @@ async function healthy(port) {
 }
 
 function startWorker() {
-  spawn(python, [worker], {
+  const child = spawn(python, [worker], {
     cwd: root,
     windowsHide: true,
     stdio: "ignore",
     detached: true,
-  }).unref();
+  });
+  child.on("error", () => {});
+  child.unref();
 }
 
 async function ensureWorker() {

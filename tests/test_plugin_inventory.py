@@ -141,6 +141,13 @@ class HarnessPluginTests(unittest.TestCase):
         self.assertIn("payload?.messages", source)
         self.assertNotIn("claimed", source)
         self.assertNotIn("[...extra", source)
+        self.assertIn('child.on("error"', source)
+
+
+class OpenClawPluginTests(unittest.TestCase):
+    def test_openclaw_spawn_swallows_missing_python(self):
+        source = (ROOT / "host" / "openclaw_plugin" / "index.js").read_text(encoding="utf-8")
+        self.assertIn('child.on("error"', source)
 
 
 if __name__ == "__main__":
