@@ -1184,11 +1184,12 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     trained = set(load_head().get("labels") or [])
     habits = remembered_doors(task)
     for gate in gates:
+        named = sentence_names(task, gate)
+        if not named:
+            probabilities[gate["id"]] = 0.0
+            continue
         if gate["id"] in habits:
             probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), 0.75)
-            continue
-        if not sentence_names(task, gate):
-            probabilities[gate["id"]] = 0.0
             continue
         if gate["id"] not in trained:
             probabilities[gate["id"]] = max(float(probabilities.get(gate["id"]) or 0), 0.75)

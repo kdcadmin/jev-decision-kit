@@ -8,9 +8,9 @@ JEV 选的是技能和能点名的插件。MCP 只在柜子里查看和管理，
 
 ## 展示
 
-介绍片太大，GitHub 网页播不了，看仓库里的页面走一遍：[docs/tour.mp4](docs/tour.mp4)
+![柜子走一遍](docs/tour.gif)
 
-本机完整介绍片仍是 `jev-skill-kit-intro.mp4`，不在网页预览里打开。
+GitHub 说明页不能内嵌仓库里的 mp4，所以这里用动图。同一段也在 [docs/tour.mp4](docs/tour.mp4)（约 25 秒，带静音音轨，本机播放器可打开）。完整介绍片仍是本机的 `jev-skill-kit-intro.mp4`，约 44MB，网页预览打不开。
 
 ![柜子](docs/cabinet.png)
 
@@ -48,7 +48,7 @@ python -m venv .venv
 
 - 权重：`models/jev/head.json`
 - 训练：`.venv\Scripts\python -m host.train_jev`
-- 样本按柜门上的说法来写，十二句考卷不放进训练集
+- 样本按柜门上的说法来写。`tests/eval_cases.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句
 
 ## 调用记录
 

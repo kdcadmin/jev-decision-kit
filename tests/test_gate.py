@@ -189,6 +189,16 @@ class GateTests(unittest.TestCase):
         self.assertTrue(sentence_names("先解释 PDF 和 Word 的区别，然后导出 Word", docx))
         self.assertFalse(sentence_names("先解释 PDF 和 Word 的区别，然后导出 Word", pdf))
         self.assertTrue(sentence_names("做一个表格对比 PDF 和 Word 的区别", xlsx))
+        self.assertFalse(sentence_names("这个 PDF 有什么用", pdf))
+        self.assertFalse(sentence_names("Word 怎么用", docx))
+        self.assertFalse(sentence_names("Excel 和表格有什么区别", xlsx))
+        self.assertFalse(sentence_names("PDF 是什么", pdf))
+        pptx = {"id": "office-pptx", "words": ("幻灯片", "ppt", "PPT", "pptx", "演示文稿")}
+        self.assertTrue(sentence_names("不要用 PDF，给我 pptx", pptx))
+        self.assertFalse(sentence_names("不要用 PDF，给我 pptx", pdf))
+        self.assertTrue(sentence_names("记成一份表格", xlsx))
+        self.assertTrue(sentence_names("导出成 Excel", xlsx))
+        self.assertTrue(sentence_names("做成一份 xlsx", xlsx))
         preface = format_preface(
             {"enabled": True, "method": "skill", "skills": [{"name": "docx"}, {"name": "pdf"}]},
             {"docx": "x" * 30000, "pdf": "y" * 30000},

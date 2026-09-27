@@ -54,6 +54,16 @@ class ToolMemoryTests(unittest.TestCase):
         )
         self.assertEqual(decided["skills"][0]["name"], "agent-browser")
 
+    def test_current_negation_beats_habit(self):
+        from unittest.mock import patch
+
+        import cabinet
+
+        with patch("host.tool_memory.remembered_doors", return_value={"office-docx"}):
+            routed = cabinet.route_task("不要用 Word", "test", record=False)
+        self.assertEqual(routed["method"], "think")
+        self.assertEqual(routed["skills"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

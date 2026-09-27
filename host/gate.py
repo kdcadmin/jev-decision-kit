@@ -157,8 +157,48 @@ GATE = (
 YES_LINE = 0.4
 NEGATION = ("不要", "别", "不用", "勿", "不是")
 _NEGATION_FALSE = ("特别", "分别", "别的", "别人", "别处", "别家", "别管", "别名")
-_ASK = ("什么意思", "是什么意思", "区别", "不同", "差异", "解释", "为什么叫", "变量")
-_MAKE = ("制作", "做一份", "做一页", "做成", "做一个", "做张", "做一张", "改成", "写成", "整理成", "整理一下", "导出", "生成", "给我一份", "用")
+_ASK = (
+    "什么意思",
+    "是什么意思",
+    "区别",
+    "不同",
+    "差异",
+    "对比",
+    "解释",
+    "为什么叫",
+    "变量",
+    "是什么",
+    "是什么东西",
+    "怎么用",
+    "怎么办",
+    "哪个好",
+    "哪个好用",
+    "能不能",
+    "可以吗",
+    "如何",
+    "为什么",
+    "什么是",
+    "干嘛的",
+    "干什么用",
+    "有什么用",
+    "怎么",
+)
+_MAKE = (
+    "制作",
+    "做一份",
+    "做一页",
+    "做成",
+    "做一个",
+    "做张",
+    "做一张",
+    "改成",
+    "写成",
+    "整理成",
+    "整理一下",
+    "导出",
+    "生成",
+    "给我一份",
+)
 _TURN = ("还是", "改成", "换成", "改为")
 # A door counts only when the sentence itself names that job.
 WORDS = {
@@ -167,7 +207,7 @@ WORDS = {
     "meeting-minutes": ("纪要", "会议"),
     "office-docx": ("Word", "word", "docx"),
     "office-pdf": ("PDF", "pdf"),
-    "office-pptx": ("幻灯片", "ppt", "PPT", "演示文稿"),
+    "office-pptx": ("幻灯片", "ppt", "PPT", "pptx", "演示文稿"),
     "office-xlsx": ("表格", "Excel", "excel", "xlsx"),
     "web-read": ("网页", "网址", "链接", "http", "https"),
     "web-act": ("点击", "填写", "填表", "提交", "登录"),
@@ -286,6 +326,18 @@ def _false_negation(text: str, index: int) -> bool:
     return False
 
 
+def _other_named(between: str, skip_at: int) -> bool:
+    del skip_at
+    blob = between or ""
+    if not blob.strip():
+        return False
+    for words in WORDS.values():
+        for word in words:
+            if word and word in blob:
+                return True
+    return False
+
+
 def _clause_span(text: str, index: int) -> tuple[int, int]:
     start = 0
     end = len(text)
@@ -323,21 +375,6 @@ def _hits(task: str, gate: dict) -> list[tuple[int, int]]:
     return uniq
 
 
-def _item_span(text: str, index: int, length: int) -> tuple[int, int]:
-    start = index
-    end = index + length
-    stops = "，,。；;！!？?、 "
-    while start > 0 and text[start - 1] not in stops:
-        start -= 1
-        if index - start > 10:
-            break
-    while end < len(text) and text[end] not in stops:
-        end += 1
-        if end - (index + length) > 6:
-            break
-    return start, end
-
-
 def _item_negated(text: str, index: int, length: int) -> bool:
     if _false_negation(text, index):
         return False
@@ -354,7 +391,9 @@ def _item_negated(text: str, index: int, length: int) -> bool:
     for flag in NEGATION:
         if flag in left and not _false_negation(text, max(0, index - 6)):
             between = left[left.rfind(flag) + len(flag) :]
-            if any(other in between for other in ("只要", "Word", "word", "PDF", "pdf", "Excel", "表格", "网页")):
+            if "只要" in between:
+                continue
+            if between.strip() and _other_named(between, skip_at=index):
                 continue
             return True
         if flag in right and not _false_negation(text, index + length):
@@ -377,17 +416,21 @@ def _item_asking(text: str, index: int, length: int) -> bool:
     clause = text[start:end]
     local = text[max(0, index - 8) : min(len(text), index + length + 8)]
     word = text[index : index + length]
-    contrast = any(mark in local for mark in ("区别", "不同", "差异", "对比"))
-    export = any(mark in local for mark in ("导出", "写成", "做成", "改成", "只要"))
+    contrast = any(mark in clause for mark in ("区别", "不同", "差异", "对比")) or any(
+        mark in local for mark in ("区别", "不同", "差异", "对比")
+    )
+    export = any(mark in local for mark in ("导出", "写成", "改成", "只要"))
     if contrast and not export and word.lower() in {"word", "pdf", "docx", "ppt", "pptx"}:
         return True
     if word.lower() in {"表格", "excel", "xlsx"}:
-        return False
+        before = text[max(0, index - 10) : index]
+        if any(mark in before for mark in _MAKE):
+            return False
     if any(mark in local for mark in _MAKE) and not contrast:
         return False
     if any(mark in clause for mark in _MAKE) and not any(mark in clause for mark in _ASK):
         return False
-    return any(mark in clause for mark in _ASK)
+    return any(mark in clause for mark in _ASK) or any(mark in local for mark in _ASK)
 
 
 def sentence_names(task: str, gate: dict) -> bool:
@@ -430,16 +473,17 @@ def decision_from_votes(
     chosen = []
     reasons = []
     for vote, _index, gate in ranked:
-        named = sentence_names(task, gate) or gate["id"] in remembered
-        if named and gate["id"] in remembered:
-            why = "沿用你改过的说法"
-        elif named and vote >= YES_LINE:
+        named = sentence_names(task, gate)
+        if named and vote >= YES_LINE:
             why = "点了名，分数 " + str(round(vote, 2))
+            kept = True
         elif named:
             why = "点了名，分数 " + str(round(vote, 2)) + " 没过 0.4"
+            kept = False
         else:
             why = "没点名" if vote < YES_LINE else "没点名，虽然分数 " + str(round(vote, 2))
-        if vote >= YES_LINE and named:
+            kept = False
+        if kept:
             chosen.append(gate)
             reasons.append({"id": gate["id"], "label": gate["label"], "kept": True, "probability": round(vote, 4), "reason": why})
         else:
