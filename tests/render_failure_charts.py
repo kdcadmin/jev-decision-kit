@@ -165,49 +165,39 @@ def table() -> str:
 
 
 def moved() -> str:
-    groups = group_rates()
-    laya = sum(1 for row in ROWS if row[3])
-    jev = sum(1 for row in ROWS if row[5])
-    n = len(ROWS)
-    cats = [("全部 33 句", laya, jev, n)] + [(name, a, b, count) for name, count, a, b in groups]
-    w, h = 960, 420
-    left, right, top, bottom = 56, 920, 86, 318
-    plot_h = bottom - top
-    bar_w = 36
+    better = sum(1 for row in ROWS if row[5] and not row[3])
+    worse = sum(1 for row in ROWS if row[3] and not row[5])
+    same_ok = sum(1 for row in ROWS if row[3] and row[5])
+    same_bad = sum(1 for row in ROWS if not row[3] and not row[5])
+    w, h = 960, 220
+    items = [
+        ("两边都对", same_ok, "#0c6b52"),
+        ("Laya 错，现在对", better, "#0c6b52"),
+        ("Laya 对，现在错", worse, "#8f3d32"),
+        ("两边都错", same_bad, "#1c211c"),
+    ]
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="#f7f6f2"/>',
-        '<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">刚好选对：Laya 当时 vs jev-decision</text>',
-        '<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是刚好选对的比例（%）。同一批 33 句。没有技能和插件时自己做算对。</text>',
+        '<text x="24" y="30" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">33 句里谁变了</text>',
+        '<text x="24" y="52" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">单位：句。没有技能和插件时自己做算对，所以这 33 句 jev-decision 全部通过。</text>',
     ]
-    for tick in (0, 25, 50, 75, 100):
-        y = bottom - plot_h * tick / 100
-        parts.append(f'<line x1="{left}" y1="{y:.1f}" x2="{right}" y2="{y:.1f}" stroke="#d5d1c7"/>')
+    gap = (900 - 48) / 4
+    for i, (name, value, color) in enumerate(items):
+        x = 48 + i * gap
+        bh = 90 * value / 33
+        if bh < 2 and value == 0:
+            bh = 0
+        y = 160 - bh
+        if bh:
+            parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="70" height="{bh:.1f}" fill="{color}"/>')
         parts.append(
-            f'<text x="{left - 8}" y="{y + 4:.1f}" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">{tick}</text>'
+            f'<text x="{x + 35:.1f}" y="{y - 8:.1f}" text-anchor="middle" font-size="16" font-family="Segoe UI, sans-serif" fill="#1c211c">{value}</text>'
         )
-    gap = (right - left) / len(cats)
-    for i, (name, a, b, count) in enumerate(cats):
-        cx = left + gap * (i + 0.5)
-        for dx, value, color in ((-bar_w - 4, 100 * a / count, "#1c211c"), (4, 100 * b / count, "#0c6b52")):
-            bh = plot_h * value / 100
-            if bh < 2:
-                bh = 2
-            y = bottom - bh
-            parts.append(f'<rect x="{cx + dx:.1f}" y="{y:.1f}" width="{bar_w}" height="{bh:.1f}" fill="{color}"/>')
-            parts.append(
-                f'<text x="{cx + dx + bar_w / 2:.1f}" y="{y - 8:.1f}" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="{color}">{a if dx < 0 else b}/{count}</text>'
-            )
         parts.append(
-            f'<text x="{cx:.1f}" y="{bottom + 24}" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
+            f'<text x="{x + 35:.1f}" y="186" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">{svg_escape(name)}</text>'
         )
-    parts += [
-        '<rect x="48" y="382" width="14" height="14" fill="#1c211c"/>',
-        '<text x="68" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>',
-        '<rect x="180" y="382" width="14" height="14" fill="#0c6b52"/>',
-        '<text x="200" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>',
-        "</svg>",
-    ]
+    parts.append("</svg>")
     return "\n".join(parts) + "\n"
 
 
