@@ -32,6 +32,16 @@ class EvalIsolationTests(unittest.TestCase):
         self.assertGreaterEqual(len(blind), 30)
         self.assertEqual(sorted(regression & blind), [])
 
+    def test_memory_fixture_is_not_an_eval_sentence(self):
+        held = held_out_texts()
+        samples = json.loads((ROOT / "tests" / "memory_fixture.json").read_text(encoding="utf-8"))
+        texts = [str(item.get("task") or "").strip() for item in samples]
+        self.assertEqual([text for text in texts if text in held], [])
+        from host.tool_memory import remembered_doors
+
+        self.assertIn("thesis", remembered_doors("不要用 PDF，给我论文", samples))
+        self.assertEqual(remembered_doors("不要用 Word", samples), set())
+
     def test_asking_sentences_do_not_open_doors(self):
         import cabinet
 
@@ -69,6 +79,36 @@ class HostYamlTests(unittest.TestCase):
         self.assertEqual(again.count("jev-skill-kit:"), 1)
         self.assertIn("command: py2", again)
         self.assertIn("studio-api:", again)
+        self.assertIn("platforms:", again)
+        self.assertIn("api_server:", again)
+        last = (
+            "mcp_servers:\n"
+            "  jev-skill-kit:\n"
+            "    command: old\n"
+            "model:\n"
+            "  name: keep-me\n"
+        )
+        updated = upsert_mcp_block(last, "  jev-skill-kit:\n    command: new\n")
+        self.assertIn("model:", updated)
+        self.assertIn("keep-me", updated)
+        self.assertGreater(updated.index("model:"), updated.index("jev-skill-kit:"))
+        self.assertGreater(updated.index("name: keep-me"), updated.index("model:"))
+        hermes = (
+            "mcp_servers:\n"
+            "  studio-api:\n"
+            "    command: node\n"
+            "  jev-skill-kit:\n"
+            "    command: old\n"
+            "    enabled: true\n"
+            "platforms:\n"
+            "  api_server:\n"
+            "    extra:\n"
+            "      port: 8647\n"
+        )
+        same = upsert_mcp_block(hermes, "  jev-skill-kit:\n    command: old\n    enabled: true\n")
+        self.assertIn("platforms:", same)
+        self.assertLess(same.index("jev-skill-kit:"), same.index("platforms:"))
+        self.assertGreater(same.index("api_server:"), same.index("platforms:"))
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.yaml"
             path.write_text(original, encoding="utf-8")

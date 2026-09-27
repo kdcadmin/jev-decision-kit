@@ -1,14 +1,14 @@
 [
   {
-    "task": "不要用 PDF，给我论文",
+    "task": "先不要 PDF，给我论文",
     "doors": ["thesis"]
   },
   {
-    "task": "写成一份 Word",
+    "task": "请写成一份 Word 文档",
     "doors": ["office-docx"]
   },
   {
-    "task": "帮我把这个后台页面点开并登录",
+    "task": "帮我把后台页面打开并登录进去",
     "doors": ["web-act"]
   }
 ]

@@ -78,7 +78,7 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 独立评测分三份：`tests/eval_cases.json` 是回归集（已经指导过规则修改）；`tests/eval_blind.json` 是未参与调试的句子；记忆第三列只用 `tests/memory_fixture.json`，不读你电脑上的真实记录。训练脚本会拦截前两份里的原句。对比：`.venv\Scripts\python.exe -m host.eval_heldout`，盲测加 `--blind`。
 
-「不要用 PDF，给我论文」按论文请求计分；模型低于 0.4 算漏召回。固定记忆里若有相近论文样本，习惯分可以补上。「WordPress 建站，不是 Word」按排除 Word 计，不打开建站插件。
+「不要用 PDF，给我论文」按论文请求计分；模型低于 0.4 算漏召回。记忆第三列的样本不得与评测原句相同；只有 n-gram 覆盖够近时才会抬分，换一种说法可能补不上。「WordPress 建站，不是 Word」按排除 Word 计，不打开建站插件。
 
 插件没有写进权重文件时，只要原句点了它的名字，也会留下。
 

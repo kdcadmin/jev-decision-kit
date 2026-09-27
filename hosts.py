@@ -64,7 +64,8 @@ def upsert_mcp_block(text: str, block: str) -> str:
         if line.strip() and not line.startswith((" ", "\t")):
             limit = index
             break
-        if line.startswith("  jev-skill-kit:"):
+    for index in range(parent + 1, limit):
+        if lines[index].startswith("  jev-skill-kit:"):
             start = index
             break
     if start is None:
@@ -90,7 +91,9 @@ def sync_hermes(enabled: bool, path: Path | None = None) -> dict:
         backup = path.with_name(path.name + ".jev.bak")
         if not backup.is_file():
             backup.write_text(text, encoding="utf-8")
-        path.write_text(text2, encoding="utf-8")
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(text2, encoding="utf-8")
+        tmp.replace(path)
     return {"name": "hermes", "present": True, "enabled": enabled, "backup": str(path.with_name(path.name + ".jev.bak"))}
 
 
