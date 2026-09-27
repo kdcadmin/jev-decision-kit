@@ -91,14 +91,13 @@ function userMessage(text) {
 }
 
 export function apply(ctx) {
-  ctx.on("agent/pre-step", async (event, next) => {
-    const rest = typeof next === "function" ? await next() : [];
-    const extra = Array.isArray(rest) ? rest : [];
-    const claimed = event?.messages || event?.claimed || [];
-    const task = messageText(claimed) || messageText(event);
-    if (!task || task.includes("【技能柜】")) return extra;
+  ctx.on("agent/pre-step", async (payload, next) => {
+    const decision = await next();
+    if (decision?.kind !== "enter") return decision;
+    const task = messageText(payload?.messages);
+    if (!task || task.includes("【技能柜】")) return decision;
     const preface = await prefaceFor(task);
-    if (!preface) return extra;
-    return [...extra, userMessage(preface)];
+    if (!preface) return decision;
+    return { ...decision, messages: [...decision.messages, userMessage(preface)] };
   });
 }

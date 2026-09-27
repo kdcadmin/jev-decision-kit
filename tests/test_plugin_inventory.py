@@ -135,7 +135,12 @@ class HarnessPluginTests(unittest.TestCase):
         self.assertTrue((folder / "cordis.patch.yml").is_file())
         source = (folder / "index.js").read_text(encoding="utf-8")
         self.assertIn("agent/pre-step", source)
-        self.assertIn("source: \"harness\"", source)
+        self.assertIn('source: "harness"', source)
+        self.assertIn('decision?.kind !== "enter"', source)
+        self.assertIn("{ ...decision, messages:", source)
+        self.assertIn("payload?.messages", source)
+        self.assertNotIn("claimed", source)
+        self.assertNotIn("[...extra", source)
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ stdio 配置：
 
 选择器开着时，Hermes 用 `pre_llm_call`，OpenClaw 用 `before_prompt_build`，DeepSeek Harness 插件用 `agent/pre-step`。它们在模型开口前要这段前言。关掉选择器之后，它们不再把原句交过来。
 
-DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用：
+DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用。Electron 的 `desktop` profile 不能走 CLI 的 `dsh plugin add`，在 GUI 里：设置 → 插件 → 添加插件，填本机绝对路径 `项目目录\host\harness_plugin`，然后重启 App 并开新会话。其它 profile 可以用：
 
 ```bash
 dsh plugin add 项目目录\host\harness_plugin

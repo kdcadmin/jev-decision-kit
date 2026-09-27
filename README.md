@@ -84,7 +84,7 @@ JEV 在模型开口之前打一遍分。门上每一项单独问要不要用，�
 
 DeepSeek Harness 兼容两种接法，可以同时用：
 
-- 插件：`dsh plugin add <本项目>\host\harness_plugin`，在开口前注入 JEV 前言
+- 插件：GUI「设置 → 插件 → 添加插件」填 `D:\jev-decision-kit\host\harness_plugin`（`desktop` profile 不能走 CLI），装完重启 App 再开新会话。其它 profile 可用 `dsh plugin add <本项目>\host\harness_plugin`
 - MCP：把 `jev-skill-kit` 加进 MCP 列表，用前言里的 `decision_id` 调用 `get_skill` 续读正文
 
 Codex 目前仍走 MCP 补读。完整「先选再开口」按 [INTEGRATION.md](INTEGRATION.md)。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和 OpenClaw 的 MCP 读写项。关掉选择器后，Hermes、OpenClaw 和 DeepSeek Harness 插件不再把这句话交给 JEV。
