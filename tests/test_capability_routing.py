@@ -76,6 +76,9 @@ class CapabilityRoutingTests(unittest.TestCase):
             ('不要 shader-dev，只用 pixel-art', {'pixel-art'}),
             ('给我剪辑这段实拍视频', {'openmontage'}),
             ('把实拍素材做成一个视频', {'openmontage'}),
+            ('用 Python 写一个视频处理脚本', {'test-driven-development'}),
+            ('不需要写爬虫，只做一个 vox 视频', {'vox-style-intro-video'}),
+            ('写一个后端 API，再做一个前端页面', {'fullstack-dev', 'frontend-dev'}),
         )
         for task, expected in cases:
             with self.subTest(task=task):
@@ -90,9 +93,22 @@ class CapabilityRoutingTests(unittest.TestCase):
             'shader-dev 是什么', 'pixel-art 有什么用',
             'vox-style-intro-video 是什么', '我喜欢 Android 手机',
             '今天看了一个前端教程', '这个视频的脚本讲得不错',
+            '帮我写一个短视频脚本',
         ):
             with self.subTest(task=task):
                 self.assertEqual(set(), self.names(task))
+
+    def test_every_installed_skill_can_be_named_and_declined(self):
+        catalog = cabinet.load_catalog()
+        names = {s['name'] for s in catalog['skills']
+                 if (Path(s.get('path') or '') / 'SKILL.md').is_file()}
+        for name in sorted(names):
+            with self.subTest(name=name, mode='select'):
+                self.assertIn(name, self.names('请使用 ' + name))
+            with self.subTest(name=name, mode='decline'):
+                self.assertNotIn(name, self.names('不要使用 ' + name))
+            with self.subTest(name=name, mode='explain'):
+                self.assertNotIn(name, self.names(name + ' 是什么'))
 
 
 if __name__ == '__main__':

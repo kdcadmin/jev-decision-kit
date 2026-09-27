@@ -512,6 +512,10 @@ def sentence_names(task: str, gate: dict) -> bool:
         if not active:
             return False
         if gate['id'] == 'code-build':
+            if '脚本' in text and any(word in text for word in ('视频', '旁白', '剧情', '口播')) and not any(
+                _named(text, word) >= 0 for word in ('Python', 'JavaScript', 'TypeScript', '代码', '程序', '爬虫')
+            ):
+                return False
             # Debugging/refactoring and frontend code have their own workflow.
             if not any(mark in text for mark in ('爬虫', '脚本')) and any(
                 sentence_names(text, {'id': other, 'words': WORDS[other]})
@@ -521,7 +525,7 @@ def sentence_names(task: str, gate: dict) -> bool:
     if not explicit and gate['id'] == 'vox-video' and _named(text, 'vox') < 0 and not any(
         word in text for word in ('介绍视频', '介绍片')
     ):
-        if not _operation_request(text):
+        if not re.search(r'制作|生成|做|create|make|produce|generate', text, re.I):
             return False
         if any(word in text for word in WORDS['openmontage']):
             return False
