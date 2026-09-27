@@ -1,44 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="440" viewBox="0 0 960 440">
-<rect width="960" height="440" fill="#f7f6f2"/>
-<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">以前 Laya 选错、现在 jev-decision 选对</text>
-<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">只画这 18 句。纵轴是这组里选对的比例。黑柱是 Laya 当时，全是 0。绿柱是 jev-decision，这 18 句都对。</text>
-<line x1="56" y1="328.0" x2="920" y2="328.0" stroke="#d5d1c7"/>
-<text x="48" y="332.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
-<line x1="56" y1="269.0" x2="920" y2="269.0" stroke="#d5d1c7"/>
-<text x="48" y="273.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">25</text>
-<line x1="56" y1="210.0" x2="920" y2="210.0" stroke="#d5d1c7"/>
-<text x="48" y="214.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">50</text>
-<line x1="56" y1="151.0" x2="920" y2="151.0" stroke="#d5d1c7"/>
-<text x="48" y="155.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">75</text>
-<line x1="56" y1="92.0" x2="920" y2="92.0" stroke="#d5d1c7"/>
-<text x="48" y="96.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">100</text>
-<rect x="96.4" y="325.0" width="42" height="3.0" fill="#1c211c"/>
-<text x="117.4" y="317.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/18</text>
-<rect x="146.4" y="92.0" width="42" height="236.0" fill="#0c6b52"/>
-<text x="167.4" y="84.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">18/18</text>
-<text x="142.4" y="354" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">这 18 句</text>
-<rect x="269.2" y="325.0" width="42" height="3.0" fill="#1c211c"/>
-<text x="290.2" y="317.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/10</text>
-<rect x="319.2" y="92.0" width="42" height="236.0" fill="#0c6b52"/>
-<text x="340.2" y="84.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">10/10</text>
-<text x="315.2" y="354" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">该开却自己做</text>
-<rect x="442.0" y="325.0" width="42" height="3.0" fill="#1c211c"/>
-<text x="463.0" y="317.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/3</text>
-<rect x="492.0" y="92.0" width="42" height="236.0" fill="#0c6b52"/>
-<text x="513.0" y="84.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">3/3</text>
-<text x="488.0" y="354" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">多带了一门</text>
-<rect x="614.8" y="325.0" width="42" height="3.0" fill="#1c211c"/>
-<text x="635.8" y="317.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/3</text>
-<rect x="664.8" y="92.0" width="42" height="236.0" fill="#0c6b52"/>
-<text x="685.8" y="84.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">3/3</text>
-<text x="660.8" y="354" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不该开却开了</text>
-<rect x="787.6" y="325.0" width="42" height="3.0" fill="#1c211c"/>
-<text x="808.6" y="317.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/2</text>
-<rect x="837.6" y="92.0" width="42" height="236.0" fill="#0c6b52"/>
-<text x="858.6" y="84.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">2/2</text>
-<text x="833.6" y="354" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">只留一部分</text>
-<rect x="48" y="396" width="14" height="14" fill="#1c211c"/>
-<text x="68" y="408" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时（这 18 句都错）</text>
-<rect x="280" y="396" width="14" height="14" fill="#0c6b52"/>
-<text x="300" y="408" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision（这 18 句都对）</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+<rect width="960" height="420" fill="#f7f6f2"/>
+<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">刚好选对：Laya 当时 vs jev-decision</text>
+<text x="24" y="54" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="12" fill="#5c6560">纵轴是刚好选对的比例（%）。同一批 33 句。没有技能和插件时自己做算对。</text>
+<line x1="56" y1="318.0" x2="920" y2="318.0" stroke="#d5d1c7"/>
+<text x="48" y="322.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">0</text>
+<line x1="56" y1="260.0" x2="920" y2="260.0" stroke="#d5d1c7"/>
+<text x="48" y="264.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">25</text>
+<line x1="56" y1="202.0" x2="920" y2="202.0" stroke="#d5d1c7"/>
+<text x="48" y="206.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">50</text>
+<line x1="56" y1="144.0" x2="920" y2="144.0" stroke="#d5d1c7"/>
+<text x="48" y="148.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">75</text>
+<line x1="56" y1="86.0" x2="920" y2="86.0" stroke="#d5d1c7"/>
+<text x="48" y="90.0" text-anchor="end" font-size="11" font-family="Segoe UI, sans-serif" fill="#5c6560">100</text>
+<rect x="102.4" y="212.5" width="36" height="105.5" fill="#1c211c"/>
+<text x="120.4" y="204.5" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">15/33</text>
+<rect x="146.4" y="86.0" width="36" height="232.0" fill="#0c6b52"/>
+<text x="164.4" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">33/33</text>
+<text x="142.4" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">全部 33 句</text>
+<rect x="275.2" y="227.2" width="36" height="90.8" fill="#1c211c"/>
+<text x="293.2" y="219.2" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">9/23</text>
+<rect x="319.2" y="86.0" width="36" height="232.0" fill="#0c6b52"/>
+<text x="337.2" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">23/23</text>
+<text x="315.2" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">每道门</text>
+<rect x="448.0" y="86.0" width="36" height="232.0" fill="#1c211c"/>
+<text x="466.0" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">1/1</text>
+<rect x="492.0" y="86.0" width="36" height="232.0" fill="#0c6b52"/>
+<text x="510.0" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">1/1</text>
+<text x="488.0" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">一句多门</text>
+<rect x="620.8" y="173.0" width="36" height="145.0" fill="#1c211c"/>
+<text x="638.8" y="165.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">5/8</text>
+<rect x="664.8" y="86.0" width="36" height="232.0" fill="#0c6b52"/>
+<text x="682.8" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">8/8</text>
+<text x="660.8" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">换说法</text>
+<rect x="793.6" y="316.0" width="36" height="2.0" fill="#1c211c"/>
+<text x="811.6" y="308.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#1c211c">0/1</text>
+<rect x="837.6" y="86.0" width="36" height="232.0" fill="#0c6b52"/>
+<text x="855.6" y="78.0" text-anchor="middle" font-size="13" font-family="Segoe UI, sans-serif" fill="#0c6b52">1/1</text>
+<text x="833.6" y="342" text-anchor="middle" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">超过三道</text>
+<rect x="48" y="382" width="14" height="14" fill="#1c211c"/>
+<text x="68" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya 当时</text>
+<rect x="180" y="382" width="14" height="14" fill="#0c6b52"/>
+<text x="200" y="394" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">jev-decision</text>
 </svg>
