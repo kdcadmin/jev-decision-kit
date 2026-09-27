@@ -513,7 +513,7 @@
   <div class="sync-card wide" id="mcp-card" hidden>
     <article>
       <h3>接入 MCP</h3>
-      <p>选技能的是本机 JEV。Hermes 和龙虾在模型开口之前把这句话交给它。它选定自己做，或选定柜门上的哪几份。模型只执行这个结果，不再挑选。下面的配置只用来读取已经选定的技能正文。</p>
+      <p>选技能的是本机 JEV。Hermes 和 OpenClaw 在模型开口之前把这句话交给它。DeepSeek Harness 可以装插件，也可以走 MCP。它选定自己做，或选定柜门上的哪几份。模型只执行这个结果，不再挑选。下面的配置只用来读取已经选定的技能正文。</p>
       <pre id="mcp-config"></pre>
       <p><button id="copy-mcp" type="button">复制配置</button></p>
     </article>
@@ -1038,7 +1038,7 @@ async function loadSettings() {
 
 async function saveSettings() {
   const status = document.getElementById("settings-status");
-  status.textContent = "正在保存，并同步龙虾和 Hermes…";
+  status.textContent = "正在保存，并同步 OpenClaw 和 Hermes…";
   const saved = await api("/api/settings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

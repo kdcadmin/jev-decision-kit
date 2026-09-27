@@ -18,7 +18,7 @@
 
 ## 怎么把原句交过来
 
-推荐走前言服务。Hermes 和龙虾已经是这条路。
+推荐走前言服务。Hermes、OpenClaw 和 DeepSeek Harness 插件已经是这条路。
 
 没有进程时，在项目根目录用项目里的 Python 启动它：
 
@@ -41,7 +41,7 @@ Content-Type: application/json
 {"preface": "【技能柜】……"}
 ```
 
-必须带本机令牌。服务把令牌写在 `runtime/preface.token`，请求头用 `X-Kit-Token`。没有令牌或令牌不对，前言服务直接拒绝。项目里的 Python 客户端 `host/preface_client.py`、最小示例 `examples/ask_preface.py`，以及龙虾插件都会读这个文件。不要把令牌写进仓库。
+必须带本机令牌。服务把令牌写在 `runtime/preface.token`，请求头用 `X-Kit-Token`。没有令牌或令牌不对，前言服务直接拒绝。项目里的 Python 客户端 `host/preface_client.py`、最小示例 `examples/ask_preface.py`，以及 OpenClaw / DeepSeek Harness 插件都会读这个文件。不要把令牌写进仓库。
 
 `source` 只是记在调用记录里的名字，例如 `hermes`、`openclaw`。不要把密钥放进这个请求。
 
@@ -66,7 +66,7 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 ## 选择是怎么定的
 
-打分的是本机的 JEV，权重在 `models/jev/head.json`。它不调用云端，也不走 Laya。
+打分的是本机的 JEV，权重在 `models/jev/head.json`。它不调用云端。这项优化只覆盖技能、插件和 SKILL.md 的选择；通用任务仍比不上 Laya 一类模型。
 
 它只看柜门上的那几项本地活，加上能点名的插件。柜子里其余技能可以浏览，但不是选项。只教模型怎么想的技能不进这道题。
 
@@ -82,7 +82,7 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 插件没有写进权重文件时，只要原句点了它的名字，也会留下。
 
-MCP 不在这道题里。设置页和 MCP 页上的开关、删除、添加，只改柜子自己的清单，不改 Cursor、Hermes、Codex、龙虾的配置文件，也不保存密钥。
+MCP 不在这道题里。设置页和 MCP 页上的开关、删除、添加，只改柜子自己的清单，不改 Cursor、Hermes、Codex、OpenClaw 的配置文件，也不保存密钥。
 
 ## MCP 只负责读
 
@@ -108,9 +108,15 @@ stdio 配置：
 
 ## 已经接上的宿主
 
-选择器开着时，Hermes 用 `pre_llm_call`，龙虾用 `before_prompt_build`。两个插件都在模型开口前要这段前言。关掉选择器之后，它们不再把原句交过来。
+选择器开着时，Hermes 用 `pre_llm_call`，OpenClaw 用 `before_prompt_build`，DeepSeek Harness 插件用 `agent/pre-step`。它们在模型开口前要这段前言。关掉选择器之后，它们不再把原句交过来。
 
-Codex 把下面这段加进 `~/.codex/config.toml` 的 MCP 列表，DeepSeek Harness 把同一组绝对路径写进它的 MCP 配置（Harness 要求 `command` 是绝对路径）。这两边目前只能补读已经选定的技能，还不会在模型开口前自动问柜。
+DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用：
+
+```bash
+dsh plugin add 项目目录\host\harness_plugin
+```
+
+Codex 把下面这段加进 `~/.codex/config.toml` 的 MCP 列表，DeepSeek Harness 也可以把同一组绝对路径写进它的 MCP 配置（Harness 要求 `command` 是绝对路径）。MCP 只补读已经选定的技能。
 
 ```toml
 [mcp_servers.jev-skill-kit]
@@ -120,7 +126,7 @@ args = ["项目目录\\mcp_server.py"]
 
 Cursor 没有接这条前言。不要假设它会先问柜子。
 
-打开网页不会改 Hermes 或龙虾的配置。只有在设置里保存选择器开关时才会同步那两项 MCP。
+打开网页不会改 Hermes 或 OpenClaw 的配置。只有在设置里保存选择器开关时才会同步那两项 MCP。
 
 ## 不要做的事
 

@@ -16,6 +16,7 @@ _SLUG = re.compile(r"[^a-z0-9]+")
 # The cabinet hook and the product shell are not jobs. codex-app-tools is an MCP wrapper.
 _SKIP_SELECT = {
     "jev-skill-kit",
+    "dsh-jev-skill-kit",
     "codex-app-tools",
     "unified-computer-use",
     "@deepseek-ai/dsh-base",

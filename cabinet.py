@@ -520,7 +520,7 @@ def mcp_snippet() -> dict:
     return {"name": "jev-skill-kit", "configText": json.dumps(block, ensure_ascii=False, indent=2)}
 
 
-SOURCE_LABELS = {"web": "网页", "mcp": "MCP", "hermes": "Hermes", "openclaw": "龙虾"}
+SOURCE_LABELS = {"web": "网页", "mcp": "MCP", "hermes": "Hermes", "openclaw": "OpenClaw", "harness": "DeepSeek Harness"}
 TASK_MATCH = 0.5
 
 
@@ -1868,7 +1868,7 @@ def install_github(url: str) -> dict:
     if len(installed) >= 80:
         message += "这个仓库太大，先装了 80 个。"
     if connected:
-        message += "龙虾和 Hermes 已经接在这个柜上，下次任务直接用，不用再让它们单独下载。"
+        message += "OpenClaw 和 Hermes 已经接在这个柜上，下次任务直接用，不用再让它们单独下载。"
     return {"copied": installed, "skipped": [item for item in copied if item.get("skipped")], "message": message}
 
 

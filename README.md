@@ -38,9 +38,16 @@ python -m venv .venv
 
 ## JEV
 
-选择器是本机训出来的门打分头，不调用 Laya。
+选择器是本机训出来的门打分头，权重在 `models/jev/head.json`：39 扇门、3101 个词片段、229 条技能/插件样本，约 1.1 MB。这是已发布的基线，不要假设 `python -m host.train_jev` 会得到同一份文件。样本表可以比权重新。
 
-- 权重：`models/jev/head.json`。这是已发布的基线，不要假设 `python -m host.train_jev` 会得到同一份文件。样本表可以比权重新。
+它只针对智能体在技能、插件和 SKILL.md 上的选择做优化：句子里点了名、并且过线的门留下，写了不要的关掉。通用写作、推理、未点名的活仍比不上 Laya 一类通用模型，也不该拿 JEV 去替代它们。
+
+![柜门集合匹配](docs/compare-set-match.svg)
+
+![漏选与误开](docs/compare-errors.svg)
+
+![JEV 与 Laya 的职责](docs/compare-scope.svg)
+
 - 训练：`.venv\Scripts\python -m host.train_jev`。候选权重写在 `head.candidate.json` 上评测，回归不下降且提问/否定/核心句不破才替换 `head.json`。对比写在 `models/jev/last-train.json`。要强行覆盖用 `--force`。
 - 样本按柜门上的说法来写。`tests/eval_cases.json`、`tests/eval_blind.json` 和十二句考卷都不放进训练集；修召回用近义句，不用评测原句
 
@@ -67,12 +74,17 @@ JEV 在模型开口之前打一遍分。门上每一项单独问要不要用，�
 
 「库」里每天从 GitHub 取星标最高、话题是 agent-skills 的 10 个仓库。只是推荐，不会自动安装。
 
-推荐在页面最上。仓库名和里面的技能都能点开原链接。贴 GitHub 链接的输入框在标题那一行。柜会把里面的 SKILL.md 复制进来，不运行脚本。龙虾和 Hermes 已经接在这个柜上时，下次任务直接用这份副本。
+推荐在页面最上。仓库名和里面的技能都能点开原链接。贴 GitHub 链接的输入框在标题那一行。柜会把里面的 SKILL.md 复制进来，不运行脚本。OpenClaw 和 Hermes 已经接在这个柜上时，下次任务直接用这份副本。
 
-## 龙虾、Hermes、Codex、Harness
+## OpenClaw、Hermes、Codex、DeepSeek Harness
 
-接上之后，这几家不再自己在柜子里翻技能、猜该用哪一份。模型开口前（Hermes `pre_llm_call`、龙虾 `before_prompt_build`）先把原句交给本机 JEV：该自己做还是该用哪几份技能、哪几个点了名的插件，结果已经写在前言里。原句不拆、否定项会关掉、解释类问题不会当成操作。模型只执行这个结果。
+接上之后，这几家不再自己在柜子里翻技能、猜该用哪一份。模型开口前（Hermes `pre_llm_call`、OpenClaw `before_prompt_build`、DeepSeek Harness `agent/pre-step`）先把原句交给本机 JEV：该自己做还是该用哪几份技能、哪几个点了名的插件，结果已经写在前言里。原句不拆、否定项会关掉、解释类问题不会当成操作。模型只执行这个结果。
 
 因此宿主侧少了三件常见事故：把「不要 Word」又打开成 Word、把「PDF 是什么」当成导出 PDF、把一句里的会议纪要和 Word 收成只留一个赢家。技能正文来自本机副本，原来的技能文件夹不会被删。MCP 只补读已经选定的正文，不能改选。
 
-Codex 和 DeepSeek Harness 目前走 MCP 补读：把 `jev-skill-kit` 加进各自的 MCP 列表，`get_skill` 必须带前言里的 `decision_id`。它们还没有开口前钩子，完整「先选再开口」仍要宿主自己接 [INTEGRATION.md](INTEGRATION.md) 里的前言服务。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和龙虾的 MCP 读写项。关掉选择器后，Hermes 和龙虾不再把这句话交给 JEV。
+DeepSeek Harness 兼容两种接法，可以同时用：
+
+- 插件：`dsh plugin add <本项目>\host\harness_plugin`，在开口前注入 JEV 前言
+- MCP：把 `jev-skill-kit` 加进 MCP 列表，用前言里的 `decision_id` 调用 `get_skill` 续读正文
+
+Codex 目前仍走 MCP 补读。完整「先选再开口」按 [INTEGRATION.md](INTEGRATION.md)。打开网页不会改这些宿主的配置；只有在设置里点保存时才会同步 Hermes 和 OpenClaw 的 MCP 读写项。关掉选择器后，Hermes、OpenClaw 和 DeepSeek Harness 插件不再把这句话交给 JEV。

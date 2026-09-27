@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="360" viewBox="0 0 920 360">
+<rect width="920" height="360" fill="#f7f6f2"/>
+<text x="24" y="32" font-family="Noto Sans SC, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#1c211c">JEV 与 Laya：职责不同，不是通用替代</text>
+<rect x="24" y="56" width="430" height="248" fill="#e7f3ee" stroke="#d5d1c7"/>
+<rect x="466" y="56" width="430" height="248" fill="#f7f6f2" stroke="#d5d1c7"/>
+<text x="44" y="88" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#0c6b52">JEV（本柜选择器）</text>
+<text x="44" y="118" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">线性 n-gram 头 · 39 扇门 · 3101 词片段</text>
+<text x="44" y="140" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">229 条技能/插件样本 · 权重 1.1 MB</text>
+<text x="44" y="168" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">只优化：技能、插件、SKILL.md 选哪几份</text>
+<text x="44" y="190" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">回归集合匹配 106/108，加记忆 108/108</text>
+<text x="44" y="212" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">盲测 36/37（登录页那句仍漏）</text>
+<text x="44" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">不负责通用写作、推理、多轮规划。</text>
+<text x="486" y="88" font-size="16" font-weight="700" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">Laya（通用智能体）</text>
+<text x="486" y="118" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">多语 RL 通用模型，体积远大于选择头</text>
+<text x="486" y="140" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">不输出本柜的门 ID，未跑同一套集合匹配</text>
+<text x="486" y="168" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">强项：通用任务、对话、未点名的活</text>
+<text x="486" y="190" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#1c211c">用它猜技能门，否定句和多门并列更容易漂</text>
+<text x="486" y="248" font-size="13" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">通用能力仍以 Laya 一类模型为准。</text>
+<text x="24" y="340" font-size="11" font-family="Noto Sans SC, Segoe UI, sans-serif" fill="#5c6560">JEV 权重：models/jev/head.json。这条选择路径不经过 Laya。</text>
+</svg>

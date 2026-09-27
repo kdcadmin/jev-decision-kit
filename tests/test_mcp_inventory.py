@@ -42,7 +42,7 @@ class McpInventoryTests(unittest.TestCase):
             names = {(item["host"], item["name"]) for item in report["servers"]}
             self.assertEqual(
                 names,
-                {("Cursor", "godot-ai"), ("龙虾", "jev-skill-kit"), ("龙虾", "minimax"), ("Hermes", "studio-api"), ("Codex", "node_repl")},
+                {("Cursor", "godot-ai"), ("OpenClaw", "jev-skill-kit"), ("OpenClaw", "minimax"), ("Hermes", "studio-api"), ("Codex", "node_repl")},
             )
             blob = json.dumps(report)
             self.assertNotIn("secret", blob)

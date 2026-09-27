@@ -80,10 +80,10 @@ def list_mcp_servers(home: Path | None = None) -> dict:
     claw = _read_json(root / ".openclaw" / "openclaw.json")
     if isinstance(claw, dict):
         mcp = claw.get("mcp") if isinstance(claw.get("mcp"), dict) else {}
-        servers.extend(servers_from_map("龙虾", mcp.get("servers")))
+        servers.extend(servers_from_map("OpenClaw", mcp.get("servers")))
     minimax = root / ".openclaw" / "mcp-minimax.json"
     if minimax.is_file() and isinstance(_read_json(minimax), dict):
-        servers.append({"name": "minimax", "host": "龙虾", "enabled": True})
+        servers.append({"name": "minimax", "host": "OpenClaw", "enabled": True})
     hermes = root / ".hermes" / "config.yaml"
     if hermes.is_file():
         try:
