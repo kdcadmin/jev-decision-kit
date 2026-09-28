@@ -14,3 +14,7 @@ models/jev/last-train.json
 models/jev/head.candidate.json
 intro/chrome-profile/
 intro/frames/
+*.mp4
+*.webm
+*.mov
+*.mkv
