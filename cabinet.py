@@ -1979,11 +1979,35 @@ def _agent_install_prompt(url: str) -> str:
     )
 
 
+def _catalog_names() -> set[str]:
+    return {str(item.get("name") or "") for item in load_catalog().get("skills") or [] if item.get("name")}
+
+
+def _install_error_zh(text: str) -> str:
+    raw = (text or "").strip()
+    low = raw.lower()
+    if "not found" in low:
+        return "这个仓库不存在，或现在访问不到。"
+    if any(part in low for part in ("could not resolve", "unable to access", "failed to connect", "timed out", "connection reset")):
+        return "连不上 GitHub。"
+    if any(part in low for part in ("authentication failed", "permission denied", "access denied")):
+        return "这个仓库现在访问不到。"
+    if low.startswith("fatal:") or low.startswith("error:"):
+        return "克隆没有完成。"
+    if re.search(r"[\u4e00-\u9fff]", raw):
+        return raw
+    return "没装上。"
+
+
+def _fail_install(job_id: str, progress: int, message: str) -> None:
+    _touch_install(job_id, progress=progress, label="没装上", state="failed", message=_install_error_zh(message))
+
+
 def _hand_install_to_agent(url: str, job_id: str) -> None:
     hermes = shutil.which("hermes") or shutil.which("hermes.exe")
     if not hermes:
         raise RuntimeError("本机没有 Hermes，链接没有送出去。")
-    _touch_install(job_id, progress=45, label="正在把链接交给 Hermes", state="running")
+    _touch_install(job_id, progress=62, label="已交给 Hermes", state="running")
     log_path = Path(tempfile.mkdtemp(prefix="jev-install-")) / "hermes.txt"
     log_handle = log_path.open("w", encoding="utf-8")
     proc = subprocess.Popen(
@@ -1994,11 +2018,9 @@ def _hand_install_to_agent(url: str, job_id: str) -> None:
         stderr=subprocess.STDOUT,
         text=True,
     )
-    progress = 45
+    _touch_install(job_id, progress=78, label="正在写进柜", state="running")
     try:
         while proc.poll() is None:
-            progress = min(progress + 3, 90)
-            _touch_install(job_id, progress=progress, label="Hermes 正在安装这个链接", state="running")
             try:
                 proc.wait(timeout=2)
             except subprocess.TimeoutExpired:
@@ -2006,39 +2028,55 @@ def _hand_install_to_agent(url: str, job_id: str) -> None:
     finally:
         log_handle.close()
     if proc.returncode != 0:
-        tail = ""
-        try:
-            lines = [line.strip() for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
-            tail = lines[-1] if lines else ""
-        except OSError:
-            tail = ""
-        raise RuntimeError(tail or "Hermes 没有装完这个链接")
+        raise RuntimeError("Hermes 没有装完这个链接。")
+
+
+def _finish_from_catalog(job_id: str, before: set[str], message: str) -> None:
+    added = sorted(_catalog_names() - before)
+    if not added:
+        _fail_install(job_id, 78, "Hermes 跑完了，柜子里没有新的技能。")
+        return
+    _touch_install(
+        job_id,
+        progress=100,
+        label="已装进柜",
+        state="done",
+        message=message,
+        copied=[{"name": name} for name in added],
+    )
 
 
 def _run_install(job_id: str, url: str) -> None:
     try:
-        _touch_install(job_id, progress=20, label="正在把仓库复制进柜", state="running")
+        _touch_install(job_id, progress=28, label="正在克隆", state="running")
         report = install_github(url)
+        present = _catalog_names()
+        landed = [item for item in (report.get("copied") or []) if item.get("name") and item.get("name") in present]
+        if not landed:
+            _fail_install(job_id, 28, "克隆结束了，柜子里没有新的技能。")
+            return
         _touch_install(
             job_id,
             progress=100,
             label="已装进柜",
             state="done",
             message=report.get("message") or "已装进柜",
-            copied=report.get("copied") or [],
+            copied=landed,
         )
     except FileNotFoundError as exc:
         if "SKILL.md" not in str(exc):
-            _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(exc))
+            _fail_install(job_id, 28, str(exc))
             return
+        before = _catalog_names()
+        _touch_install(job_id, progress=48, label="这个链接里没有 SKILL.md", state="running", message="")
         try:
             _hand_install_to_agent(url, job_id)
         except Exception as agent_exc:
-            _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(agent_exc))
+            _fail_install(job_id, 62, str(agent_exc))
             return
-        _touch_install(job_id, progress=100, label="Hermes 已装完", state="done", message="链接已交给 Hermes，安装跑完了。")
+        _finish_from_catalog(job_id, before, "已装进柜")
     except Exception as exc:
-        _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(exc))
+        _fail_install(job_id, 28, str(exc))
 
 
 def begin_install(url: str) -> dict:
