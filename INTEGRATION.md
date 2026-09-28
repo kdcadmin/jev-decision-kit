@@ -66,7 +66,7 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 ## 选择是怎么定的
 
-打分的是本机的 jev-decision，权重在 `models/jev/head.json`。它不调用云端。这项优化只覆盖技能、插件和 SKILL.md 的选择；通用任务仍比不上 Laya 一类模型。
+打分的是本机的 jev-decision，权重在 `models/jev/head.json`。它不调用云端。这项优化只覆盖技能、插件和 SKILL.md 的选择。
 
 它只看柜门上的那几项本地活，加上能点名的插件。柜子里其余技能可以浏览，但不是选项。只教模型怎么想的技能不进这道题。
 

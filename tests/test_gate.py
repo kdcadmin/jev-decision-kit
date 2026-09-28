@@ -224,7 +224,7 @@ class GateTests(unittest.TestCase):
         declared = {entry["id"] for entry in GATE}
         self.assertTrue(declared <= ids)
 
-    def test_named_jobs_from_the_laya_set_stay_open(self):
+    def test_named_jobs_from_the_eval_set_stay_open(self):
         expect = {
             "盯盘今天有没有提醒": "盯盘",
             "读一下这个 PDF": "PDF",

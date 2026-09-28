@@ -18,17 +18,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-os.environ.setdefault("USE_TF", "0")
-
 ROOT = Path(__file__).resolve().parent
 SKILLS = ROOT / "skills"
 CATALOG_PATH = ROOT / "catalog.json"
 CONFIG_PATH = ROOT / "config.json"
 CALLS_PATH = ROOT / "calls.json"
-LAYA_REPO = "https://github.com/NandhaKishorM/laya"
-LAYA_WEIGHTS = "https://huggingface.co/convaiinnovations/laya-multilingual"
-LAYA_HF_REPO = "convaiinnovations/laya-multilingual"
-BUNDLED_MODEL = ROOT / "models" / "laya"
 
 GUESS_RULES = (
     ("router", ("aas", "skill-router", "skill-creator", "find-skills", "using-agent")),
@@ -61,25 +55,7 @@ LABELS = {
     "other": "其他",
 }
 
-CRITERIA = {
-    "code": "写代码、改 bug、审查、测试、重构、脚本",
-    "web": "网页、浏览器、抓取页面、前端界面",
-    "prompts": "提示词、系统提示、写作指令",
-    "thesis": "论文、学位论文、文献格式",
-    "research": "调研、检索资料、公司或文献情报",
-    "design": "视觉设计、配色、界面稿、海报",
-    "docs": "文档、会议纪要、说明、幻灯片文稿",
-    "market": "股票、行情、交易、金融数据",
-    "media": "图片、视频、音频、动画、剪辑",
-    "planning": "规划、任务拆解、执行计划、日程",
-    "product": "产品、商业、增长、运营、定价",
-    "router": "决定下一步该用哪类技能",
-    "other": "上面都不合适",
-}
-
 lock = threading.Lock()
-_model_lock = threading.Lock()
-agent = None
 
 
 def load_catalog() -> dict:
@@ -362,7 +338,6 @@ def default_config() -> dict:
 
     return {
         "selectorEnabled": True,
-        "layaModelDir": "",
         "extraScanRoots": [],
         "board": empty_board(),
     }
@@ -376,22 +351,16 @@ def load_config() -> dict:
             data.update({key: stored[key] for key in data if key in stored and key != "board"})
             if isinstance(stored.get("board"), dict):
                 data["board"] = stored["board"]
-    if not str(data.get("layaModelDir") or "").strip():
-        data["layaModelDir"] = str(BUNDLED_MODEL)
     return data
 
 
 def save_config(updates: dict) -> dict:
-    global agent, _loaded_from
     data = load_config()
     if "selectorEnabled" in updates:
         data["selectorEnabled"] = bool(updates["selectorEnabled"])
-    if "layaModelDir" in updates:
-        data["layaModelDir"] = str(updates["layaModelDir"] or "").strip()
-        agent = None
-        _loaded_from = None
     if "extraScanRoots" in updates and isinstance(updates["extraScanRoots"], list):
         data["extraScanRoots"] = [str(item).strip() for item in updates["extraScanRoots"] if str(item).strip()]
+    data.pop("layaModelDir", None)
     _write_config(data)
     from hosts import sync_hosts
 
@@ -399,66 +368,17 @@ def save_config(updates: dict) -> dict:
     return {"config": public_config(data), "hosts": hosts}
 
 
-def weights_ready(directory: Path) -> bool:
-    return (directory / "model.safetensors").is_file() and (directory / "rl_agent_config.json").is_file()
-
-
-def pick_model_dir(configured: str, bundled: Path = BUNDLED_MODEL) -> Path:
-    text = (configured or "").strip()
-    if text:
-        path = Path(text)
-        if weights_ready(path):
-            return path
-    return bundled
-
-
 def public_config(data: dict | None = None) -> dict:
     from host.jev import WEIGHTS
 
     data = data or load_config()
-    directory = pick_model_dir(str(data.get("layaModelDir") or ""))
-    ready = weights_ready(directory)
     return {
         "selectorEnabled": bool(data["selectorEnabled"]),
         "jevWeights": str(WEIGHTS),
-        "layaModelDir": str(directory),
-        "layaReady": ready,
-        "layaRepo": LAYA_REPO,
-        "layaWeights": LAYA_WEIGHTS,
         "skillDir": str(SKILLS),
         "extraScanRoots": data.get("extraScanRoots") or [],
         "project": str(ROOT),
     }
-
-
-def model_dir() -> Path:
-    return pick_model_dir(str(load_config().get("layaModelDir") or ""))
-
-
-def ensure_laya_weights() -> Path:
-    directory = model_dir()
-    if weights_ready(directory):
-        return directory
-    directory = BUNDLED_MODEL
-    directory.mkdir(parents=True, exist_ok=True)
-    try:
-        from huggingface_hub import snapshot_download
-
-        snapshot_download(repo_id=LAYA_HF_REPO, local_dir=str(directory))
-    except Exception as exc:
-        raise FileNotFoundError(
-            "项目里还没有 Laya 权重，自动下载也失败了。需要能访问 "
-            + LAYA_WEIGHTS
-            + " 。"
-            + str(exc)
-        ) from exc
-    if not weights_ready(directory):
-        raise FileNotFoundError("下载结束了，但项目里的 models/laya 仍缺少 model.safetensors 或 rl_agent_config.json。")
-    stored = load_config()
-    if not weights_ready(Path(str(stored.get("layaModelDir") or ""))):
-        stored["layaModelDir"] = str(directory)
-        _write_config(stored)
-    return directory
 
 
 def load_memory() -> dict:
@@ -1153,46 +1073,6 @@ def import_folder(path: str) -> dict:
     report = scan_skills(roots=[("chosen", Path(path))], home_walk=False)
     report["extraScanRoots"] = roots
     return report
-
-
-_loaded_from: str | None = None
-
-
-def get_agent():
-    global agent, _loaded_from
-    directory = ensure_laya_weights()
-    with _model_lock:
-        if agent is not None and _loaded_from == str(directory):
-            return agent
-        import laya
-
-        agent = laya.load(str(directory), device="cpu")
-        _loaded_from = str(directory)
-        return agent
-
-
-def predict_choice(model, task: str, key: str, instructions: str, criteria: dict) -> dict:
-    result = model.predict(
-        task,
-        {
-            key: {
-                "type": "choice",
-                "instructions": instructions,
-                "criteria": criteria,
-            }
-        },
-        max_len=1024,
-    )
-    return result["answers"][key]
-
-
-def method_probabilities(answer: dict) -> dict:
-    raw = answer.get("probabilities") or {}
-    think_p = float(raw.get("think") or 0)
-    skill_p = float(raw.get("skill") or 0)
-    if skill_p <= 0 and think_p > 0:
-        skill_p = max(0.0, 1.0 - think_p)
-    return {"think": round(think_p, 4), "skill": round(skill_p, 4)}
 
 
 def _gate_method_probabilities(votes: dict) -> dict:
