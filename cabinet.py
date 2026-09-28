@@ -1467,13 +1467,21 @@ def _archive_current(data: dict) -> bool:
 
 
 def library_view() -> dict:
+    empty = {
+        "fetchedAt": "",
+        "items": [],
+        "days": [],
+        "note": "还没有推荐。打开这一页时会去 GitHub 取一次。",
+        "directories": skill_directories(),
+    }
     if not LIBRARY_PATH.is_file():
-        return {"fetchedAt": "", "items": [], "days": [], "note": "还没有推荐。打开这一页时会去 GitHub 取一次。"}
+        return empty
     data = json.loads(LIBRARY_PATH.read_text(encoding="utf-8-sig"))
     if not isinstance(data, dict):
-        return {"fetchedAt": "", "items": [], "days": []}
+        return {"fetchedAt": "", "items": [], "days": [], "directories": skill_directories()}
     data.setdefault("items", [])
     data.setdefault("fetchedAt", "")
+    data["directories"] = skill_directories()
     changed = _zh_items(data["items"])
     for item in data["items"]:
         polished = _polish_zh(item.get("description") or "")
@@ -1977,6 +1985,186 @@ def _agent_install_prompt(url: str) -> str:
         + " 。整理成一份带 SKILL.md 的技能，复制进柜子的 skills 目录并写进 catalog。"
         "不要运行仓库里的脚本，不要重启 Hermes 或 OpenClaw，不要改选择器权重。"
     )
+
+
+_progress_jobs: dict[str, dict] = {}
+_progress_latest: dict[str, str] = {}
+_progress_guard = threading.Lock()
+
+
+def _public_progress(job: dict) -> dict:
+    return {
+        "id": job["id"],
+        "kind": job["kind"],
+        "progress": job["progress"],
+        "label": job["label"],
+        "state": job["state"],
+        "message": job.get("message") or "",
+        "copied": job.get("copied") or [],
+        "kept": job.get("kept"),
+        "doors": job.get("doors") or {},
+        "retrained": job.get("retrained"),
+        "reason": job.get("reason") or "",
+        "plugins": job.get("plugins") or [],
+        "note": job.get("note") or "",
+    }
+
+
+def _touch_progress(job_id: str, **fields) -> None:
+    with _progress_guard:
+        job = _progress_jobs.get(job_id)
+        if not job:
+            return
+        job.update(fields)
+
+
+def progress_job(kind: str, job_id: str = "") -> dict | None:
+    with _progress_guard:
+        key = job_id or _progress_latest.get(kind, "")
+        job = _progress_jobs.get(key)
+        if not job or job.get("kind") != kind:
+            return None
+        return _public_progress(job)
+
+
+def _begin_progress(kind: str, label: str) -> dict:
+    job_id = hashlib.sha1(f"{kind}:{time.time_ns()}".encode("utf-8")).hexdigest()[:12]
+    job = {
+        "id": job_id,
+        "kind": kind,
+        "progress": 8,
+        "label": label,
+        "state": "running",
+        "message": "",
+        "copied": [],
+        "kept": 0,
+        "doors": {},
+        "retrained": False,
+        "reason": "",
+        "plugins": [],
+        "note": "",
+    }
+    with _progress_guard:
+        _progress_jobs[job_id] = job
+        _progress_latest[kind] = job_id
+        public = _public_progress(job)
+    return public
+
+
+def _fail_progress(job_id: str, message: str, progress: int | None = None) -> None:
+    fields = {"state": "failed", "message": message, "label": "没做完"}
+    if progress is not None:
+        fields["progress"] = progress
+    _touch_progress(job_id, **fields)
+
+
+def _run_scan(job_id: str) -> None:
+    try:
+        _touch_progress(job_id, progress=18, label="正在看常见技能目录")
+        report = scan_skills()
+        copied = report.get("copied") or []
+        _touch_progress(
+            job_id,
+            progress=100,
+            label="搜索完了",
+            state="done",
+            copied=copied,
+            message=f"新复制 {len(copied)} 个，已按名称分类。重复跳过 {report.get('skippedDuplicates') or 0} 个。",
+        )
+    except Exception as exc:
+        _fail_progress(job_id, str(exc) or "搜索没有完成。", 28)
+
+
+def begin_scan() -> dict:
+    public = _begin_progress("scan", "开始搜索本机技能")
+    threading.Thread(target=_run_scan, args=(public["id"],), daemon=True).start()
+    return public
+
+
+def _run_memory(job_id: str) -> None:
+    try:
+        from host.jev import cache_clear, load_head
+        from host.tool_memory import extract_tool_memory
+        from host.train_jev import train
+
+        _touch_progress(job_id, progress=18, label="正在读 Hermes 记录")
+        report = extract_tool_memory()
+        _touch_progress(job_id, progress=62, label="正在写进工具记忆", kept=report.get("kept") or 0, doors=report.get("doors") or {})
+        try:
+            _touch_progress(job_id, progress=78, label="正在重训 JEV")
+            train()
+            retrained = True
+            reason = ""
+        except RuntimeError as exc:
+            retrained = False
+            reason = str(exc)
+        cache_clear()
+        load_head()
+        doors = report.get("doors") or {}
+        names = "、".join(f"{name} {count}" for name, count in list(doors.items())[:8])
+        message = "留下 " + str(report.get("kept") or 0) + " 条工具记忆" + (("：" + names) if names else "") + "。"
+        message += "已重训。" if retrained else ("未写入权重：" + (reason or "回归下降"))
+        _touch_progress(
+            job_id,
+            progress=100,
+            label="读完了",
+            state="done",
+            kept=report.get("kept") or 0,
+            doors=doors,
+            retrained=retrained,
+            reason=reason,
+            message=message,
+        )
+    except Exception as exc:
+        _fail_progress(job_id, str(exc) or "工具记忆没有读完。", 28)
+
+
+def begin_memory() -> dict:
+    public = _begin_progress("memory", "开始读取工具记忆")
+    threading.Thread(target=_run_memory, args=(public["id"],), daemon=True).start()
+    return public
+
+
+def _run_plugins(job_id: str) -> None:
+    try:
+        from host.plugin_inventory import list_plugins
+
+        _touch_progress(job_id, progress=22, label="正在看 Hermes、Codex、Cursor、Harness")
+        data = list_plugins()
+        plugins = data.get("plugins") or []
+        _touch_progress(
+            job_id,
+            progress=100,
+            label="插件名单已更新",
+            state="done",
+            plugins=plugins,
+            note=data.get("note") or "",
+            message="读到 " + str(len(plugins)) + " 个插件。开关和删除只改技能柜里的这份名单。",
+        )
+    except Exception as exc:
+        _fail_progress(job_id, str(exc) or "插件名单没有读完。", 28)
+
+
+def begin_plugins() -> dict:
+    public = _begin_progress("plugins", "开始读取已装插件")
+    threading.Thread(target=_run_plugins, args=(public["id"],), daemon=True).start()
+    return public
+
+
+SKILL_DIRECTORIES = (
+    {"name": "skills.sh", "url": "https://www.skills.sh/", "note": "公开技能目录，点进去看原站。"},
+    {"name": "SkillsMP", "url": "https://skillsmp.com/", "note": "技能集合站。不要整站抓下来。"},
+    {"name": "ClawHub", "url": "https://clawhub.ai", "note": "OpenClaw 技能目录。"},
+    {"name": "anthropics/skills", "url": "https://github.com/anthropics/skills", "note": "官方示例仓库。各技能许可证不同，不能当 MIT 拷进柜。"},
+    {"name": "VoltAgent awesome-agent-skills", "url": "https://github.com/VoltAgent/awesome-agent-skills", "note": "列表本身是 MIT，里面链到的技能另有许可证。"},
+    {"name": "ComposioHQ awesome-claude-skills", "url": "https://github.com/ComposioHQ/awesome-claude-skills", "note": "Apache 2.0 列表。单个技能许可证另看。"},
+    {"name": "VoltAgent awesome-openclaw-skills", "url": "https://github.com/VoltAgent/awesome-openclaw-skills", "note": "OpenClaw 技能列表。"},
+    {"name": "Agent Skills 规格", "url": "https://agentskills.io", "note": "格式说明，不是技能仓库。"},
+)
+
+
+def skill_directories() -> list[dict]:
+    return [dict(item) for item in SKILL_DIRECTORIES]
 
 
 def _catalog_names() -> set[str]:

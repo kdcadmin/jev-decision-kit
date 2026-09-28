@@ -84,6 +84,15 @@ class Handler(BaseHTTPRequestHandler):
 
                 self._json(200, {"ok": True, "modelReady": WEIGHTS.is_file()})
                 return
+            if parsed.path == "/api/progress":
+                kind = parse_qs(parsed.query).get("kind", [""])[0]
+                job_id = parse_qs(parsed.query).get("id", [""])[0]
+                job = cabinet.progress_job(kind, job_id)
+                if not job:
+                    self._json(404, {"error": "没有这次任务"})
+                    return
+                self._json(200, job)
+                return
             if parsed.path == "/api/settings":
                 self._json(200, cabinet.public_config())
                 return
@@ -96,6 +105,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, list_mcp_servers())
                 return
             if parsed.path == "/api/plugins":
+                job_id = parse_qs(parsed.query).get("id", [""])[0]
+                if job_id:
+                    job = cabinet.progress_job("plugins", job_id)
+                    if not job:
+                        self._json(404, {"error": "没有这次任务"})
+                        return
+                    self._json(200, job)
+                    return
                 from host.plugin_inventory import list_plugins
 
                 self._json(200, list_plugins())
@@ -141,23 +158,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, cabinet.delete_call(str(body.get("id") or "")))
                 return
             if parsed.path == "/api/scan":
-                self._json(200, cabinet.scan_skills())
+                self._json(200, cabinet.begin_scan())
                 return
             if parsed.path == "/api/memory/tools":
-                from host.jev import cache_clear, load_head
-                from host.tool_memory import extract_tool_memory
-                from host.train_jev import train
-
-                report = extract_tool_memory()
-                try:
-                    train()
-                    report["retrained"] = True
-                except RuntimeError as exc:
-                    report["retrained"] = False
-                    report["reason"] = str(exc)
-                cache_clear()
-                load_head()
-                self._json(200, report)
+                self._json(200, cabinet.begin_memory())
                 return
             if parsed.path == "/api/sync":
                 chosen = str(body.get("direction") or "")
@@ -181,6 +185,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/library/refresh":
                 self._json(200, cabinet.refresh_library())
+                return
+            if parsed.path == "/api/plugins/refresh":
+                self._json(200, cabinet.begin_plugins())
                 return
             if parsed.path == "/api/library/search":
                 self._json(200, cabinet.search_library(str(body.get("q") or "")))

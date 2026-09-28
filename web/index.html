@@ -326,6 +326,11 @@
   .install-track { height: 8px; max-width: 420px; margin: 8px 0; background: var(--line); border-radius: 99px; overflow: hidden; }
   .install-track span { display: block; height: 100%; width: 0; background: var(--accent); }
   .install-track.failed span { background: #9a3412; }
+  .dir-list { display: grid; gap: 8px; margin: 10px 0 16px; }
+  .dir-list a { display: block; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; text-decoration: none; color: inherit; }
+  .dir-list a:hover { background: var(--fill); }
+  .dir-list strong { display: block; }
+  .dir-list span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
   #library-view.on { display: block; overflow: auto; }
   .lib-center { width: 100%; }
   .lib-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -532,7 +537,7 @@
   </div>
 </div>
 <script>
-const state = { categories: [], skills: [], filter: "all", query: "", current: null, dirty: false, libQuery: "", libSearch: null, libDay: null, libHistoryOpen: false, libPick: null, libRepo: null, libraryFeed: null, libraryStatus: "", githubDraft: "", repoCache: {} };
+const state = { categories: [], skills: [], filter: "all", query: "", current: null, dirty: false, libQuery: "", libSearch: null, libDay: null, libHistoryOpen: false, libPick: null, libRepo: null, libraryFeed: null, libraryStatus: "", githubDraft: "", repoCache: {}, scanJob: null, memoryJob: null, pluginJob: null };
 
 const catsEl = document.getElementById("cats");
 const listEl = document.getElementById("list");
@@ -864,7 +869,7 @@ document.querySelectorAll(".views button").forEach((button) => {
     document.getElementById("library-view").classList.toggle("on", view === "library");
     if (view === "calls") loadCalls().catch((error) => alert(error.message));
     if (view === "mcp") loadMcp().catch((error) => alert(error.message));
-    if (view === "plugins") loadPlugins().catch((error) => alert(error.message));
+    if (view === "plugins") loadPlugins(true).catch((error) => alert(error.message));
     if (view === "settings") loadSettings().catch((error) => alert(error.message));
     if (view === "library") loadLibrary().catch((error) => alert(error.message));
   });
@@ -914,8 +919,30 @@ function toolCells(kind, item) {
     </span></td>`;
 }
 
-async function loadPlugins() {
-  const data = await api("/api/plugins");
+async function pollJob(kind, job, onTick) {
+  let current = job;
+  onTick(current);
+  while (current && current.state === "running") {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    current = await api("/api/progress?kind=" + encodeURIComponent(kind) + "&id=" + encodeURIComponent(job.id));
+    onTick(current);
+  }
+  return current;
+}
+
+function paintTrack(prefix, job) {
+  const line = document.getElementById(prefix + "-status");
+  const track = document.getElementById(prefix + "-track");
+  const bar = track && track.querySelector("span");
+  if (line) line.textContent = job.state === "failed" ? (job.message || job.label) : (job.message || job.label);
+  if (track) {
+    track.hidden = false;
+    track.classList.toggle("failed", job.state === "failed");
+  }
+  if (bar) bar.style.width = Math.max(0, Math.min(100, Number(job.progress) || 0)) + "%";
+}
+
+function renderPluginTable(data, job) {
   const rows = (data.plugins || []).map((item) => `
     <tr>
       <td>${esc(item.host)}</td>
@@ -923,12 +950,16 @@ async function loadPlugins() {
       <td>${item.selectable ? "会选" : "不选"}</td>
       ${toolCells("plugin", item)}
     </tr>`).join("");
+  const progress = job || state.pluginJob;
   document.getElementById("plugin-view").innerHTML = `
     <div class="calls-head">
       <h2>插件</h2>
       <button id="add-plugin" type="button">添加插件</button>
+      <button id="refresh-plugins" type="button">重新读取</button>
     </div>
     <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的文件。关掉之后 JEV 不再选它。</p>
+    <p class="note" id="plugin-status">${esc(progress ? (progress.message || progress.label) : "")}</p>
+    <div class="install-track${progress && progress.state === "failed" ? " failed" : ""}" id="plugin-track" ${progress ? "" : "hidden"}><span style="width:${Number((progress && progress.progress) || 0)}%"></span></div>
     <table>
       <thead><tr><th>宿主</th><th>插件</th><th>JEV</th><th>操作</th></tr></thead>
       <tbody>${rows || "<tr><td colspan=\"4\">没有读到插件。</td></tr>"}</tbody>
@@ -942,12 +973,30 @@ async function loadPlugins() {
       ["local", "本地目录", "D:\\plugins\\my-plugin"]
     ],
     path: "/api/plugins/add",
-    after: loadPlugins
+    after: () => loadPlugins(false)
   }));
+  document.getElementById("refresh-plugins").addEventListener("click", () => loadPlugins(true).catch((error) => alert(error.message)));
+}
+
+async function loadPlugins(refresh) {
+  if (refresh) {
+    if (state.pluginJob && state.pluginJob.state === "running") return;
+    renderPluginTable({ note: "正在读取本机已装插件。", plugins: [] }, { state: "running", progress: 8, label: "开始读取已装插件", message: "开始读取已装插件" });
+    const job = await api("/api/plugins/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const done = await pollJob("plugins", job, (current) => {
+      state.pluginJob = current;
+      paintTrack("plugin", current);
+    });
+    state.pluginJob = done;
+    renderPluginTable({ note: done.note || "", plugins: done.plugins || [] }, done);
+    return;
+  }
+  const data = await api("/api/plugins");
+  renderPluginTable(data, state.pluginJob);
 }
 
 document.getElementById("plugin-view").addEventListener("click", (event) => {
-  handleBoardClick(event, loadPlugins).catch((error) => alert(error.message));
+  handleBoardClick(event, () => loadPlugins(false)).catch((error) => alert(error.message));
 });
 
 async function loadCalls() {
@@ -1035,7 +1084,8 @@ async function loadSettings() {
     <label for="jev-path">JEV 权重</label>
     <input id="jev-path" type="text" readonly value="${esc(config.jevWeights || "")}">
     <div class="action-row"><button id="save-settings" type="button">保存设置</button> <button id="scan-skills" type="button">全局搜索技能</button> <button id="read-tools" type="button">读取工具记忆</button> <button id="sync-origins" type="button">全局同步</button></div>
-    <p class="note" id="settings-status"></p>`;
+    <p class="note" id="settings-status">${esc((state.memoryJob && (state.memoryJob.message || state.memoryJob.label)) || (state.scanJob && (state.scanJob.message || state.scanJob.label)) || "")}</p>
+    <div class="install-track${(state.memoryJob && state.memoryJob.state === "failed") || (state.scanJob && state.scanJob.state === "failed") ? " failed" : ""}" id="settings-track" ${state.memoryJob || state.scanJob ? "" : "hidden"}><span style="width:${Number(((state.memoryJob || state.scanJob) && (state.memoryJob || state.scanJob).progress) || 0)}%"></span></div>`;
   document.getElementById("save-settings").addEventListener("click", saveSettings);
   document.getElementById("scan-skills").addEventListener("click", scanSkills);
   document.getElementById("read-tools").addEventListener("click", readToolMemory);
@@ -1269,21 +1319,29 @@ async function runSync(direction, name) {
 }
 
 async function readToolMemory() {
-  const status = document.getElementById("settings-status");
-  status.textContent = "正在读取各家智能体里已完成的工具调用，并重训 JEV。";
-  const report = await api("/api/memory/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-  const doors = Object.entries(report.doors || {}).map(([name, count]) => name + " " + count).join("，");
-  status.textContent = "留下 " + report.kept + " 条工具记忆" + (doors ? "：" + doors : "") + "。" + (
-    report.retrained ? "已重训。" : ("未写入权重：" + (report.reason || "回归下降"))
-  );
+  if (state.memoryJob && state.memoryJob.state === "running") return;
+  const job = await api("/api/memory/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  const done = await pollJob("memory", job, (current) => {
+    state.memoryJob = current;
+    paintTrack("settings", current);
+  });
+  state.memoryJob = done;
 }
 
 async function scanSkills() {
-  const status = document.getElementById("settings-status");
-  status.textContent = "正在搜索。已有的技能会跳过，原目录不会删。";
-  const report = await api("/api/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-  const catalog = await api("/api/catalog");
-  applyCatalog(catalog, status, report);
+  if (state.scanJob && state.scanJob.state === "running") return;
+  const job = await api("/api/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  const done = await pollJob("scan", job, (current) => {
+    state.scanJob = current;
+    paintTrack("settings", current);
+  });
+  state.scanJob = done;
+  if (done && done.state === "done") {
+    const catalog = await api("/api/catalog");
+    applyCatalog(catalog, document.getElementById("settings-status"), null);
+    const line = document.getElementById("settings-status");
+    if (line) line.textContent = done.message || done.label;
+  }
 }
 
 function visibleLibrary() {
@@ -1328,6 +1386,9 @@ function renderLibrary() {
   const history = state.libHistoryOpen && !state.libSearch
     ? `<div class="lib-days">${dayButtons || `<span class="note">还没有留下推荐。</span>`}</div>`
     : "";
+  const directories = ((state.libraryFeed && state.libraryFeed.directories) || []).map((item) =>
+    `<a href="${esc(item.url)}" target="_blank" rel="noreferrer"><strong>${esc(item.name)}</strong><span>${esc(item.note || item.url)}</span></a>`
+  ).join("");
   const heading = state.libSearch ? "搜索结果" : (state.libDay && state.libDay !== latestDay ? `${state.libDay} 的推荐` : "今日推荐");
   view.classList.toggle("picked", !!(state.libPick && state.libPick.kind === "repo"));
   view.innerHTML = `
@@ -1348,6 +1409,7 @@ function renderLibrary() {
         <button id="refresh-library" type="button">重新获取</button>
       </div>
       <p class="note">${esc(state.libSearch ? (feed.note || "") : "按 GitHub 星标，话题是 agent-skills 的仓库。每天留一份，以前的推荐还能翻。不会自动装进柜。")}${feed.fetchedAt ? " · 更新于\u00a0" + esc(formatWhen(feed.fetchedAt)) : ""}</p>
+      ${state.libSearch ? "" : `<p class="note">市面上的技能集合只放链接，不把别人的 SKILL.md 拷进这个仓库。点进去看原站，要装再用上面的 GitHub 链接。</p><div class="dir-list">${directories}</div>`}
       ${history}
       <p class="note" id="library-status">${esc(state.installJob ? (state.installJob.state === "running" ? state.installJob.label : (state.installJob.message || state.installJob.label)) : (state.libraryStatus || "点一张卡片，右边是中文介绍。可以装入库，也可以只装其中一个。"))}</p>
       <div class="install-track${state.installJob && state.installJob.state === "failed" ? " failed" : ""}" id="install-track" ${state.installJob ? "" : "hidden"}><span style="width:${Number((state.installJob && state.installJob.progress) || 0)}%"></span></div>
