@@ -932,16 +932,23 @@ async function pollJob(kind, job, onTick) {
   return current;
 }
 
+function jobStatusText(job) {
+  if (!job) return "";
+  if (job.state === "failed") return job.message || job.label || "没做完";
+  if (job.state === "done") return "完成。" + (job.message || job.label || "");
+  return job.message || job.label || "";
+}
+
 function paintTrack(prefix, job) {
   const line = document.getElementById(prefix + "-status");
   const track = document.getElementById(prefix + "-track");
   const bar = track && track.querySelector("span");
-  if (line) line.textContent = job.state === "failed" ? (job.message || job.label) : (job.message || job.label);
+  if (line) line.textContent = jobStatusText(job);
   if (track) {
-    track.hidden = false;
-    track.classList.toggle("failed", job.state === "failed");
+    track.hidden = !job || job.state === "done";
+    track.classList.toggle("failed", !!(job && job.state === "failed"));
   }
-  if (bar) bar.style.width = Math.max(0, Math.min(100, Number(job.progress) || 0)) + "%";
+  if (bar) bar.style.width = job && job.state === "done" ? "0%" : Math.max(0, Math.min(100, Number((job && job.progress) || 0))) + "%";
 }
 
 function renderPluginTable(data, job) {
@@ -960,8 +967,8 @@ function renderPluginTable(data, job) {
       <button id="refresh-plugins" type="button">重新读取</button>
     </div>
     <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的文件。关掉之后 JEV 不再选它。</p>
-    <p class="note" id="plugin-status">${esc(progress ? (progress.message || progress.label) : "")}</p>
-    <div class="install-track${progress && progress.state === "failed" ? " failed" : ""}" id="plugin-track" ${progress ? "" : "hidden"}><span style="width:${Number((progress && progress.progress) || 0)}%"></span></div>
+    <p class="note" id="plugin-status">${esc(jobStatusText(progress))}</p>
+    <div class="install-track${progress && progress.state === "failed" ? " failed" : ""}" id="plugin-track" ${progress && progress.state !== "done" ? "" : "hidden"}><span style="width:${progress && progress.state === "done" ? 0 : Number((progress && progress.progress) || 0)}%"></span></div>
     <table>
       <thead><tr><th>宿主</th><th>插件</th><th>JEV</th><th>操作</th></tr></thead>
       <tbody>${rows || "<tr><td colspan=\"4\">没有读到插件。</td></tr>"}</tbody>
@@ -1076,6 +1083,8 @@ document.getElementById("calls-view").addEventListener("click", async (event) =>
 
 async function loadSettings() {
   const config = await api("/api/settings");
+  const job = (state.memoryJob && state.memoryJob.state !== "done") ? state.memoryJob : ((state.scanJob && state.scanJob.state !== "done") ? state.scanJob : (state.memoryJob || state.scanJob));
+  const showTrack = !!(job && job.state !== "done");
   document.getElementById("settings-view").innerHTML = `
     <h2>设置</h2>
     <label><input id="selector-enabled" type="checkbox" ${config.selectorEnabled ? "checked" : ""}> 启动技能选择器</label>
@@ -1086,8 +1095,8 @@ async function loadSettings() {
     <label for="jev-path">JEV 权重</label>
     <input id="jev-path" type="text" readonly value="${esc(config.jevWeights || "")}">
     <div class="action-row"><button id="save-settings" type="button">保存设置</button> <button id="scan-skills" type="button">全局搜索技能</button> <button id="read-tools" type="button">读取工具记忆</button> <button id="sync-origins" type="button">全局同步</button></div>
-    <p class="note" id="settings-status">${esc((state.memoryJob && (state.memoryJob.message || state.memoryJob.label)) || (state.scanJob && (state.scanJob.message || state.scanJob.label)) || "")}</p>
-    <div class="install-track${(state.memoryJob && state.memoryJob.state === "failed") || (state.scanJob && state.scanJob.state === "failed") ? " failed" : ""}" id="settings-track" ${state.memoryJob || state.scanJob ? "" : "hidden"}><span style="width:${Number(((state.memoryJob || state.scanJob) && (state.memoryJob || state.scanJob).progress) || 0)}%"></span></div>`;
+    <p class="note" id="settings-status">${esc(jobStatusText(job))}</p>
+    <div class="install-track${job && job.state === "failed" ? " failed" : ""}" id="settings-track" ${showTrack ? "" : "hidden"}><span style="width:${showTrack ? Number((job && job.progress) || 0) : 0}%"></span></div>`;
   document.getElementById("save-settings").addEventListener("click", saveSettings);
   document.getElementById("scan-skills").addEventListener("click", scanSkills);
   document.getElementById("read-tools").addEventListener("click", readToolMemory);
@@ -1412,8 +1421,8 @@ function renderLibrary() {
       </div>
       <p class="note">${esc(state.libSearch ? (feed.note || "") : "按 GitHub 星标，话题是 agent-skills 的仓库。每天留一份，以前的推荐还能翻。不会自动装进柜。")}${feed.fetchedAt ? " · 更新于\u00a0" + esc(formatWhen(feed.fetchedAt)) : ""}</p>
       ${history}
-      <p class="note" id="library-status">${esc(state.installJob ? (state.installJob.state === "running" ? state.installJob.label : (state.installJob.message || state.installJob.label)) : (state.libraryStatus || "点一张卡片，右边是中文介绍。可以装入库，也可以只装其中一个。"))}</p>
-      <div class="install-track${state.installJob && state.installJob.state === "failed" ? " failed" : ""}" id="install-track" ${state.installJob ? "" : "hidden"}><span style="width:${Number((state.installJob && state.installJob.progress) || 0)}%"></span></div>
+      <p class="note" id="library-status">${esc(state.installJob ? jobStatusText(state.installJob) : (state.libraryStatus || "点一张卡片，右边是中文介绍。可以装入库，也可以只装其中一个。"))}</p>
+      <div class="install-track${state.installJob && state.installJob.state === "failed" ? " failed" : ""}" id="install-track" ${state.installJob && state.installJob.state !== "done" ? "" : "hidden"}><span style="width:${state.installJob && state.installJob.state !== "done" ? Number(state.installJob.progress || 0) : 0}%"></span></div>
       <div class="lib-stage" id="lib-stage">
         <div class="lib-cards">${cards}</div>
         <aside class="lib-detail" id="lib-detail"></aside>
@@ -1703,12 +1712,12 @@ function paintInstall(job) {
   const line = document.getElementById("library-status");
   const track = document.getElementById("install-track");
   const bar = track && track.querySelector("span");
-  if (line) line.textContent = job.state === "failed" ? (job.message || job.label) : (job.state === "done" && job.message ? job.message : job.label);
+  if (line) line.textContent = jobStatusText(job);
   if (track) {
-    track.hidden = false;
-    track.classList.toggle("failed", job.state === "failed");
+    track.hidden = !job || job.state === "done";
+    track.classList.toggle("failed", !!(job && job.state === "failed"));
   }
-  if (bar) bar.style.width = Math.max(0, Math.min(100, Number(job.progress) || 0)) + "%";
+  if (bar) bar.style.width = job && job.state === "done" ? "0%" : Math.max(0, Math.min(100, Number((job && job.progress) || 0))) + "%";
 }
 
 async function installGithub(url) {
