@@ -326,11 +326,13 @@
   .install-track { height: 8px; max-width: 420px; margin: 8px 0; background: var(--line); border-radius: 99px; overflow: hidden; }
   .install-track span { display: block; height: 100%; width: 0; background: var(--accent); }
   .install-track.failed span { background: #9a3412; }
-  .dir-list { display: grid; gap: 8px; margin: 10px 0 16px; }
-  .dir-list a { display: block; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; text-decoration: none; color: inherit; }
+  .dir-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 8px 0 0; }
+  .dir-list a { display: block; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; text-decoration: none; color: inherit; background: var(--sheet); }
   .dir-list a:hover { background: var(--fill); }
-  .dir-list strong { display: block; }
-  .dir-list span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .dir-list strong { display: block; font-size: 13px; }
+  .dir-list span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; line-height: 1.4; }
+  .lib-extra { margin: 22px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .lib-extra h3 { margin: 0 0 6px; font-size: 14px; }
   #library-view.on { display: block; overflow: auto; }
   .lib-center { width: 100%; }
   .lib-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -1409,7 +1411,6 @@ function renderLibrary() {
         <button id="refresh-library" type="button">重新获取</button>
       </div>
       <p class="note">${esc(state.libSearch ? (feed.note || "") : "按 GitHub 星标，话题是 agent-skills 的仓库。每天留一份，以前的推荐还能翻。不会自动装进柜。")}${feed.fetchedAt ? " · 更新于\u00a0" + esc(formatWhen(feed.fetchedAt)) : ""}</p>
-      ${state.libSearch ? "" : `<p class="note">市面上的技能集合只放链接，不把别人的 SKILL.md 拷进这个仓库。点进去看原站，要装再用上面的 GitHub 链接。</p><div class="dir-list">${directories}</div>`}
       ${history}
       <p class="note" id="library-status">${esc(state.installJob ? (state.installJob.state === "running" ? state.installJob.label : (state.installJob.message || state.installJob.label)) : (state.libraryStatus || "点一张卡片，右边是中文介绍。可以装入库，也可以只装其中一个。"))}</p>
       <div class="install-track${state.installJob && state.installJob.state === "failed" ? " failed" : ""}" id="install-track" ${state.installJob ? "" : "hidden"}><span style="width:${Number((state.installJob && state.installJob.progress) || 0)}%"></span></div>
@@ -1417,6 +1418,7 @@ function renderLibrary() {
         <div class="lib-cards">${cards}</div>
         <aside class="lib-detail" id="lib-detail"></aside>
       </div>
+      ${state.libSearch ? "" : `<section class="lib-extra"><h3>附赠链接</h3><p class="note">市面上的技能集合只放链接，不把别人的 SKILL.md 拷进这个仓库。点进去看原站，要装再用上面的 GitHub 链接。</p><div class="dir-list">${directories}</div></section>`}
     </div>`;
   document.getElementById("refresh-library").addEventListener("click", () => refreshLibrary().catch((error) => alert(error.message)));
   document.getElementById("lib-search").addEventListener("submit", (event) => {
