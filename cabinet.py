@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 import urllib.error
 import urllib.parse
@@ -1932,3 +1933,132 @@ def install_local(path: str) -> dict:
     if len(installed) >= 80:
         message += "这个文件夹太大，先装了 80 个。"
     return {"copied": installed, "skipped": [item for item in copied if item.get("skipped")], "message": message}
+
+
+_install_jobs: dict[str, dict] = {}
+_install_latest = ""
+_install_guard = threading.Lock()
+
+
+def _public_install_job(job: dict) -> dict:
+    return {
+        "id": job["id"],
+        "url": job["url"],
+        "progress": job["progress"],
+        "label": job["label"],
+        "state": job["state"],
+        "message": job.get("message") or "",
+        "copied": job.get("copied") or [],
+    }
+
+
+def _touch_install(job_id: str, **fields) -> None:
+    with _install_guard:
+        job = _install_jobs.get(job_id)
+        if not job:
+            return
+        job.update(fields)
+
+
+def install_job(job_id: str = "") -> dict | None:
+    with _install_guard:
+        key = job_id or _install_latest
+        job = _install_jobs.get(key)
+        return _public_install_job(job) if job else None
+
+
+def _agent_install_prompt(url: str) -> str:
+    return (
+        "技能柜装入库时，这个 GitHub 仓库里没有 SKILL.md，所以不能直接复制。"
+        "请把这个链接安装进技能柜 "
+        + str(ROOT)
+        + " ： "
+        + url
+        + " 。整理成一份带 SKILL.md 的技能，复制进柜子的 skills 目录并写进 catalog。"
+        "不要运行仓库里的脚本，不要重启 Hermes 或 OpenClaw，不要改选择器权重。"
+    )
+
+
+def _hand_install_to_agent(url: str, job_id: str) -> None:
+    hermes = shutil.which("hermes") or shutil.which("hermes.exe")
+    if not hermes:
+        raise RuntimeError("本机没有 Hermes，链接没有送出去。")
+    _touch_install(job_id, progress=45, label="正在把链接交给 Hermes", state="running")
+    log_path = Path(tempfile.mkdtemp(prefix="jev-install-")) / "hermes.txt"
+    log_handle = log_path.open("w", encoding="utf-8")
+    proc = subprocess.Popen(
+        [hermes, "-z", _agent_install_prompt(url), "--cli"],
+        cwd=str(ROOT),
+        stdin=subprocess.DEVNULL,
+        stdout=log_handle,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    progress = 45
+    try:
+        while proc.poll() is None:
+            progress = min(progress + 3, 90)
+            _touch_install(job_id, progress=progress, label="Hermes 正在安装这个链接", state="running")
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                continue
+    finally:
+        log_handle.close()
+    if proc.returncode != 0:
+        tail = ""
+        try:
+            lines = [line.strip() for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip()]
+            tail = lines[-1] if lines else ""
+        except OSError:
+            tail = ""
+        raise RuntimeError(tail or "Hermes 没有装完这个链接")
+
+
+def _run_install(job_id: str, url: str) -> None:
+    try:
+        _touch_install(job_id, progress=20, label="正在把仓库复制进柜", state="running")
+        report = install_github(url)
+        _touch_install(
+            job_id,
+            progress=100,
+            label="已装进柜",
+            state="done",
+            message=report.get("message") or "已装进柜",
+            copied=report.get("copied") or [],
+        )
+    except FileNotFoundError as exc:
+        if "SKILL.md" not in str(exc):
+            _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(exc))
+            return
+        try:
+            _hand_install_to_agent(url, job_id)
+        except Exception as agent_exc:
+            _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(agent_exc))
+            return
+        _touch_install(job_id, progress=100, label="Hermes 已装完", state="done", message="链接已交给 Hermes，安装跑完了。")
+    except Exception as exc:
+        _touch_install(job_id, progress=100, label="没装上", state="failed", message=str(exc))
+
+
+def begin_install(url: str) -> dict:
+    global _install_latest
+    parse_github(url)
+    job_id = hashlib.sha1(f"{url}:{time.time_ns()}".encode("utf-8")).hexdigest()[:12]
+    job = {
+        "id": job_id,
+        "url": url.strip(),
+        "progress": 8,
+        "label": "已收下链接",
+        "state": "running",
+        "message": "",
+        "copied": [],
+    }
+    with _install_guard:
+        _install_jobs[job_id] = job
+        _install_latest = job_id
+        public = _public_install_job(job)
+    threading.Thread(target=_run_install, args=(job_id, url.strip()), daemon=True).start()
+    return public
+
+

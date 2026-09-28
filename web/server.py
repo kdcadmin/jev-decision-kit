@@ -103,6 +103,14 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/library":
                 self._json(200, cabinet.library_view())
                 return
+            if parsed.path == "/api/library/install":
+                job_id = parse_qs(parsed.query).get("id", [""])[0]
+                job = cabinet.install_job(job_id)
+                if not job:
+                    self._json(404, {"error": "没有这次安装"})
+                    return
+                self._json(200, job)
+                return
             self._json(404, {"error": "not found"})
         except Exception as exc:
             self._json(400, {"error": str(exc)})
@@ -178,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, cabinet.search_library(str(body.get("q") or "")))
                 return
             if parsed.path == "/api/library/install":
-                self._json(200, cabinet.install_github(str(body.get("url") or "")))
+                self._json(200, cabinet.begin_install(str(body.get("url") or "")))
                 return
             if parsed.path == "/api/library/local":
                 self._json(200, cabinet.install_local(str(body.get("path") or "")))

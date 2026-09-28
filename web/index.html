@@ -323,6 +323,8 @@
   .settings input[type="text"], .settings input[type="number"] { width: min(100%, 640px); }
   .settings a, .lib-actions a, a.lib-jump small, .lib-jump a { color: var(--accent); }
   .note { color: var(--muted); font-size: 14px; max-width: 68ch; }
+  .install-track { height: 8px; max-width: 420px; margin: 8px 0; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .install-track span { display: block; height: 100%; width: 0; background: var(--accent); }
   #library-view.on { display: block; overflow: auto; }
   .lib-center { width: 100%; }
   .lib-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -1346,7 +1348,8 @@ function renderLibrary() {
       </div>
       <p class="note">${esc(state.libSearch ? (feed.note || "") : "按 GitHub 星标，话题是 agent-skills 的仓库。每天留一份，以前的推荐还能翻。不会自动装进柜。")}${feed.fetchedAt ? " · 更新于\u00a0" + esc(formatWhen(feed.fetchedAt)) : ""}</p>
       ${history}
-      <p class="note" id="library-status">${esc(state.libraryStatus || "点一张卡片，右边是中文介绍。可以整仓装进柜，也可以只装其中一个。")}</p>
+      <p class="note" id="library-status">${esc((state.installJob && state.installJob.label) || state.libraryStatus || "点一张卡片，右边是中文介绍。可以整仓装进柜，也可以只装其中一个。")}</p>
+      <div class="install-track" id="install-track" ${state.installJob ? "" : "hidden"}><span style="width:${Number((state.installJob && state.installJob.progress) || 0)}%"></span></div>
       <div class="lib-stage" id="lib-stage">
         <div class="lib-cards">${cards}</div>
         <aside class="lib-detail" id="lib-detail"></aside>
@@ -1423,7 +1426,7 @@ function renderLibDetail() {
   const failed = pick.error ? `<p class="note">${esc(pick.error)}</p>` : "";
   const more = pick.truncated ? `<p class="note">仓库里还有更多，这里先列 ${(pick.skills || []).length} 个。</p>` : "";
   const count = pick.loading ? "" : ` · ${(pick.skills || []).length} 个`;
-  const installAll = pick.loading ? "" : `<button class="go-install" type="button" data-install="${esc(pick.url)}">整仓装进柜</button>`;
+  const installAll = pick.loading ? "" : `<button class="go-install" type="button" data-install="${esc(pick.url)}">装入库</button>`;
   const about = (pick.about || "").trim();
   const intro = about
     ? about.split(/\n\n+/).map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")
@@ -1630,20 +1633,40 @@ async function installLocal() {
   if (line) line.textContent = state.libraryStatus;
 }
 
+function paintInstall(job) {
+  state.installJob = job;
+  const line = document.getElementById("library-status");
+  const track = document.getElementById("install-track");
+  const bar = track && track.querySelector("span");
+  if (line) line.textContent = job.message && job.state !== "running" ? job.label + "。" + job.message : job.label;
+  if (track) track.hidden = false;
+  if (bar) bar.style.width = Math.max(0, Math.min(100, Number(job.progress) || 0)) + "%";
+}
+
 async function installGithub(url) {
-  const status = document.getElementById("library-status");
-  if (!url) return;
-  if (status) status.textContent = "正在复制这个仓库里的技能，不运行脚本…";
-  const report = await api("/api/library/install", {
+  if (!url || state.installJob && state.installJob.state === "running") return;
+  const job = await api("/api/library/install", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url })
   });
-  const catalog = await api("/api/catalog");
-  applyCatalog(catalog, status, null);
-  state.libraryStatus = report.message + " " + (report.copied || []).map((item) => item.name).join("、");
-  const line = document.getElementById("library-status");
-  if (line) line.textContent = state.libraryStatus;
+  paintInstall(job);
+  while (state.installJob && state.installJob.state === "running") {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const next = await api("/api/library/install?id=" + encodeURIComponent(job.id));
+    paintInstall(next);
+  }
+  if (state.installJob && state.installJob.state === "done") {
+    const catalog = await api("/api/catalog");
+    applyCatalog(catalog, document.getElementById("library-status"), null);
+    const names = (state.installJob.copied || []).map((item) => item.name).filter(Boolean).join("、");
+    state.libraryStatus = state.installJob.message + (names ? " " + names : "");
+    const line = document.getElementById("library-status");
+    if (line) line.textContent = state.libraryStatus;
+  }
+  if (state.installJob && state.installJob.state === "failed") {
+    state.libraryStatus = state.installJob.message || state.installJob.label;
+  }
 }
 
 api("/api/catalog").then((data) => {
