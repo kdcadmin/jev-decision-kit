@@ -14,6 +14,7 @@ models/jev/last-train.json
 models/jev/head.candidate.json
 intro/chrome-profile/
 intro/frames/
+# 视频只留本机。docs 里的 png/svg 截图照常提交。
 *.mp4
 *.webm
 *.mov
