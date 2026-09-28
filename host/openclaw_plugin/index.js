@@ -73,7 +73,7 @@ async function prefaceFor(task) {
 export default definePluginEntry({
   id: "jev-skill-kit",
   name: "技能柜",
-  description: "JEV 在模型开口前选定自己做，或选定哪几份技能和插件。",
+  description: "jev-decision 在模型开口前选定自己做，或选定哪几份技能和插件。",
   register(api) {
     api.on("before_prompt_build", async (event) => {
       const task = String(event.prompt || "").trim();

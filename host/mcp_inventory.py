@@ -103,6 +103,6 @@ def list_mcp_servers(home: Path | None = None) -> dict:
         servers = apply_rows(servers, "mcp")
         servers.sort(key=lambda item: (item["host"], item["name"]))
     return {
-        "note": "这些 MCP 只在这里查看。JEV 不会挑选它们。",
+        "note": "这些 MCP 只在这里查看。jev-decision 不会挑选它们。",
         "servers": servers,
     }

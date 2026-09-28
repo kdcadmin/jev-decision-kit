@@ -464,7 +464,7 @@
   <header>
     <div class="mark">
       <h1>技能柜</h1>
-      <p id="count">JEV · …</p>
+      <p id="count">jev-decision · …</p>
       <div class="views">
         <button class="on" type="button" data-view="cabinet">柜</button>
         <button type="button" data-view="calls">调用</button>
@@ -532,7 +532,7 @@
   <div class="sync-card wide" id="mcp-card" hidden>
     <article>
       <h3>接入 MCP</h3>
-      <p>选技能的是本机 JEV。Hermes 和 OpenClaw 在模型开口之前把这句话交给它。DeepSeek Harness 可以装插件，也可以走 MCP。它选定自己做，或选定柜门上的哪几份。模型只执行这个结果，不再挑选。下面的配置只用来读取已经选定的技能正文。</p>
+      <p>选技能的是本机 jev-decision。Hermes 和 OpenClaw 在模型开口之前把这句话交给它。DeepSeek Harness 可以装插件，也可以走 MCP。它选定自己做，或选定柜门上的哪几份。模型只执行这个结果，不再挑选。下面的配置只用来读取已经选定的技能正文。</p>
       <pre id="mcp-config"></pre>
       <p><button id="copy-mcp" type="button">复制配置</button></p>
     </article>
@@ -764,7 +764,7 @@ function recount() {
   const counts = {};
   for (const skill of state.skills) counts[skill.category] = (counts[skill.category] || 0) + 1;
   for (const cat of state.categories) cat.count = counts[cat.id] || 0;
-  document.getElementById("count").textContent = "JEV · " + state.skills.length;
+  document.getElementById("count").textContent = "jev-decision · " + state.skills.length;
 }
 
 catsEl.addEventListener("click", (event) => {
@@ -830,7 +830,7 @@ document.getElementById("route-form").addEventListener("submit", async (event) =
   button.disabled = true;
   button.textContent = "在选";
   state.routeTask = task;
-  let waiting = "正在用 JEV 打分，请等这一次完成，不要重复点。";
+  let waiting = "正在用 jev-decision 打分，请等这一次完成，不要重复点。";
   try {
     const health = await api("/api/health");
     if (health.modelReady) waiting = "正在选择…";
@@ -897,7 +897,7 @@ async function loadMcp() {
     </table>`;
   document.getElementById("add-mcp").addEventListener("click", () => openSource({
     title: "添加 MCP",
-    note: "可以是一个链接、GitHub 仓库，或本机上的目录。只记在这里查看，JEV 不会挑选 MCP，也不会写入宿主配置。",
+    note: "可以是一个链接、GitHub 仓库，或本机上的目录。只记在这里查看，jev-decision 不会挑选 MCP，也不会写入宿主配置。",
     kinds: [
       ["link", "链接", "https://example.com/mcp"],
       ["github", "GitHub", "https://github.com/作者/仓库"],
@@ -966,16 +966,16 @@ function renderPluginTable(data, job) {
       <button id="add-plugin" type="button">添加插件</button>
       <button id="refresh-plugins" type="button">重新读取</button>
     </div>
-    <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的文件。关掉之后 JEV 不再选它。</p>
+    <p class="note">${esc(data.note || "")} 开关和删除只改技能柜里的这份名单，不改宿主原来的文件。关掉之后 jev-decision 不再选它。</p>
     <p class="note" id="plugin-status">${esc(jobStatusText(progress))}</p>
     <div class="install-track${progress && progress.state === "failed" ? " failed" : ""}" id="plugin-track" ${progress && progress.state !== "done" ? "" : "hidden"}><span style="width:${progress && progress.state === "done" ? 0 : Number((progress && progress.progress) || 0)}%"></span></div>
     <table>
-      <thead><tr><th>宿主</th><th>插件</th><th>JEV</th><th>操作</th></tr></thead>
+      <thead><tr><th>宿主</th><th>插件</th><th>jev-decision</th><th>操作</th></tr></thead>
       <tbody>${rows || "<tr><td colspan=\"4\">没有读到插件。</td></tr>"}</tbody>
     </table>`;
   document.getElementById("add-plugin").addEventListener("click", () => openSource({
     title: "添加插件",
-    note: "写下包名、GitHub 仓库，或本机上的插件目录。装进名单后，JEV 可以按名字选它。不会运行插件，也不会改 Harness 的安装。",
+    note: "写下包名、GitHub 仓库，或本机上的插件目录。装进名单后，jev-decision 可以按名字选它。不会运行插件，也不会改 Harness 的安装。",
     kinds: [
       ["package", "包名", "@deepseek-ai/dsh-plugin"],
       ["github", "GitHub", "https://github.com/作者/仓库"],
@@ -1092,7 +1092,7 @@ async function loadSettings() {
     <input id="skill-dir" type="text" readonly value="${esc(config.skillDir || "")}">
     <ul id="skill-roots">${(config.extraScanRoots || []).map((item) => `<li>${esc(item)} <button type="button" data-root="${esc(item)}">移除</button></li>`).join("")}</ul>
     <div class="path-row"><input id="skill-root" type="text" placeholder="或粘贴文件夹路径"> <button id="add-root" type="button">添加</button> <button id="pick-root" type="button">选择文件夹</button></div>
-    <label for="jev-path">JEV 权重</label>
+    <label for="jev-path">jev-decision 权重</label>
     <input id="jev-path" type="text" readonly value="${esc(config.jevWeights || "")}">
     <div class="action-row"><button id="save-settings" type="button">保存设置</button> <button id="scan-skills" type="button">全局搜索技能</button> <button id="read-tools" type="button">读取工具记忆</button> <button id="sync-origins" type="button">全局同步</button></div>
     <p class="note" id="settings-status">${esc(jobStatusText(job))}</p>
@@ -1126,7 +1126,7 @@ async function saveSettings() {
 function applyCatalog(catalog, status, report) {
   state.categories = catalog.categories;
   state.skills = catalog.skills;
-  document.getElementById("count").textContent = "JEV · " + catalog.total;
+  document.getElementById("count").textContent = "jev-decision · " + catalog.total;
   renderCats();
   renderList();
   if (report) status.textContent = `新复制 ${report.copied.length} 个，已按名称分类。重复跳过 ${report.skippedDuplicates} 个。`;
@@ -1749,7 +1749,7 @@ async function installGithub(url) {
 api("/api/catalog").then((data) => {
   state.categories = data.categories;
   state.skills = data.skills;
-  document.getElementById("count").textContent = "JEV · " + data.total;
+  document.getElementById("count").textContent = "jev-decision · " + data.total;
   renderCats();
   renderList();
 }).catch((error) => {

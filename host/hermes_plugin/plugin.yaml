@@ -1,5 +1,5 @@
 name: jev-skill-kit
 version: 0.1.0
-description: Run JEV before the model speaks and inject the chosen skills.
+description: Run jev-decision before the model speaks and inject the chosen skills.
 provides_hooks:
   - pre_llm_call

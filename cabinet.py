@@ -1223,7 +1223,7 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     if not config["selectorEnabled"]:
         return {
             "enabled": False,
-            "message": "技能选择器已关闭。打开后，宿主会在模型开口前用 JEV 选技能。",
+            "message": "技能选择器已关闭。打开后，宿主会在模型开口前用 jev-decision 选技能。",
         }
     del model
     from host.jev import load_head, score_task
@@ -1277,13 +1277,13 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
         )
     kinds = {str(item.get("kind") or "skill") for item in decided["skills"]}
     if decided["method"] == "think":
-        message = "JEV 判断这次自己做。不要套技能，直接完成任务。"
+        message = "jev-decision 判断这次自己做。不要套技能，直接完成任务。"
     elif kinds == {"plugin"}:
-        message = "JEV 已选定插件。按插件做，不要再挑选。"
+        message = "jev-decision 已选定插件。按插件做，不要再挑选。"
     elif "plugin" in kinds:
-        message = "JEV 已选定技能和插件。读完照做，不要再挑选。"
+        message = "jev-decision 已选定技能和插件。读完照做，不要再挑选。"
     else:
-        message = "JEV 已选定技能。读完照做，不要再挑选。"
+        message = "jev-decision 已选定技能。读完照做，不要再挑选。"
     return {
         "enabled": True,
         "method": decided["method"],
@@ -2091,7 +2091,7 @@ def _run_memory(job_id: str) -> None:
         report = extract_tool_memory()
         _touch_progress(job_id, progress=62, label="正在写进工具记忆", kept=report.get("kept") or 0, doors=report.get("doors") or {})
         try:
-            _touch_progress(job_id, progress=78, label="正在重训 JEV")
+            _touch_progress(job_id, progress=78, label="正在重训 jev-decision")
             train()
             retrained = True
             reason = ""

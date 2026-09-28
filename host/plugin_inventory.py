@@ -233,7 +233,7 @@ def list_plugins(home: Path | None = None, harness_home: Path | None = None) -> 
         plugins = apply_rows(plugins, "plugin")
         plugins.sort(key=lambda item: (item["host"], item["name"]))
     return {
-        "note": "这些插件和技能一起交给 JEV。只有这句话点了名、并且分数过线的才会留下。MCP 仍只查看，不参与选择。",
+        "note": "这些插件和技能一起交给 jev-decision。只有这句话点了名、并且分数过线的才会留下。MCP 仍只查看，不参与选择。",
         "plugins": plugins,
     }
 

@@ -17,11 +17,11 @@ KNOWN_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 TOOLS = [
     {
         "name": "get_skill",
-        "description": "读取 JEV 这次已经选定的技能正文。必须带 decision_id。不能用来浏览或改选技能。",
+        "description": "读取 jev-decision 这次已经选定的技能正文。必须带 decision_id。不能用来浏览或改选技能。",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "JEV 选定的技能目录名"},
+                "name": {"type": "string", "description": "jev-decision 选定的技能目录名"},
                 "decision_id": {"type": "string", "description": "前言里的 decision_id"},
                 "offset": {"type": "integer", "description": "从第几个字符继续读", "minimum": 0},
             },
@@ -101,7 +101,7 @@ def call_tool(name: str, arguments: dict) -> dict:
             return tool_result("决定已过期。不要改选，也不要猜别的技能。", is_error=True)
         allowed = allowed_skill_names(decision_id)
         if requested not in allowed:
-            return tool_result("JEV 这次没有选定这个技能。不要改选。", is_error=True)
+            return tool_result("jev-decision 这次没有选定这个技能。不要改选。", is_error=True)
         skill = cabinet.read_skill(requested)
         content = skill.get("content") or ""
         chunk = content[offset : offset + CONTENT_LIMIT]
@@ -138,7 +138,7 @@ def handle(message: dict) -> dict | None:
                 "protocolVersion": version,
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "jev-skill-kit", "version": "0.1.0"},
-                "instructions": "选技能的是 JEV，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 必须带前言里的 decision_id，只能读取已经选定的名字，超长正文用 offset 续读。",
+                "instructions": "选技能的是 jev-decision，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 必须带前言里的 decision_id，只能读取已经选定的名字，超长正文用 offset 续读。",
             },
         }
     if method == "ping":

@@ -649,7 +649,7 @@ def format_preface(routed: dict, texts: dict[str, str]) -> str:
     if not routed.get("enabled", True):
         return ""
     if routed.get("method") != "skill":
-        return MARKER + "JEV 已选定：自己做。不要读取技能，不要再挑选。"
+        return MARKER + "jev-decision 已选定：自己做。不要读取技能，不要再挑选。"
     chosen = routed.get("skills") or []
     kinds = {str(item.get("kind") or "skill") for item in chosen}
     names = [str(skill.get("name") or "") for skill in chosen if skill.get("name")]
