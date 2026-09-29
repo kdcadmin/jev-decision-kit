@@ -48,6 +48,7 @@ class Handler(BaseHTTPRequestHandler):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -257,6 +258,8 @@ class Handler(BaseHTTPRequestHandler):
             data = data.replace(b"__KIT_TOKEN__", TOKEN.encode("ascii"))
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        # 本机页面不需要缓存：不禁止的话浏览器会按启发式缓存，改完看不出效果（白白怀疑"没改好"）
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)

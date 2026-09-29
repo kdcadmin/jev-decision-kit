@@ -78,6 +78,28 @@ class SafetyTests(unittest.TestCase):
             refused = mcp_server.call_tool("get_skill", {"name": "pdf"})
             self.assertTrue(refused["isError"])
 
+    def test_recorded_call_keeps_why_each_gate_won_or_lost(self):
+        """落选门的分数大多是设计上的 0（没点名按 0 分计），所以历史里必须存 reasons 才有解释力。"""
+        with tempfile.TemporaryDirectory() as folder:
+            original = cabinet.CALLS_PATH
+            cabinet.CALLS_PATH = Path(folder) / "calls.json"
+            try:
+                cabinet.record_call(
+                    "查股价", "market-data", [{"name": "china-stock-data"}], "web",
+                    passed=[{"name": "Word", "probability": 0.0}],
+                    reasons=[
+                        {"id": "market-data", "label": "行情", "kept": True, "probability": 0.93, "reason": "点了名，分数 0.93"},
+                        {"id": "office-docx", "label": "Word", "kept": False, "probability": 0.31, "reason": "点了名，分数 0.31 没过 0.4"},
+                        {"id": "office-pdf", "label": "PDF", "kept": False, "probability": 0.0, "reason": "没点名"},
+                    ],
+                )
+                top = cabinet.load_memory()["calls"][0]
+                self.assertEqual([row["label"] for row in top["reasons"]], ["行情", "Word"])
+                self.assertEqual(top["unnamedCount"], 1)
+                self.assertEqual(cabinet.calls_view()["calls"][0]["reasons"][0]["label"], "行情")
+            finally:
+                cabinet.CALLS_PATH = original
+
     def test_github_backslash_cannot_escape(self):
         with self.assertRaises(ValueError):
             cabinet.parse_github("https://github.com/ada/demo/tree/main/..\\..\\Windows")

@@ -405,7 +405,7 @@ def save_memory(data: dict) -> None:
     _atomic_write(CALLS_PATH, json.dumps(data, ensure_ascii=False, indent=2))
 
 
-def record_call(task: str, category: str, skills: list[dict], source: str, method: str = "skill", passed: list | None = None, label: str | None = None) -> dict:
+def record_call(task: str, category: str, skills: list[dict], source: str, method: str = "skill", passed: list | None = None, label: str | None = None, reasons: list | None = None) -> dict:
     with lock:
         memory = load_memory()
         shown = label or ("自主思考" if method == "think" else LABELS.get(category, category))
@@ -425,6 +425,26 @@ def record_call(task: str, category: str, skills: list[dict], source: str, metho
                 for item in passed
                 if item.get("name")
             ]
+        if reasons:
+            # 落选门的分数大多是「没点名按 0 分计」的设计值，光看 passed 没有解释力。
+            # 这里把判定依据留下：留下的门、点名但没过 0.4 的门、分数不为 0 的门。
+            # 「没点名」的门理由一样、数量多，压成一个计数，别把 calls.json 撑大。
+            keep = [
+                {
+                    "label": row.get("label"),
+                    "probability": row.get("probability"),
+                    "kept": bool(row.get("kept")),
+                    "reason": row.get("reason"),
+                }
+                for row in reasons
+                if row.get("kept")
+                or str(row.get("reason") or "").startswith("点了名")
+                or float(row.get("probability") or 0) > 0
+            ]
+            entry["reasons"] = keep[:12]
+            unnamed = len(reasons) - len(keep)
+            if unnamed:
+                entry["unnamedCount"] = unnamed
         memory["calls"].insert(0, entry)
         memory["calls"] = memory["calls"][:200]
         save_memory(memory)
@@ -1172,6 +1192,7 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
             decided["method"],
             decided["passed"],
             decided["label"],
+            decided.get("reasons"),
         )
     kinds = {str(item.get("kind") or "skill") for item in decided["skills"]}
     if decided["method"] == "think":

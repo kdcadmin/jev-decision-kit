@@ -1,12 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light" data-view="list">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>技能柜</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- 图标：Reicon（MIT · https://reicon.dev · 底图 Solar Icons CC BY 4.0），内联 SVG，不引任何外部请求 -->
+<script>
+/* 主题与视图先于首屏生效，避免闪一下；默认跟随系统，手动选择记在本机。 */
+try {
+  var t = localStorage.getItem("kit-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.view = localStorage.getItem("kit-view") || "list";
+} catch (e) { document.documentElement.dataset.theme = "light"; }
+</script>
 <style>
   :root {
     --bg: #e4e1d8;
@@ -458,6 +464,356 @@
     .lib-cards, #library-view.picked .lib-stage { grid-template-columns: 1fr; }
     .lib-install input { width: min(100%, 220px); }
   }
+  /* ===================== 设计层（D 方向：密度 + 卡片，双主题） ===================== */
+  :root, html[data-theme="light"]{
+    --bg:#f4f6f8; --sheet:#fff; --card:#fff; --panel2:#fbfcfd; --soft:#f1f4f7;
+    --ink:#12161c; --muted:#6b7480; --line:#e5e9ee; --line-soft:#eef1f5;
+    --accent:#0f7a5f; --accent-ink:#fff; --fill:#e6f4ef; --warn:#9a6b1f;
+    --radius:14px; --radius-sm:10px; --rail:196px;
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 10px 28px -14px rgba(16,24,40,.22);
+    --ring:0 0 0 3px rgba(15,122,95,.18);
+  }
+  html[data-theme="dark"]{
+    --bg:#0e1116; --sheet:#161a21; --card:#161a21; --panel2:#12161c; --soft:#1b212a;
+    --ink:#e7ebf0; --muted:#98a2ae; --line:#252b34; --line-soft:#1d232b;
+    --accent:#34c39a; --accent-ink:#06231b; --fill:#12312a; --warn:#e0a458;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
+    --ring:0 0 0 3px rgba(52,195,154,.22);
+  }
+  html, body { height: 100%; }
+  body{ background:var(--bg); color:var(--ink); font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; font-size:13.5px; }
+  ::selection{ background:var(--fill); }
+  [hidden]{ display:none !important; }
+  *:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb{ background:var(--line); border-radius:8px; border:3px solid transparent; background-clip:content-box; }
+  *::-webkit-scrollbar-track{ background:transparent; }
+
+  /* ---- 外壳：左导航竖栏 + 顶栏（用 display:contents 把 header 的子项提为网格项，不改标记） ---- */
+  body .app{
+    display:grid; height:100vh; height:100dvh; overflow:hidden;
+    grid-template-columns:var(--rail) minmax(0,1fr);
+    grid-template-rows:auto auto auto minmax(0,1fr);
+    grid-template-areas:
+      "title top"
+      "count top"
+      "nav   ticket"
+      "nav   main";
+  }
+  body .app > header, body .app > header > .mark{ display:contents; }
+  body .app > header h1{ grid-area:title; background:var(--panel2); border-right:1px solid var(--line); margin:0; padding:15px 15px 2px; font-size:19px; font-weight:700; }
+  body .app > header #count{ grid-area:count; background:var(--panel2); border-right:1px solid var(--line); margin:0; padding:0 15px 13px; color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+  body .app .views{ grid-area:nav; background:var(--panel2); border-right:1px solid var(--line); display:flex; flex-direction:column; gap:2px; padding:8px 8px 12px; margin:0; overflow:auto; }
+  body .app .views button{
+    text-align:left; border:1px solid transparent; background:transparent; color:var(--ink);
+    border-radius:9px; padding:8px 11px; font-size:13.5px; font-weight:500;
+  }
+  body .app .views button:hover{ background:var(--soft); }
+  body .app .views button.on{ background:var(--fill); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  body .app .route{
+    grid-area:top; display:flex; gap:10px; align-items:center; margin:0;
+    padding:10px 14px; background:var(--sheet); border-bottom:1px solid var(--line);
+  }
+  body .app .route > div:first-child{ flex:1; min-width:0; }
+  body .app .route label{ display:block; color:var(--muted); font-size:11.5px; margin-bottom:3px; }
+  body .app .route input[type=text], body .app .route input:not([type]){
+    width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 12px; color:var(--ink); font-size:13.5px;
+  }
+  body .app .route input:focus{ border-color:var(--accent); outline:none; box-shadow:var(--ring); }
+  .kit-tools{ display:flex; gap:8px; align-items:center; flex:none; }
+  .seg{ display:flex; gap:2px; background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:2px; }
+  .seg button{ border:0; background:transparent; color:var(--muted); border-radius:999px; padding:5px 12px; font-size:12.5px; }
+  .seg button.on{ background:var(--accent); color:var(--accent-ink); font-weight:600; }
+  body .app .ticket{ grid-area:ticket; padding:12px 14px 0; }
+  body .app main{ grid-area:main; display:grid; grid-template-columns:200px minmax(0,1fr) 372px; gap:13px; padding:14px; overflow:hidden; min-height:0; }
+  body .app .sheet.on{ grid-area:main; margin:14px; padding:0; overflow:auto; background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+
+  /* ---- 通用元件 ---- */
+  button{ font:inherit; color:inherit; cursor:pointer; }
+  button:not(.go):not(.save):not(.go-install):not(.switch){
+    background:var(--sheet); border:1px solid var(--line); border-radius:9px; padding:5px 11px; font-size:12.5px;
+  }
+  button:not(.go):not(.save):not(.go-install):not(.switch):hover{ background:var(--soft); border-color:var(--accent); }
+  .go, .save, .go-install{
+    background:var(--accent); border:1px solid var(--accent); color:var(--accent-ink);
+    border-radius:10px; padding:8px 16px; font-weight:600; font-size:13.5px;
+  }
+  .go:hover, .save:hover, .go-install:hover{ filter:brightness(1.06); }
+  select, input[type=text], input:not([type]), textarea{
+    background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:6px 10px; color:var(--ink); font:inherit;
+  }
+  select:focus, input:focus, textarea:focus{ border-color:var(--accent); outline:none; box-shadow:var(--ring); }
+  input[type=checkbox]{ accent-color:var(--accent); }
+  code{ font-family:Consolas,ui-monospace,monospace; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:12px; }
+  .note{ color:var(--muted); font-size:12.5px; line-height:1.6; }
+  .status{ color:var(--muted); font-size:12px; }
+  .changed{ color:var(--warn); font-style:normal; font-size:11.5px; margin-left:6px; }
+  .meta{ color:var(--muted); font-size:12px; text-align:right; }
+  .install-track{ height:6px; background:var(--soft); border:1px solid var(--line); border-radius:999px; overflow:hidden; margin:8px 0; }
+  .install-track > span{ display:block; height:100%; background:var(--accent); }
+  .install-track.failed > span{ background:var(--warn); }
+
+  /* ---- 柜：分类 / 列表 / 详情 ---- */
+  body .app main > .pane{ background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px; min-height:0; overflow:auto; display:flex; flex-direction:column; }
+  body .app main > .pane > h2{ margin:0 0 9px; font-size:12px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; font-weight:600; }
+  .cats{ display:flex; flex-direction:column; gap:2px; }
+  .cat{ display:flex; justify-content:space-between; align-items:center; gap:8px; background:transparent; border:1px solid transparent; border-radius:8px; padding:6px 9px; color:var(--muted); font-size:12.5px; }
+  .cat em{ font-style:normal; font-variant-numeric:tabular-nums; }
+  .cat:hover{ background:var(--soft); color:var(--ink); }
+  .cat.active{ background:var(--fill); border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .search{ width:100%; margin-bottom:9px; }
+  .list{ display:flex; flex-direction:column; gap:4px; }
+  .skill{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:7px 10px; }
+  .skill b{ font-size:13px; font-weight:600; }
+  .skill small{ color:var(--muted); font-size:11.5px; }
+  .skill:hover{ background:var(--soft); border-color:var(--accent); }
+  .skill.active{ background:var(--fill); border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+  html[data-view="cards"] .list{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  html[data-view="cards"] .skill{ background:var(--card); border-radius:12px; padding:12px 13px; gap:5px; box-shadow:var(--shadow); }
+  html[data-view="cards"] .skill b{ font-size:13.5px; }
+  .detail-head{ display:flex; justify-content:space-between; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line-soft); }
+  .detail-head h3{ margin:0 0 4px; font-size:16px; }
+  .detail-head p{ margin:0; color:var(--muted); font-size:12.5px; }
+  .tools{ display:flex; flex-wrap:wrap; gap:7px; align-items:center; padding:10px 0; }
+  #editor{ width:100%; flex:1; min-height:320px; resize:vertical; font-family:Consolas,ui-monospace,monospace; font-size:12.5px; line-height:1.6; }
+  .scripts{ padding-top:8px; color:var(--muted); font-size:12px; }
+  .empty{ color:var(--muted); text-align:center; padding:26px 12px; line-height:1.7; }
+
+  /* ---- 选择票 ---- */
+  .ticket-card{ background:var(--sheet); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:var(--radius-sm); box-shadow:var(--shadow); padding:12px 14px; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-start; }
+  .ticket-card .pick{ background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 11px; min-width:150px; }
+  .ticket-card .pick .k{ color:var(--muted); font-size:11.5px; }
+  .ticket-card .pick strong{ display:block; font-size:14px; }
+  .ticket-card .pick span{ color:var(--muted); font-size:12px; }
+  .ticket-card .pick-actions{ margin-top:6px; display:flex; gap:6px; }
+  .ticket-wait, .ticket-error{ background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 14px; }
+  .ticket-wait{ color:var(--muted); }
+  .ticket-error{ color:var(--warn); border-left:4px solid var(--warn); }
+  .bars{ display:flex; flex-direction:column; gap:4px; min-width:220px; }
+  .bar{ display:grid; grid-template-columns:96px minmax(0,1fr) 34px; gap:8px; align-items:center; font-size:12px; color:var(--muted); }
+  .bar i{ display:block; height:6px; background:var(--soft); border-radius:999px; overflow:hidden; }
+  .bar i b{ display:block; height:100%; background:var(--accent); }
+  .passed{ color:var(--warn); font-size:12px; }
+
+  /* ---- 各面公共：标题行 / 表格 / 芯片 / 行工具 ---- */
+  .calls-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); }
+  .calls-head h2{ margin:0; font-size:16px; }
+  .sheet > .note, .sheet > p{ margin:10px 16px; }
+  .sheet table{ width:100%; border-collapse:collapse; }
+  .sheet th, .sheet td{ text-align:left; padding:8px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  .sheet th{ color:var(--muted); font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; font-weight:600; }
+  .sheet tr:hover td{ background:var(--soft); }
+  .row-tools{ display:flex; gap:6px; }
+  .chip{ display:inline-flex; align-items:center; gap:5px; background:var(--fill); border:1px solid var(--accent); color:var(--accent); border-radius:999px; padding:1px 9px; font-size:11.5px; margin:2px 2px 2px 0; }
+  .chip button{ border:0; background:transparent; color:inherit; padding:0 0 0 2px; font-size:11.5px; }
+  .skill-line{ display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:8px; align-items:center; }
+  .skill-name{ font-family:Consolas,ui-monospace,monospace; font-size:12.5px; }
+  .chip-add{ border:1px solid var(--line); background:var(--sheet); border-radius:999px; padding:1px 9px; font-size:11.5px; }
+  .path-row, .action-row{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 16px; }
+  #skill-roots{ list-style:none; margin:10px 16px; padding:0; }
+  #skill-roots li{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-soft); font-family:Consolas,ui-monospace,monospace; font-size:12px; }
+  .add-results{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .settings > label{ display:flex; align-items:center; gap:8px; margin:10px 16px; }
+
+  /* ---- 库 ---- */
+  .lib-center{ padding:14px 16px; }
+  .lib-head{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .lib-install{ display:flex; gap:6px; flex:1; min-width:220px; }
+  .lib-install input{ flex:1; }
+  .lib-days{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  .lib-stage{ display:grid; grid-template-columns:minmax(0,1fr) 420px; gap:13px; margin-top:10px; align-items:start; }
+  .lib-cards{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  .lib-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 13px; box-shadow:var(--shadow); }
+  .lib-card:hover{ border-color:var(--accent); }
+  .lib-detail{ background:var(--panel2); border:1px solid var(--line); border-radius:var(--radius); padding:14px; position:sticky; top:0; }
+  .lib-kicker{ color:var(--muted); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; margin:0 0 6px; }
+  .intro{ color:var(--muted); font-size:12.5px; line-height:1.7; }
+  .lib-actions{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; }
+  .lib-skills{ display:flex; flex-direction:column; gap:6px; }
+  .lib-jump{ animation:none; background:var(--sheet); border:1px solid var(--line); border-radius:10px; padding:8px 11px; }
+  .lib-extra{ margin:14px 16px; }
+  .dir-list{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  /* ---- 弹层 ---- */
+  body .app > .sync-card{ position:fixed; inset:0; z-index:40; display:grid; place-items:center; background:rgba(8,12,16,.5); backdrop-filter:blur(2px); }
+  body .app > .sync-card > article{ width:min(560px,92vw); max-height:86vh; overflow:auto; background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px; }
+  body .app > .sync-card.wide > article{ width:min(720px,94vw); }
+  body .app > .sync-card h3{ margin:0 0 8px; font-size:16px; }
+  body .app > .sync-card pre{ background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; overflow:auto; font-size:12px; }
+  .choices{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+
+  /* ---- 修正：胶囊切换器必须压过上面的通用 button 规则 ---- */
+  body .app .route .seg button{ border:0; background:transparent; color:var(--muted); border-radius:999px; padding:5px 12px; font-size:12.5px; box-shadow:none; }
+  body .app .route .seg button:hover{ background:var(--soft); border:0; }
+  body .app .route .seg button.on{ background:var(--accent); color:var(--accent-ink); font-weight:600; }
+  /* ---- 修正：表格等宽列，别再让窄列一字一行 ---- */
+  .sheet table{ table-layout:fixed; width:100%; }
+  .sheet th, .sheet td{ white-space:normal; overflow-wrap:anywhere; word-break:break-word; }
+  .sheet td button{ white-space:nowrap; }
+
+  /* ============ Stage 2：导航计数 · 详情动作条 · 库面细节 ============ */
+  /* 导航项：去掉通用按钮带出的浅框；计数靠右、空则不占位 */
+  body .app header .views button{
+    display:grid; grid-template-columns:18px minmax(0,1fr) auto; gap:10px; align-items:center;
+    border:1px solid transparent !important; background:transparent !important; box-shadow:none !important;
+  }
+  body .app header .views button:hover{ background:var(--soft) !important; }
+  body .app header .views button.on{ background:var(--fill) !important; border-color:var(--accent) !important; }
+  .views .n{ font-style:normal; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums; }
+  .views button.on .n{ color:var(--accent); }
+  .views .n:empty{ display:none; }
+
+  /* 详情：字段分组 + 底部动作条（用 order 重排，不改 JS 生成的顺序） */
+  body .app main > .pane.detail > .detail-head{ order:1; }
+  body .app main > .pane.detail > #editor{ order:2; border-radius:var(--radius-sm); }
+  body .app main > .pane.detail > .scripts{ order:3; }
+  body .app main > .pane.detail > .tools{
+    order:4; position:sticky; bottom:-12px; margin:10px -12px -12px; padding:10px 12px;
+    background:var(--panel2); border-top:1px solid var(--line); border-radius:0 0 var(--radius) var(--radius);
+  }
+  body .app main > .pane.detail > .tools select{ min-width:118px; }
+  body .app main > .pane.detail > .tools .status{ margin-left:auto; }
+  /* 详情动作条上的主按钮必须看起来是主按钮（旧 .save 规则会盖掉强调色） */
+  body .app main > .pane.detail > .tools .save{
+    background:var(--accent) !important; color:var(--accent-ink) !important; border:1px solid var(--accent) !important;
+    border-radius:10px; padding:7px 15px; font-weight:600;
+  }
+
+  /* 库：卡片与详情细节 */
+  .lib-card b{ display:block; font-size:13.5px; margin-bottom:3px; }
+  .lib-card small{ color:var(--muted); font-size:12px; }
+  .lib-extra{ background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; }
+  .dir-list > *{ background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:8px 10px; font-size:12.5px; color:var(--ink); text-decoration:none; overflow-wrap:anywhere; }
+  .dir-list > *:hover{ border-color:var(--accent); }
+  .lib-install input{ min-width:0; }
+  .go-install{ white-space:nowrap; }
+
+  /* ============ Stage 3：图标 · 可收起侧栏 · 列表摘要 · 键盘 ============ */
+  /* 修 bug：设计层的 `body .app main{display:grid}` 压过了旧规则 `main.off{display:none}`，
+     导致看 MCP / 派遣 等面时，技能详情还露在下面（用户截图里那条动作条） */
+  body .app main.off{ display:none; }
+
+  .views button .ic{ width:17px; height:17px; color:var(--muted); flex:none; }
+  body .app header .views button.on .ic{ color:var(--accent); }
+  body .app header .views button:hover .ic{ color:var(--ink); }
+  body .app header .views button{ padding:8px 10px; }
+  body .app header .views .rail-toggle{ margin-top:auto; color:var(--muted); }
+  body .app header .views .rail-toggle:hover{ color:var(--ink); }
+  .cats-hint{ color:var(--muted); font-size:11.5px; margin:8px 2px 0; line-height:1.55; }
+  .skill .sum{ color:var(--muted); font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+
+  /* 收起态：只留图标 */
+  html[data-rail="collapsed"]{ --rail:58px; }
+  html[data-rail="collapsed"] body .app header .views button{ grid-template-columns:1fr; justify-items:center; padding:9px 0; }
+  html[data-rail="collapsed"] body .app header .views button span{ display:none; }
+  html[data-rail="collapsed"] body .app header .views .n{ display:none; }
+  html[data-rail="collapsed"] body .app header .views .ic{ width:19px; height:19px; }
+  html[data-rail="collapsed"] body .app > header h1{
+    writing-mode:vertical-rl; font-size:13px; letter-spacing:2px; text-align:center; padding:14px 0 8px;
+  }
+  html[data-rail="collapsed"] body .app > header #count{ display:none; }
+
+  /* ============ Stage 4：内容区对齐 · 库页右边缘 · 派遣页分组 ============ */
+  /* 对齐：内容区与顶栏用同一条 14px 边线（原来 sheet 20px + 内部 14px 会差出两层） */
+  body .app .sheet.on{ margin:12px 14px 14px; }
+  body .app .calls-head{ padding:14px; }
+  body .app .sheet > .note, body .app .sheet > p, body .app .sheet > label{ margin:10px 14px; }
+  body .app .sheet th, body .app .sheet td{ padding:8px 14px; }
+  body .app #skill-roots, body .app .path-row, body .app .action-row, body .app .settings > label{ margin:10px 14px; }
+
+  /* 库页：原来我把它写死成两列 420px，覆盖了原 CSS 的 .picked 判断 →
+     没选仓库时右边空一块、卡片右边缘参差。恢复「未选=单列、选中=两列」。 */
+  body .app .lib-stage{ grid-template-columns:minmax(0,1fr); }
+  body .app #library-view.picked .lib-stage{ grid-template-columns:minmax(0,1fr) 420px; }
+  body .app #library-view.picked .lib-cards{ grid-template-columns:1fr; }
+  body .app .lib-center{ padding:0; }
+  body .app .lib-days, body .app .lib-head, body .app .lib-stage, body .app .lib-extra{ margin:14px; }
+  body .app .lib-cards{ margin:0; gap:12px; }
+  body .app .lib-extra{ padding:12px 14px; }
+
+  /* 派遣页：建议 / 观测 分组标题与状态色 */
+  body .app h3.group{ margin:16px 14px 6px; font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:8px; font-weight:600; }
+  body .app h3.group .count{ background:var(--soft); border:1px solid var(--line); border-radius:999px; padding:0 8px; font-size:11.5px; font-variant-numeric:tabular-nums; }
+  body .app td.muted-cell{ color:var(--muted); }
+  .pill.err{ background:#fdeceb; border-color:#d99b93; color:#8f3d32; }
+  html[data-theme="dark"] .pill.err{ background:#2a1514; border-color:#7a3b32; color:#f0a8a0; }
+  .pill.muted{ color:var(--muted); }
+
+  /* ============ Stage 5：决策详情抽屉 ============ */
+  body .app .drawer-scrim{ position:fixed; inset:0; z-index:30; background:rgba(8,12,16,.38); }
+  body .app .drawer{
+    position:fixed; top:0; right:0; bottom:0; z-index:31; width:min(460px, 94vw);
+    background:var(--sheet); border-left:1px solid var(--line); box-shadow:var(--shadow);
+    display:flex; flex-direction:column;
+  }
+  .drawer-hd{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px; border-bottom:1px solid var(--line); }
+  .drawer-hd h3{ margin:0; font-size:15px; }
+  .drawer-body{ padding:14px; overflow:auto; display:flex; flex-direction:column; gap:15px; }
+  .drawer-body h4{ margin:0 0 6px; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .drawer-body .q{ margin:0; font-size:14.5px; line-height:1.65; overflow-wrap:anywhere; }
+  .drawer-body .kv{ display:grid; grid-template-columns:88px minmax(0,1fr); gap:5px 10px; margin:0; font-size:12.5px; }
+  .drawer-body .kv dt{ color:var(--muted); }
+  .drawer-body .kv dd{ margin:0; overflow-wrap:anywhere; }
+  .drawer-body details{ border:1px solid var(--line); border-radius:10px; padding:8px 11px; background:var(--panel2); }
+  .drawer-body summary{ cursor:pointer; color:var(--muted); font-size:12.5px; }
+  .drawer-body details code{ display:block; margin-top:7px; overflow-wrap:anywhere; }
+  .drawer-body .chips button{ cursor:pointer; }
+  .drawer-body .gate{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; padding:7px 0; border-bottom:1px solid var(--line-soft); }
+  .drawer-body .gate:last-child{ border-bottom:0; }
+  .drawer-body .gate b{ font-size:12.5px; font-weight:600; }
+  .drawer-body .gate .pct{ color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+  .drawer-body .gate small{ grid-column:1 / -1; color:var(--muted); font-size:11.5px; }
+  .drawer-body .gate.ok b{ color:var(--accent); }
+  body .app tr.row-click{ cursor:pointer; }
+
+  /* ============ Stage 6：开关看得懂 · 列表/卡片对全站生效 ============ */
+  /* 启用开关：原来被通用 button 规则盖掉，旋钮和颜色都没了 → 看不出开还是关 */
+  body .app button.switch{
+    width:40px; height:22px; padding:0; border-radius:999px; background:var(--soft); border:1px solid var(--line);
+    position:relative; flex:none; box-shadow:none;
+  }
+  body .app button.switch i{
+    position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%;
+    background:var(--muted); transition:left .15s ease, background .15s ease;
+  }
+  body .app button.switch.on{ background:var(--accent); border-color:var(--accent); }
+  body .app button.switch.on i{ left:20px; background:var(--accent-ink); }
+  body .app button.switch:hover{ border-color:var(--accent); }
+  body .app .switch-text{ font-size:11.5px; color:var(--muted); min-width:1.1em; }
+  body .app .switch-text.on{ color:var(--accent); font-weight:600; }
+
+  /* 卡片视图：所有面的表格都变卡片，字段名取自每格自己的 data-label */
+  html[data-view="cards"] body .app .sheet thead{ display:none; }
+  html[data-view="cards"] body .app .sheet table,
+  html[data-view="cards"] body .app .sheet tbody{ display:block; }
+  html[data-view="cards"] body .app .sheet tbody{ display:grid; grid-template-columns:1fr 1fr; gap:11px; padding:12px 14px; }
+  html[data-view="cards"] body .app .sheet tr{
+    display:block; background:var(--card); border:1px solid var(--line); border-radius:12px;
+    box-shadow:var(--shadow); padding:11px 13px;
+  }
+  html[data-view="cards"] body .app .sheet tr:hover td{ background:transparent; }
+  html[data-view="cards"] body .app .sheet td,
+  html[data-view="cards"] body .app .sheet th{ display:block; border:0; padding:3px 0; }
+  html[data-view="cards"] body .app .sheet td[data-label]::before{ content:attr(data-label) " · "; color:var(--muted); font-size:11.5px; }
+  html[data-view="cards"] body .app .sheet td:empty{ display:none; }
+  @media (max-width: 1000px){
+    html[data-view="cards"] body .app .sheet tbody{ grid-template-columns:1fr; }
+  }
+
+  /* ---- 窄屏 ---- */
+  @media (max-width: 1280px){
+    body .app main{ grid-template-columns:180px minmax(0,1fr) 320px; }
+    .lib-stage{ grid-template-columns:minmax(0,1fr); }
+  }
+  @media (max-width: 1000px){
+    body .app{ grid-template-columns:minmax(0,1fr); grid-template-areas:"title" "count" "top" "nav" "ticket" "main"; }
+    body .app > header h1, body .app > header #count, body .app .views{ border-right:0; }
+    body .app .views{ flex-direction:row; flex-wrap:wrap; }
+    body .app main{ grid-template-columns:minmax(0,1fr); }
+    html[data-view="cards"] .list{ grid-template-columns:1fr; }
+    .lib-cards, .add-results, .dir-list{ grid-template-columns:1fr; }
+  }
 </style>
 </head>
 <body>
@@ -467,13 +823,14 @@
       <h1>技能柜</h1>
       <p id="count">jev-decision · …</p>
       <div class="views">
-        <button class="on" type="button" data-view="cabinet">柜</button>
-        <button type="button" data-view="calls">调用</button>
-        <button type="button" data-view="delegation">派遣</button>
-        <button type="button" data-view="mcp">MCP</button>
-        <button type="button" data-view="plugins">插件</button>
-        <button type="button" data-view="settings">设置</button>
-        <button type="button" data-view="library">库</button>
+        <button class="on" type="button" data-view="cabinet"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9.25 5.75C9.66421 5.75 10 6.08579 10 6.5V7.25H14V6.5C14 6.08579 14.3358 5.75 14.75 5.75C15.1642 5.75 15.5 6.08579 15.5 6.5V7.5C15.5 8.19036 14.9404 8.75 14.25 8.75H9.75C9.05964 8.75 8.5 8.19036 8.5 7.5V6.5C8.5 6.08579 8.83579 5.75 9.25 5.75Z" fill="currentColor"/> <path d="M10 16C10 15.5858 9.66421 15.25 9.25 15.25C8.83579 15.25 8.5 15.5858 8.5 16V17C8.5 17.6904 9.05964 18.25 9.75 18.25H14.25C14.9404 18.25 15.5 17.6904 15.5 17V16C15.5 15.5858 15.1642 15.25 14.75 15.25C14.3358 15.25 14 15.5858 14 16V16.75H10V16Z" fill="currentColor"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M16.2321 1.25H7.7679C6.95506 1.24999 6.29944 1.24999 5.76853 1.29336C5.2219 1.33803 4.74175 1.43239 4.29754 1.65873C3.59193 2.01825 3.01825 2.59193 2.65873 3.29754C2.43239 3.74175 2.33803 4.2219 2.29336 4.76853C2.24999 5.29944 2.24999 5.95505 2.25 6.76788V17.2321C2.24999 18.0449 2.24999 18.7006 2.29336 19.2315C2.33803 19.7781 2.43239 20.2582 2.65873 20.7025C3.01825 21.4081 3.59193 21.9817 4.29754 22.3413C4.74175 22.5676 5.2219 22.662 5.76853 22.7066C6.29946 22.75 6.9551 22.75 7.76798 22.75H16.232C17.0449 22.75 17.7005 22.75 18.2315 22.7066C18.7781 22.662 19.2582 22.5676 19.7025 22.3413C20.4081 21.9817 20.9817 21.4081 21.3413 20.7025C21.5676 20.2582 21.662 19.7781 21.7066 19.2315C21.75 18.7006 21.75 18.045 21.75 17.2321V6.76788C21.75 5.95505 21.75 5.29944 21.7066 4.76853C21.662 4.2219 21.5676 3.74175 21.3413 3.29754C20.9817 2.59193 20.4081 2.01825 19.7025 1.65873C19.2582 1.43239 18.7781 1.33803 18.2315 1.29336C17.7006 1.24999 17.0449 1.24999 16.2321 1.25ZM20.25 11.25V6.8C20.25 5.94755 20.2494 5.35331 20.2116 4.89068C20.1745 4.43681 20.1054 4.17604 20.0048 3.97852C19.789 3.55516 19.4448 3.21095 19.0215 2.99524C18.824 2.8946 18.5632 2.82547 18.1093 2.78838C17.6467 2.75058 17.0525 2.75 16.2 2.75H7.8C6.94755 2.75 6.35331 2.75058 5.89068 2.78838C5.43681 2.82547 5.17604 2.8946 4.97852 2.99524C4.55516 3.21095 4.21095 3.55516 3.99524 3.97852C3.8946 4.17604 3.82547 4.43681 3.78838 4.89068C3.75058 5.35331 3.75 5.94755 3.75 6.8V11.25H20.25ZM3.75 12.75H20.25V17.2C20.25 18.0525 20.2494 18.6467 20.2116 19.1093C20.1745 19.5632 20.1054 19.824 20.0048 20.0215C19.789 20.4448 19.4448 20.789 19.0215 21.0048C18.824 21.1054 18.5632 21.1745 18.1093 21.2116C17.6467 21.2494 17.0525 21.25 16.2 21.25H7.8C6.94755 21.25 6.35331 21.2494 5.89068 21.2116C5.43681 21.1745 5.17604 21.1054 4.97852 21.0048C4.55516 20.789 4.21095 20.4448 3.99524 20.0215C3.8946 19.824 3.82547 19.5632 3.78838 19.1093C3.75058 18.6467 3.75 18.0525 3.75 17.2V12.75Z" fill="currentColor"/></svg><span>柜</span><em class="n" data-nav-count="cabinet"></em></button>
+        <button type="button" data-view="calls"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.07868 5.06891C8.87402 1.27893 15.0437 1.31923 18.8622 5.13778C22.6824 8.95797 22.7211 15.1313 18.9262 18.9262C15.1312 22.7211 8.95793 22.6824 5.13774 18.8622C2.87389 16.5984 1.93904 13.5099 2.34047 10.5812C2.39672 10.1708 2.775 9.88377 3.18537 9.94002C3.59575 9.99627 3.88282 10.3745 3.82658 10.7849C3.4866 13.2652 4.27782 15.881 6.1984 17.8016C9.44288 21.0461 14.6664 21.0646 17.8655 17.8655C21.0646 14.6664 21.046 9.44292 17.8015 6.19844C14.5587 2.95561 9.33889 2.93539 6.13935 6.12957L6.88705 6.13333C7.30126 6.13541 7.63535 6.47288 7.63327 6.88709C7.63119 7.3013 7.29372 7.63539 6.87951 7.63331L4.33396 7.62052C3.92269 7.61845 3.58981 7.28556 3.58774 6.8743L3.57495 4.32874C3.57286 3.91454 3.90696 3.57707 4.32117 3.57498C4.73538 3.5729 5.07285 3.907 5.07493 4.32121L5.07868 5.06891ZM11.9999 7.24992C12.4141 7.24992 12.7499 7.58571 12.7499 7.99992V11.6893L15.0302 13.9696C15.3231 14.2625 15.3231 14.7374 15.0302 15.0302C14.7373 15.3231 14.2624 15.3231 13.9696 15.0302L11.2499 12.3106V7.99992C11.2499 7.58571 11.5857 7.24992 11.9999 7.24992Z" fill="currentColor"/></svg><span>调用</span><em class="n" data-nav-count="calls"></em></button>
+        <button type="button" data-view="delegation"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M16.96 6.17004C18.96 7.56004 20.34 9.77004 20.62 12.32" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.48999 12.37C3.74999 9.82997 5.10999 7.61997 7.08999 6.21997" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.19 20.9399C9.35 21.5299 10.67 21.8599 12.06 21.8599C13.4 21.8599 14.66 21.5599 15.79 21.0099" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.06 7.70001C13.5954 7.70001 14.84 6.45537 14.84 4.92001C14.84 3.38466 13.5954 2.14001 12.06 2.14001C10.5247 2.14001 9.28003 3.38466 9.28003 4.92001C9.28003 6.45537 10.5247 7.70001 12.06 7.70001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.82999 19.92C6.36534 19.92 7.60999 18.6753 7.60999 17.14C7.60999 15.6046 6.36534 14.36 4.82999 14.36C3.29464 14.36 2.04999 15.6046 2.04999 17.14C2.04999 18.6753 3.29464 19.92 4.82999 19.92Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.17 19.92C20.7054 19.92 21.95 18.6753 21.95 17.14C21.95 15.6046 20.7054 14.36 19.17 14.36C17.6347 14.36 16.39 15.6046 16.39 17.14C16.39 18.6753 17.6347 19.92 19.17 19.92Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>派遣</span><em class="n" data-nav-count="delegation"></em></button>
+        <button type="button" data-view="mcp"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.948 1.5H18.052C18.9505 1.49997 19.6997 1.49995 20.2945 1.57991C20.9223 1.66432 21.4891 1.84999 21.9445 2.30546C22.4 2.76093 22.5857 3.32773 22.6701 3.95552C22.7501 4.5503 22.75 5.29953 22.75 6.19801V6.302C22.75 7.20048 22.7501 7.9497 22.6701 8.54448C22.5857 9.17228 22.4 9.73907 21.9445 10.1945C21.4891 10.65 20.9223 10.8357 20.2945 10.9201C19.6997 11.0001 18.9505 11 18.052 11H5.94801C5.04953 11 4.3003 11.0001 3.70552 10.9201C3.07773 10.8357 2.51093 10.65 2.05546 10.1945C1.59999 9.73907 1.41432 9.17228 1.32991 8.54448C1.24995 7.9497 1.24997 7.20048 1.25 6.302V6.198C1.24997 5.29952 1.24995 4.5503 1.32991 3.95552C1.41432 3.32773 1.59999 2.76093 2.05546 2.30546C2.51093 1.84999 3.07773 1.66432 3.70552 1.57991C4.3003 1.49995 5.04952 1.49997 5.948 1.5ZM3.90539 3.06654C3.44393 3.12858 3.24644 3.2358 3.11612 3.36612C2.9858 3.49643 2.87858 3.69393 2.81654 4.15539C2.7516 4.63843 2.75 5.28599 2.75 6.25C2.75 7.21401 2.7516 7.86157 2.81654 8.34461C2.87858 8.80607 2.9858 9.00357 3.11612 9.13388C3.24644 9.2642 3.44393 9.37142 3.90539 9.43347C4.38843 9.49841 5.03599 9.5 6 9.5H18C18.964 9.5 19.6116 9.49841 20.0946 9.43347C20.5561 9.37142 20.7536 9.2642 20.8839 9.13388C21.0142 9.00357 21.1214 8.80607 21.1835 8.34461C21.2484 7.86157 21.25 7.21401 21.25 6.25C21.25 5.28599 21.2484 4.63843 21.1835 4.15539C21.1214 3.69393 21.0142 3.49643 20.8839 3.36612C20.7536 3.2358 20.5561 3.12858 20.0946 3.06654C19.6116 3.00159 18.964 3 18 3H6C5.03599 3 4.38843 3.00159 3.90539 3.06654ZM5.25 6.25C5.25 5.83579 5.58579 5.5 6 5.5H8C8.41422 5.5 8.75 5.83579 8.75 6.25C8.75 6.66422 8.41422 7 8 7H6C5.58579 7 5.25 6.66422 5.25 6.25ZM10.25 6.25C10.25 5.83579 10.5858 5.5 11 5.5H18C18.4142 5.5 18.75 5.83579 18.75 6.25C18.75 6.66422 18.4142 7 18 7H11C10.5858 7 10.25 6.66422 10.25 6.25ZM5.94801 12.5H18.052C18.9505 12.5 19.6997 12.4999 20.2945 12.5799C20.9223 12.6643 21.4891 12.85 21.9445 13.3055C22.4 13.7609 22.5857 14.3277 22.6701 14.9555C22.7501 15.5503 22.75 16.2995 22.75 17.198V17.302C22.75 18.2005 22.7501 18.9497 22.6701 19.5445C22.5857 20.1723 22.4 20.7391 21.9445 21.1945C21.4891 21.65 20.9223 21.8357 20.2945 21.9201C19.6997 22.0001 18.9505 22 18.052 22H5.94801C5.04953 22 4.30031 22.0001 3.70552 21.9201C3.07773 21.8357 2.51093 21.65 2.05546 21.1945C1.59999 20.7391 1.41432 20.1723 1.32991 19.5445C1.24995 18.9497 1.24997 18.2005 1.25 17.302V17.198C1.24997 16.2995 1.24995 15.5503 1.32991 14.9555C1.41432 14.3277 1.59999 13.7609 2.05546 13.3055C2.51093 12.85 3.07773 12.6643 3.70552 12.5799C4.30031 12.4999 5.04953 12.5 5.94801 12.5ZM3.90539 14.0665C3.44393 14.1286 3.24644 14.2358 3.11612 14.3661C2.9858 14.4964 2.87858 14.6939 2.81654 15.1554C2.7516 15.6384 2.75 16.286 2.75 17.25C2.75 18.214 2.7516 18.8616 2.81654 19.3446C2.87858 19.8061 2.9858 20.0036 3.11612 20.1339C3.24644 20.2642 3.44393 20.3714 3.90539 20.4335C4.38843 20.4984 5.03599 20.5 6 20.5H18C18.964 20.5 19.6116 20.4984 20.0946 20.4335C20.5561 20.3714 20.7536 20.2642 20.8839 20.1339C21.0142 20.0036 21.1214 19.8061 21.1835 19.3446C21.2484 18.8616 21.25 18.214 21.25 17.25C21.25 16.286 21.2484 15.6384 21.1835 15.1554C21.1214 14.6939 21.0142 14.4964 20.8839 14.3661C20.7536 14.2358 20.5561 14.1286 20.0946 14.0665C19.6116 14.0016 18.964 14 18 14H6C5.03599 14 4.38843 14.0016 3.90539 14.0665ZM5.25 17.25C5.25 16.8358 5.58579 16.5 6 16.5H8C8.41422 16.5 8.75 16.8358 8.75 17.25C8.75 17.6642 8.41422 18 8 18H6C5.58579 18 5.25 17.6642 5.25 17.25ZM10.25 17.25C10.25 16.8358 10.5858 16.5 11 16.5H18C18.4142 16.5 18.75 16.8358 18.75 17.25C18.75 17.6642 18.4142 18 18 18H11C10.5858 18 10.25 17.6642 10.25 17.25Z" fill="currentColor"/></svg><span>MCP</span><em class="n" data-nav-count="mcp"></em></button>
+        <button type="button" data-view="plugins"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M13 4.25C13 2.59315 11.6569 1.25 10 1.25C8.34315 1.25 7 2.59315 7 4.25V5.75H4C2.48122 5.75 1.25 6.98122 1.25 8.5V11.25C1.25 11.6642 1.58579 12 2 12H4.25C5.07843 12 5.75 12.6716 5.75 13.5C5.75 14.3284 5.07843 15 4.25 15H2C1.58579 15 1.25 15.3358 1.25 15.75V20C1.25 21.5188 2.48122 22.75 4 22.75H7.75C8.16421 22.75 8.5 22.4142 8.5 22V19.75C8.5 18.9216 9.17157 18.25 10 18.25C10.8284 18.25 11.5 18.9216 11.5 19.75V22C11.5 22.4142 11.8358 22.75 12.25 22.75H15.5C17.0188 22.75 18.25 21.5188 18.25 20V16.5H19.75C21.4069 16.5 22.75 15.1569 22.75 13.5C22.75 11.8431 21.4069 10.5 19.75 10.5H18.25V8.5C18.25 6.98122 17.0188 5.75 15.5 5.75H13V4.25ZM10 2.75C10.8284 2.75 11.5 3.42157 11.5 4.25V6.5C11.5 6.91421 11.8358 7.25 12.25 7.25H15.5C16.1904 7.25 16.75 7.80964 16.75 8.5V11.25C16.75 11.6642 17.0858 12 17.5 12H19.75C20.5784 12 21.25 12.6716 21.25 13.5C21.25 14.3284 20.5784 15 19.75 15H17.5C17.0858 15 16.75 15.3358 16.75 15.75V20C16.75 20.6904 16.1904 21.25 15.5 21.25H13V19.75C13 18.0931 11.6569 16.75 10 16.75C8.34315 16.75 7 18.0931 7 19.75V21.25H4C3.30964 21.25 2.75 20.6904 2.75 20V16.5H4.25C5.90685 16.5 7.25 15.1569 7.25 13.5C7.25 11.8431 5.90685 10.5 4.25 10.5H2.75V8.5C2.75 7.80964 3.30964 7.25 4 7.25H7.75C8.16421 7.25 8.5 6.91421 8.5 6.5V4.25C8.5 3.42157 9.17157 2.75 10 2.75Z" fill="currentColor"/></svg><span>插件</span><em class="n" data-nav-count="plugins"></em></button>
+        <button type="button" data-view="settings"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 8.25C9.92893 8.25 8.25 9.92893 8.25 12C8.25 14.0711 9.92893 15.75 12 15.75C14.0711 15.75 15.75 14.0711 15.75 12C15.75 9.92893 14.0711 8.25 12 8.25ZM9.75 12C9.75 10.7574 10.7574 9.75 12 9.75C13.2426 9.75 14.25 10.7574 14.25 12C14.25 13.2426 13.2426 14.25 12 14.25C10.7574 14.25 9.75 13.2426 9.75 12Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C11.2954 1.25 10.6519 1.44359 9.94858 1.77037C9.26808 2.08656 8.48039 2.55304 7.49457 3.13685L6.74148 3.58283C5.75533 4.16682 4.96771 4.63324 4.36076 5.07944C3.73315 5.54083 3.25177 6.01311 2.90334 6.63212C2.55548 7.25014 2.39841 7.91095 2.32306 8.69506C2.24999 9.45539 2.24999 10.3865 2.25 11.556V12.444C2.24999 13.6135 2.24999 14.5446 2.32306 15.3049C2.39841 16.0891 2.55548 16.7499 2.90334 17.3679C3.25177 17.9869 3.73315 18.4592 4.36076 18.9206C4.96771 19.3668 5.75533 19.8332 6.74148 20.4172L7.4946 20.8632C8.48038 21.447 9.2681 21.9135 9.94858 22.2296C10.6519 22.5564 11.2954 22.75 12 22.75C12.7046 22.75 13.3481 22.5564 14.0514 22.2296C14.7319 21.9134 15.5196 21.447 16.5054 20.8632L17.2585 20.4172C18.2446 19.8332 19.0323 19.3668 19.6392 18.9206C20.2669 18.4592 20.7482 17.9869 21.0967 17.3679C21.4445 16.7499 21.6016 16.0891 21.6769 15.3049C21.75 14.5446 21.75 13.6135 21.75 12.4441V11.556C21.75 10.3866 21.75 9.45538 21.6769 8.69506C21.6016 7.91095 21.4445 7.25014 21.0967 6.63212C20.7482 6.01311 20.2669 5.54083 19.6392 5.07944C19.0323 4.63324 18.2447 4.16683 17.2585 3.58285L16.5054 3.13685C15.5196 2.55303 14.7319 2.08656 14.0514 1.77037C13.3481 1.44359 12.7046 1.25 12 1.25ZM8.22524 4.44744C9.25238 3.83917 9.97606 3.41161 10.5807 3.13069C11.1702 2.85676 11.5907 2.75 12 2.75C12.4093 2.75 12.8298 2.85676 13.4193 3.13069C14.0239 3.41161 14.7476 3.83917 15.7748 4.44744L16.4609 4.85379C17.4879 5.46197 18.2109 5.89115 18.7508 6.288C19.2767 6.67467 19.581 6.99746 19.7895 7.36788C19.9986 7.73929 20.1199 8.1739 20.1838 8.83855C20.2492 9.51884 20.25 10.378 20.25 11.5937V12.4063C20.25 13.622 20.2492 14.4812 20.1838 15.1614C20.1199 15.8261 19.9986 16.2607 19.7895 16.6321C19.581 17.0025 19.2767 17.3253 18.7508 17.712C18.2109 18.1089 17.4879 18.538 16.4609 19.1462L15.7748 19.5526C14.7476 20.1608 14.0239 20.5884 13.4193 20.8693C12.8298 21.1432 12.4093 21.25 12 21.25C11.5907 21.25 11.1702 21.1432 10.5807 20.8693C9.97606 20.5884 9.25238 20.1608 8.22524 19.5526L7.53909 19.1462C6.5121 18.538 5.78906 18.1089 5.24923 17.712C4.72326 17.3253 4.419 17.0025 4.2105 16.6321C4.00145 16.2607 3.88005 15.8261 3.81618 15.1614C3.7508 14.4812 3.75 13.622 3.75 12.4063V11.5937C3.75 10.378 3.7508 9.51884 3.81618 8.83855C3.88005 8.1739 4.00145 7.73929 4.2105 7.36788C4.419 6.99746 4.72326 6.67467 5.24923 6.288C5.78906 5.89115 6.5121 5.46197 7.53909 4.85379L8.22524 4.44744Z" fill="currentColor"/></svg><span>设置</span><em class="n" data-nav-count="settings"></em></button>
+        <button type="button" data-view="library"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C12.4142 1.25 12.75 1.58579 12.75 2V12.9726L14.4306 11.0119C14.7001 10.6974 15.1736 10.661 15.4881 10.9306C15.8026 11.2001 15.839 11.6736 15.5694 11.9881L12.5694 15.4881C12.427 15.6543 12.2189 15.75 12 15.75C11.7811 15.75 11.573 15.6543 11.4306 15.4881L8.43056 11.9881C8.16099 11.6736 8.19741 11.2001 8.51191 10.9306C8.8264 10.661 9.29988 10.6974 9.56944 11.0119L11.25 12.9726V2C11.25 1.58579 11.5858 1.25 12 1.25ZM6.99583 8.25196C7.41003 8.24966 7.74768 8.58357 7.74999 8.99778C7.7523 9.41199 7.41838 9.74964 7.00418 9.75194C5.91068 9.75803 5.1356 9.78643 4.54735 9.89448C3.98054 9.99859 3.65246 10.1658 3.40901 10.4092C3.13225 10.686 2.9518 11.0746 2.85315 11.8083C2.75159 12.5637 2.75 13.5648 2.75 15.0002V16.0002C2.75 17.4356 2.75159 18.4367 2.85315 19.1921C2.9518 19.9259 3.13225 20.3144 3.40901 20.5912C3.68577 20.868 4.07435 21.0484 4.80812 21.1471C5.56347 21.2486 6.56458 21.2502 8 21.2502H16C17.4354 21.2502 18.4365 21.2486 19.1919 21.1471C19.9257 21.0484 20.3142 20.868 20.591 20.5912C20.8678 20.3144 21.0482 19.9259 21.1469 19.1921C21.2484 18.4367 21.25 17.4356 21.25 16.0002V15.0002C21.25 13.5648 21.2484 12.5637 21.1469 11.8083C21.0482 11.0746 20.8678 10.686 20.591 10.4092C20.3475 10.1658 20.0195 9.99859 19.4527 9.89448C18.8644 9.78643 18.0893 9.75803 16.9958 9.75194C16.5816 9.74964 16.2477 9.41199 16.25 8.99778C16.2523 8.58357 16.59 8.24966 17.0042 8.25196C18.0857 8.25799 18.9871 8.28387 19.7236 8.41916C20.4816 8.55839 21.1267 8.82364 21.6517 9.34857C22.2536 9.95048 22.5125 10.7084 22.6335 11.6085C22.75 12.4754 22.75 13.5778 22.75 14.9453V16.0551C22.75 17.4227 22.75 18.525 22.6335 19.392C22.5125 20.2921 22.2536 21.0499 21.6517 21.6519C21.0497 22.2538 20.2919 22.5127 19.3918 22.6337C18.5248 22.7503 17.4225 22.7502 16.0549 22.7502H7.94513C6.57754 22.7502 5.47522 22.7503 4.60825 22.6337C3.70814 22.5127 2.95027 22.2538 2.34835 21.6519C1.74643 21.0499 1.48754 20.2921 1.36652 19.392C1.24996 18.525 1.24998 17.4227 1.25 16.0551V14.9453C1.24998 13.5778 1.24996 12.4754 1.36652 11.6085C1.48754 10.7084 1.74643 9.95048 2.34835 9.34857C2.87328 8.82363 3.51835 8.55839 4.27635 8.41916C5.01291 8.28387 5.9143 8.25798 6.99583 8.25196Z" fill="currentColor"/></svg><span>库</span><em class="n" data-nav-count="library"></em></button>
+        <button type="button" class="rail-toggle" id="rail-toggle" title="收起或展开左侧栏" aria-label="收起或展开左侧栏"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M5.5 9.25C5.08579 9.25 4.75 9.58579 4.75 10C4.75 10.4142 5.08579 10.75 5.5 10.75H11.5C11.9142 10.75 12.25 10.4142 12.25 10C12.25 9.58579 11.9142 9.25 11.5 9.25H5.5Z" fill="currentColor"/><path d="M5.75 14C5.75 13.5858 6.08579 13.25 6.5 13.25H10.5C10.9142 13.25 11.25 13.5858 11.25 14C11.25 14.4142 10.9142 14.75 10.5 14.75H6.5C6.08579 14.75 5.75 14.4142 5.75 14Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.94358 2.25C8.10583 2.24998 6.65019 2.24997 5.51098 2.40314C4.33856 2.56076 3.38961 2.89288 2.64124 3.64124C1.89288 4.38961 1.56076 5.33856 1.40314 6.51098C1.24997 7.65019 1.24998 9.10582 1.25 10.9436V13.0564C1.24998 14.8942 1.24997 16.3498 1.40314 17.489C1.56076 18.6614 1.89288 19.6104 2.64124 20.3588C3.38961 21.1071 4.33856 21.4392 5.51098 21.5969C6.65018 21.75 8.1058 21.75 9.94354 21.75H14.0564C14.3706 21.75 14.6738 21.75 14.966 21.7492C14.9773 21.7497 14.9886 21.75 15 21.75C15.0129 21.75 15.0257 21.7497 15.0384 21.749C16.4224 21.7448 17.5607 21.7217 18.489 21.5969C19.6614 21.4392 20.6104 21.1071 21.3588 20.3588C22.1071 19.6104 22.4392 18.6614 22.5969 17.489C22.75 16.3498 22.75 14.8942 22.75 13.0565V10.9436C22.75 9.10585 22.75 7.65018 22.5969 6.51098C22.4392 5.33856 22.1071 4.38961 21.3588 3.64124C20.6104 2.89288 19.6614 2.56076 18.489 2.40314C17.5607 2.27833 16.4224 2.25523 15.0384 2.25096C15.0257 2.25032 15.0129 2.25 15 2.25C14.9886 2.25 14.9773 2.25025 14.966 2.25076C14.6737 2.25 14.3707 2.25 14.0564 2.25H9.94358ZM14.25 3.75002C14.1677 3.75 14.0844 3.75 14 3.75H10C8.09318 3.75 6.73851 3.75159 5.71085 3.88976C4.70476 4.02503 4.12511 4.27869 3.7019 4.7019C3.27869 5.12511 3.02503 5.70476 2.88976 6.71085C2.75159 7.73851 2.75 9.09318 2.75 11V13C2.75 14.9068 2.75159 16.2615 2.88976 17.2892C3.02503 18.2952 3.27869 18.8749 3.7019 19.2981C4.12511 19.7213 4.70476 19.975 5.71085 20.1102C6.73851 20.2484 8.09318 20.25 10 20.25H14C14.0844 20.25 14.1677 20.25 14.25 20.25L14.25 3.75002ZM15.75 20.2443C16.7836 20.2334 17.6082 20.2018 18.2892 20.1102C19.2952 19.975 19.8749 19.7213 20.2981 19.2981C20.7213 18.8749 20.975 18.2952 21.1102 17.2892C21.2484 16.2615 21.25 14.9068 21.25 13V11C21.25 9.09318 21.2484 7.73851 21.1102 6.71085C20.975 5.70476 20.7213 5.12511 20.2981 4.7019C19.8749 4.27869 19.2952 4.02503 18.2892 3.88976C17.6082 3.79821 16.7836 3.76662 15.75 3.75573L15.75 20.2443Z" fill="currentColor"/></svg><span>收起</span></button>
       </div>
     </div>
     <form class="route" id="route-form">
@@ -482,6 +839,16 @@
         <input id="task" name="task" placeholder="例如：把这份纪要整理成一页周报" autocomplete="off">
       </div>
       <button class="go" id="go" type="submit">选择</button>
+      <div class="kit-tools">
+        <div class="seg" id="kit-view">
+          <button type="button" data-kit-view="list">列表</button>
+          <button type="button" data-kit-view="cards">卡片</button>
+        </div>
+        <div class="seg" id="kit-theme">
+          <button type="button" data-kit-theme="light">浅色</button>
+          <button type="button" data-kit-theme="dark">深色</button>
+        </div>
+      </div>
     </form>
   </header>
   <div class="ticket" id="ticket"></div>
@@ -489,6 +856,7 @@
     <section class="pane">
       <h2>分类</h2>
       <div class="cats" id="cats"></div>
+      <p class="cats-hint">把技能拖到左边分类上即可归档。带「已改」的技能，正文和旧文件不一致。</p>
     </section>
     <section class="pane">
       <h2>技能</h2>
@@ -505,6 +873,11 @@
   <section class="sheet" id="plugin-view"></section>
   <section class="sheet settings" id="settings-view"></section>
   <section class="sheet" id="library-view"></section>
+  <div class="drawer-scrim" id="drawer-scrim" hidden></div>
+  <aside class="drawer" id="decision-drawer" hidden aria-label="这次决定的详情">
+    <div class="drawer-hd"><h3>这次决定</h3><button id="drawer-close" type="button">关闭</button></div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
   <div class="sync-card" id="sync-card" hidden>
     <article>
       <h3 id="sync-card-title">同步</h3>
@@ -562,6 +935,143 @@ function esc(value) {
 
 const KIT_TOKEN = "__KIT_TOKEN__";
 
+// 主题 / 视图：跟随系统为默认，手动切换写入本机
+(function kitPrefs(){
+  const html = document.documentElement;
+  function paint(){
+    document.querySelectorAll("[data-kit-theme]").forEach((b) => b.classList.toggle("on", b.dataset.kitTheme === html.dataset.theme));
+    document.querySelectorAll("[data-kit-view]").forEach((b) => b.classList.toggle("on", b.dataset.kitView === html.dataset.view));
+  }
+  document.querySelectorAll("[data-kit-theme]").forEach((b) => b.addEventListener("click", () => {
+    html.dataset.theme = b.dataset.kitTheme;
+    try { localStorage.setItem("kit-theme", html.dataset.theme); } catch (e) {}
+    paint();
+  }));
+  document.querySelectorAll("[data-kit-view]").forEach((b) => b.addEventListener("click", () => {
+    html.dataset.view = b.dataset.kitView;
+    try { localStorage.setItem("kit-view", html.dataset.view); } catch (e) {}
+    paint();
+  }));
+  try {
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+      if (localStorage.getItem("kit-theme")) return;
+      html.dataset.theme = event.matches ? "dark" : "light";
+      paint();
+    });
+  } catch (e) {}
+  paint();
+})();
+
+// 左侧导航计数：跟着各面已渲染的内容走，不额外打任何接口
+(function kitNavCounts(){
+  const html = document.documentElement;
+  function setNav(view, value){
+    const node = html.querySelector('[data-nav-count="' + view + '"]');
+    if (node) node.textContent = value ? String(value) : "";
+  }
+  function countItems(root){
+    const cards = root.querySelectorAll(".lib-card").length;
+    if (cards) return cards;
+    return Array.from(root.querySelectorAll("tr")).filter((tr) => !tr.querySelector("th")).length;
+  }
+  const views = [["calls", "calls-view"], ["delegation", "delegation-view"], ["mcp", "mcp-view"],
+                 ["plugins", "plugin-view"], ["library", "library-view"]];
+  function sync(){
+    setNav("cabinet", state && state.skills ? state.skills.length : 0);
+    for (const [view, id] of views){
+      const root = document.getElementById(id);
+      if (!root) continue;
+      if (!root.innerHTML.trim()) { setNav(view, 0); continue; }
+      const n = countItems(root);
+      if (n) setNav(view, n);
+    }
+  }
+  for (const [, id] of views){
+    const root = document.getElementById(id);
+    if (root) new MutationObserver(sync).observe(root, { childList: true, subtree: true });
+  }
+  const list = document.getElementById("list");
+  if (list) new MutationObserver(sync).observe(list, { childList: true });
+  sync();
+})();
+
+// 侧栏收起 / 展开（记住选择）
+(function kitRail(){
+  const html = document.documentElement;
+  const button = document.getElementById("rail-toggle");
+  let saved = null;
+  try { saved = localStorage.getItem("kit-rail"); } catch (e) {}
+  html.dataset.rail = saved === "collapsed" ? "collapsed" : "expanded";
+  if (button) button.addEventListener("click", () => {
+    html.dataset.rail = html.dataset.rail === "collapsed" ? "expanded" : "collapsed";
+    try { localStorage.setItem("kit-rail", html.dataset.rail); } catch (e) {}
+  });
+})();
+
+// 键盘：/ 聚焦技能搜索（Esc 关弹层由原有监听负责，不要重复实现）
+document.addEventListener("keydown", (event) => {
+  const tag = ((event.target && event.target.tagName) || "").toLowerCase();
+  if (event.key !== "/" || tag === "input" || tag === "textarea") return;
+  const box = document.getElementById("search");
+  if (box) { event.preventDefault(); box.focus(); }
+});
+
+// 决策详情抽屉：从调用记录里看清「为什么选了这几个」
+function openDecision(id) {
+  const call = (state.calls || []).find((item) => item.id === id);
+  if (!call) return;
+  const skills = call.skills || [];
+  const chips = skills.length
+    ? skills.map((name) => `<button class="chip" type="button" data-open-skill="${esc(name)}">${esc(name)}</button>`).join("")
+    : `<span class="pill muted">没有调用技能（自主思考）</span>`;
+  const reasons = Array.isArray(call.reasons) ? call.reasons : [];
+  const gateRow = (row) => {
+    const pct = Math.round((Number(row.probability) || 0) * 100);
+    return `<div class="gate ${row.kept ? "ok" : "no"}"><b>${esc(row.label || "")}</b><span class="pct">${pct > 0 ? pct + "%" : "0"}</span><small>${esc(row.reason || "")}</small></div>`;
+  };
+  const kept = reasons.filter((row) => row.kept);
+  const dropped = reasons.filter((row) => !row.kept);
+  const legacy = (!reasons.length && (call.passed || []).length)
+    ? `<div><h4>没带上（旧记录只有门名）</h4><p class="note">${(call.passed || []).map((item) => esc(item.name || "")).filter(Boolean).join("、")}</p><p class="note">这条记录早于「保存判定依据」，没有分数可看。</p></div>`
+    : "";
+  document.getElementById("drawer-body").innerHTML = `
+    <div><h4>这次的任务</h4><p class="q">${esc(call.task || "（空）")}</p></div>
+    <div><h4>结论</h4>
+      <dl class="kv">
+        <dt>做法</dt><dd>${call.method === "think" ? "自主思考（不套技能）" : "调用技能"}</dd>
+        <dt>门 / 类型</dt><dd>${esc(call.label || call.category || "—")}</dd>
+        <dt>来源</dt><dd>${esc(call.sourceLabel || call.source || "—")}</dd>
+        <dt>时间</dt><dd>${esc(formatWhen(call.at))}</dd>
+      </dl>
+    </div>
+    <div><h4>选定</h4><div class="chips">${chips}</div></div>
+    <div><h4>留下的门</h4>${kept.length ? kept.map(gateRow).join("") : `<p class="note">这次没有留下门（自己做）。</p>`}</div>
+    ${dropped.length ? `<div><h4>没带上</h4>${dropped.map(gateRow).join("")}</div>` : ""}
+    ${call.unnamedCount ? `<p class="note">另外 ${call.unnamedCount} 个门没被点名，按 0 分计，不逐条列。</p>` : ""}
+    ${legacy}
+    <div><h4>排障用</h4><details><summary>decision_id（默认折叠）</summary><code>${esc(call.id || "")}</code></details></div>`;
+  document.getElementById("decision-drawer").hidden = false;
+  document.getElementById("drawer-scrim").hidden = false;
+}
+function closeDecision() {
+  document.getElementById("decision-drawer").hidden = true;
+  document.getElementById("drawer-scrim").hidden = true;
+}
+document.getElementById("drawer-close").addEventListener("click", closeDecision);
+document.getElementById("drawer-scrim").addEventListener("click", closeDecision);
+document.getElementById("drawer-body").addEventListener("click", (event) => {
+  const chip = event.target.closest("[data-open-skill]");
+  if (!chip) return;
+  closeDecision();
+  document.querySelector('button[data-view="cabinet"]').click();
+  openSkill(chip.dataset.openSkill).catch((error) => alert(error.message));
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  const drawer = document.getElementById("decision-drawer");
+  if (drawer && !drawer.hidden) closeDecision();
+});
+
 async function api(path, options) {
   const headers = { ...(options && options.headers ? options.headers : {}) };
   if (options && options.method && options.method !== "GET") headers["X-Kit-Token"] = KIT_TOKEN;
@@ -583,7 +1093,11 @@ function visibleSkills() {
 
 function renderCats() {
   const total = state.skills.length;
-  const items = [{ id: "all", label: "全部", count: total }, ...state.categories.filter((cat) => cat.count > 0)];
+  const filled = state.categories.filter((cat) => cat.count > 0);
+  // 「其他 / 未分类」提到第二位：它是最大的一块待归档，别再埋在最底下
+  const messy = filled.filter((cat) => /^(其他|未分类|other|uncategorized)$/i.test(String(cat.label || cat.id || "").trim()));
+  const tidy = filled.filter((cat) => !messy.includes(cat));
+  const items = [{ id: "all", label: "全部", count: total }, ...messy, ...tidy];
   catsEl.innerHTML = items.map((cat) => `
     <button class="cat ${state.filter === cat.id ? "active" : ""}" data-cat="${esc(cat.id)}" type="button">
       <span>${esc(cat.label)}</span><em>${cat.count}</em>
@@ -595,6 +1109,7 @@ function renderList() {
   listEl.innerHTML = rows.map((skill) => `
     <button class="skill ${state.current && state.current.name === skill.name ? "active" : ""}" draggable="true" data-name="${esc(skill.name)}" type="button">
       <b>${esc(skill.name)}</b>
+      <small class="sum">${esc(skill.summary || skill.excerpt || "")}</small>
       <small>${esc(skill.category)}${skill.changed ? '<em class="changed">已改</em>' : ""}</small>
     </button>`).join("") || `<div class="empty">这个分类里没有匹配的技能。</div>`;
 }
@@ -886,8 +1401,8 @@ async function loadMcp() {
   const data = await api("/api/mcp");
   const rows = (data.servers || []).map((item) => `
     <tr>
-      <td>${esc(item.host)}</td>
-      <td>${esc(item.name)}</td>
+      <td data-label="宿主">${esc(item.host)}</td>
+      <td data-label="服务">${esc(item.name)}</td>
       ${toolCells("mcp", item)}
     </tr>`).join("");
   document.getElementById("mcp-view").innerHTML = `
@@ -920,8 +1435,9 @@ document.getElementById("mcp-view").addEventListener("click", (event) => {
 function toolCells(kind, item) {
   const on = item.enabled ? " on" : "";
   const pressed = item.enabled ? "true" : "false";
-  return `<td><span class="row-tools">
-      <button class="switch${on}" type="button" data-toggle="${kind}" data-host="${esc(item.host)}" data-name="${esc(item.name)}" data-enabled="${item.enabled ? "1" : "0"}" aria-pressed="${pressed}"><i></i></button>
+  const word = item.enabled ? "开" : "关";
+  return `<td data-label="操作"><span class="row-tools">
+      <button class="switch${on}" type="button" role="switch" data-toggle="${kind}" data-host="${esc(item.host)}" data-name="${esc(item.name)}" data-enabled="${item.enabled ? "1" : "0"}" aria-pressed="${pressed}" aria-label="${word === "开" ? "关闭" : "开启"} ${esc(item.name)}"><i></i></button><span class="switch-text${on}">${word}</span>
       <button type="button" data-remove="${kind}" data-host="${esc(item.host)}" data-name="${esc(item.name)}">删除</button>
     </span></td>`;
 }
@@ -959,9 +1475,9 @@ function paintTrack(prefix, job) {
 function renderPluginTable(data, job) {
   const rows = (data.plugins || []).map((item) => `
     <tr>
-      <td>${esc(item.host)}</td>
-      <td>${esc(item.name)}</td>
-      <td>${item.selectable ? "会选" : "不选"}</td>
+      <td data-label="宿主">${esc(item.host)}</td>
+      <td data-label="插件">${esc(item.name)}</td>
+      <td data-label="jev-decision">${item.selectable ? "会选" : "不选"}</td>
       ${toolCells("plugin", item)}
     </tr>`).join("");
   const progress = job || state.pluginJob;
@@ -1015,19 +1531,49 @@ document.getElementById("plugin-view").addEventListener("click", (event) => {
 
 async function loadDelegation() {
   const data = await api("/api/delegation");
-  const rows = (data.entries || []).map((entry) => {
-    const kind = entry.kind === "observed" ? "宿主执行" : (entry.kind === "effort-decision" ? "子任务思考判断" : "派遣判断");
-    const outcome = entry.kind === "observed"
-      ? ({ started: "已创建", completed: "已完成", error: "失败", aborted: "已中止" }[entry.state] || entry.state)
-      : (entry.kind === "effort-decision" ? `建议 ${entry.effort}` : (entry.recommendation === "delegate" ? `建议派 ${entry.agents} 个` : "单代理"));
-    return `<tr><td>${esc(formatWhen(entry.at))}</td><td>${esc(entry.source)}</td><td>${kind}</td><td>${esc(outcome)}</td><td>${esc(entry.task || entry.childId || "")}</td><td>模型：${esc(entry.model)}<br>强度：${esc(entry.effort)}<br>详情：${esc(entry.detail)}</td></tr>`;
-  }).join("") || `<tr><td colspan="6">还没有派遣判断或宿主执行记录。</td></tr>`;
+  const entries = data.entries || [];
+  const plans = entries.filter((entry) => entry.kind !== "observed");
+  const observed = entries.filter((entry) => entry.kind === "observed");
+
+  // 观测行按 childId 配对「创建 → 结束」，顺带算出耗时
+  const runs = new Map();
+  for (const entry of observed) {
+    const id = entry.childId || "(没有 id)";
+    if (!runs.has(id)) runs.set(id, { id: id, source: entry.source, task: entry.task || "", start: null, end: null, state: entry.state, detail: entry.detail || "" });
+    const run = runs.get(id);
+    if (entry.state === "started") { run.start = entry.at; run.state = "started"; }
+    else { run.end = entry.at; run.state = entry.state; if (entry.detail) run.detail = entry.detail; }
+    if (!run.task && entry.task) run.task = entry.task;
+  }
+  function duration(run) {
+    if (!run.start || !run.end) return "";
+    const ms = new Date(run.end) - new Date(run.start);
+    if (!Number.isFinite(ms) || ms < 0) return "";
+    return ms < 1000 ? ms + "ms" : (ms / 1000).toFixed(1) + "s";
+  }
+  const stateText = { started: "创建中", completed: "已完成", error: "失败", aborted: "已中止" };
+  const stateClass = { started: "warn", completed: "ok", error: "err", aborted: "muted" };
+
+  const planRows = plans.map((entry) => {
+    const advice = entry.kind === "effort-decision"
+      ? `建议强度 ${entry.effort || "?"}`
+      : (entry.recommendation === "delegate" ? `建议派 ${entry.agents == null ? "?" : entry.agents} 个` : "单代理");
+    const tone = entry.kind !== "effort-decision" && entry.recommendation === "delegate" ? "ok" : "muted";
+    return `<tr><td data-label="时间" class="mono">${esc(formatWhen(entry.at))}</td><td data-label="宿主">${esc(entry.source)}</td><td data-label="建议"><span class="pill ${tone}">${esc(advice)}</span></td><td data-label="任务">${esc(entry.task || "")}</td><td data-label="依据">${esc(entry.reason || entry.model || "")}</td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="muted-cell">还没有派遣建议。</td></tr>`;
+
+  const runRows = Array.from(runs.values()).map((run) => `<tr><td data-label="开始" class="mono">${esc(formatWhen(run.start || run.end || ""))}</td><td data-label="宿主">${esc(run.source)}</td><td data-label="状态"><span class="pill ${stateClass[run.state] || "muted"}">${esc(stateText[run.state] || run.state || "")}</span></td><td data-label="子代理 id" class="mono">${esc(run.id)}</td><td data-label="耗时">${esc(duration(run))}</td><td data-label="详情">${esc(run.detail || run.task || "")}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="muted-cell">还没有观测到真实子代理。宿主拉起子代理后，这里会按 run 自动配对「创建 → 结束」并算出耗时。</td></tr>`;
+
   document.getElementById("delegation-view").innerHTML = `
     <div class="calls-head"><h2>子代理派遣</h2><button id="refresh-delegation" type="button">刷新日志</button></div>
     <label><input id="delegation-enabled" type="checkbox" ${data.enabled ? "checked" : ""}> 启用派遣判断</label>
     <p class="note">当前是保守试运行：只有任务明确提出并行或子代理时才建议派遣；网页试选没有模型。建议强度按任务规则填写。真正的模型和执行详情要等 Hermes、OpenClaw、DeepSeek Harness 拉起子代理后才会出现。Codex、Cursor 尚未接入执行日志。</p>
     <p class="note" id="delegation-status"></p>
-    <table><thead><tr><th>时间</th><th>宿主</th><th>层级</th><th>结果</th><th>任务 / 子代理</th><th>模型 / 强度 / 详情</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <h3 class="group">建议（jev-decision 的判断，不一定真的派了）<span class="count">${plans.length}</span></h3>
+    <table><thead><tr><th>时间</th><th>宿主</th><th>建议</th><th>任务</th><th>依据</th></tr></thead><tbody>${planRows}</tbody></table>
+    <h3 class="group">真实子代理（宿主观测，按 run 配对）<span class="count">${runs.size}</span></h3>
+    <table><thead><tr><th>开始</th><th>宿主</th><th>状态</th><th>子代理 id</th><th>耗时</th><th>详情</th></tr></thead><tbody>${runRows}</tbody></table>`;
   document.getElementById("refresh-delegation").addEventListener("click", () => loadDelegation().catch((error) => alert(error.message)));
   document.getElementById("delegation-enabled").addEventListener("change", async (event) => {
     const box = event.target;
@@ -1059,12 +1605,12 @@ async function loadCalls() {
     const skills = thinking
       ? `<div class="skill-line"><span class="skill-name">没有调用技能</span><span></span><span></span>${forget}</div>`
       : (names.length ? names : [""]).map((name, index) => `<div class="skill-line"><span class="skill-name">${esc(name)}</span>${name ? `<button type="button" data-drop-call="${esc(call.id)}" data-skill="${esc(name)}">删除</button>` : "<span></span>"}${index === 0 ? `<button class="chip-add" type="button" data-open-add="${esc(call.id)}">添加</button>${forget}` : "<span></span><span></span>"}</div>`).join("") + passedLine(call.passed);
-    return `<tr>
-      <td>${esc(formatWhen(call.at))}<br>${esc(call.sourceLabel || call.source || "")}</td>
-      <td>${esc(call.task || "")}</td>
-      <td>${thinking ? "自主思考" : "调用技能"}</td>
-      <td>${esc(call.label || call.category || "")}</td>
-      <td>${skills}</td>
+    return `<tr class="row-click" data-call="${esc(call.id)}">
+      <td data-label="时间">${esc(formatWhen(call.at))}<br>${esc(call.sourceLabel || call.source || "")}</td>
+      <td data-label="任务">${esc(call.task || "")}</td>
+      <td data-label="做法">${thinking ? "自主思考" : "调用技能"}</td>
+      <td data-label="类型">${esc(call.label || call.category || "")}</td>
+      <td data-label="调用的技能">${skills}</td>
     </tr>`;
   }).join("") || `<tr><td colspan="5">还没有调用记录。</td></tr>`;
   state.mcpText = (data.mcp || {}).configText || "";
@@ -1111,6 +1657,9 @@ document.getElementById("calls-view").addEventListener("click", async (event) =>
       if (!call || call.method === "think") return;
       openAddCard({ task: call.task, category: call.category, from: "calls" });
     }
+    // 点这一行的空白处 → 打开「这次决定」详情抽屉
+    const row = event.target.closest("tr[data-call]");
+    if (row) openDecision(row.dataset.call);
   } catch (error) {
     alert(error.message);
   }
