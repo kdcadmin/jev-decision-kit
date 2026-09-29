@@ -84,15 +84,50 @@ async function prefaceFor(task) {
   }
 }
 
-function userMessage(text) {
-  return {
-    role: "user",
-    content: [{ type: "text", text }],
-    source: { kind: "plugin", plugin: "jev-skill-kit" },
-  };
+async function reportDispatch(event) {
+  const port = await ensureWorker();
+  if (!port || !event.child_id) return;
+  try {
+    await fetch(`http://127.0.0.1:${port}/dispatch-event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Kit-Token": await readFile(tokenFile, "utf8").then((text) => text.trim()).catch(() => "") },
+      body: JSON.stringify({ source: "harness", ...event }),
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch { /* Observability must not interrupt the agent. */ }
+}
+
+function prependPreface(message, preface) {
+  const prefix = { type: "text", text: `${preface}\n\n` };
+  const content = Array.isArray(message?.content)
+    ? [prefix, ...message.content]
+    : typeof message?.content === "string"
+      ? [prefix, { type: "text", text: message.content }]
+      : [prefix];
+  return { ...message, content };
+}
+
+export function foldPreface(decision, payloadMessages, preface) {
+  if (decision?.kind !== "enter" || !preface) return decision;
+  const messages = decision.messages;
+  if (!Array.isArray(messages) || messages.length === 0) return decision;
+  const originals = Array.isArray(payloadMessages) ? payloadMessages : [];
+  let index = messages.findLastIndex((message) => originals.includes(message));
+  if (index < 0) index = 0;
+  const next = messages.slice();
+  next[index] = prependPreface(next[index], preface);
+  return { ...decision, messages: next };
 }
 
 export function apply(ctx) {
+  ctx.on("subagent/start", (info) => reportDispatch({
+    state: "started", child_id: String(info?.id || info?.runId || ""),
+    detail: String(info?.provider || ""),
+  }));
+  ctx.on("subagent/end", (info) => reportDispatch({
+    state: info?.stopReason === "completed" ? "completed" : (info?.stopReason === "aborted" ? "aborted" : "error"),
+    child_id: String(info?.id || info?.runId || ""), detail: String(info?.stopReason || info?.diagnostic || ""),
+  }));
   ctx.on("agent/pre-step", async (payload, next) => {
     const decision = await next();
     if (decision?.kind !== "enter") return decision;
@@ -100,6 +135,6 @@ export function apply(ctx) {
     if (!task || task.includes("【技能柜】")) return decision;
     const preface = await prefaceFor(task);
     if (!preface) return decision;
-    return { ...decision, messages: [...decision.messages, userMessage(preface)] };
+    return foldPreface(decision, payload?.messages, preface);
   });
 }
