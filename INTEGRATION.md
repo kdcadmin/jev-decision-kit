@@ -130,7 +130,7 @@ args = ["项目目录\\mcp_server.py"]
 
 台账文件 `WRITER-PROTOCOL.md`、按日归档 `writer-log/`、以及本机插件/MCP `host/writer_protocol/` 都不进公开仓库。克隆下来的项目里可以没有它们。
 
-Cursor 没有接技能柜前言。不要假设它会先问柜子。
+Cursor 用项目里的 `.cursor/hooks.json`：`beforeSubmitPrompt` 把原句交给本机 jev-decision，前言写入 `runtime/cursor-preface.txt`，并尽量作为 `additional_context` 交给模型。只读技能用 MCP `jev-skill-kit`（`python mcp_server.py`），写在本机 `.cursor/mcp.json`，不进公开仓库。改完后重载 MCP，并新开一轮 Agent 对话。
 
 打开网页不会改 Hermes 或 OpenClaw 的配置。只有在设置里保存选择器开关时才会同步那两项 MCP。
 

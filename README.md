@@ -58,7 +58,7 @@
 
 ## 接入对话宿主
 
-选择器开着时，Hermes、OpenClaw、DeepSeek Harness 会在模型开口前注入前言。步骤、前言格式、MCP 只读约定见 [INTEGRATION.md](INTEGRATION.md)。Cursor 默认不接这条前言。
+选择器开着时，Hermes、OpenClaw、DeepSeek Harness 会在模型开口前注入前言。Cursor 用本仓库 `.cursor/hooks.json`（提交原句前打分）和 `.cursor/mcp.json` 里的 `jev-skill-kit`（只读 `get_skill`）。改完需在 Cursor 里重载 MCP，并新开一轮对话才能看到前言。步骤见 [INTEGRATION.md](INTEGRATION.md)。
 
 ```json
 {

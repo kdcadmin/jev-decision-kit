@@ -1,0 +1,10 @@
+---
+description: Follow the local jev-decision preface in this workspace.
+alwaysApply: true
+---
+
+本仓库已接技能柜。选技能的是本机 jev-decision，不是你。
+
+- 本轮上下文里如果出现以 `jev-decision:` 开头的段落，按它做：写了「自己做」就不要读技能、不要再选；列出了技能名，只用 MCP `get_skill` 读那些名字，读完照做。
+- 如果没有这段前言，先看项目里的 `runtime/cursor-preface.txt`（提交原句时的 hook 会写下这一轮的决定）。有文件就当成本轮宿主决定。
+- 不要用 MCP 工具列表当技能目录。不要改用别的技能。
