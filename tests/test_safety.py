@@ -37,6 +37,47 @@ class SafetyTests(unittest.TestCase):
         finally:
             cabinet.load_memory = original
 
+    def test_latest_decision_serves_hosts_without_an_id(self):
+        from datetime import datetime, timedelta
+        from unittest.mock import patch
+
+        import mcp_server
+
+        now = datetime.now().astimezone()
+        fresh = (now - timedelta(seconds=30)).isoformat(timespec="seconds")
+        stale = (now - timedelta(hours=3)).isoformat(timespec="seconds")
+        memory = {"calls": [
+            {"id": "stale1", "at": stale, "method": "skill", "skills": ["pdf"], "source": "cursor"},
+            {"id": "fresh1", "at": fresh, "method": "skill", "skills": ["docx"], "source": "harness"},
+        ], "rules": {}}
+        with patch.object(cabinet, "load_memory", return_value=memory):
+            self.assertEqual("fresh1", mcp_server.latest_decision_id())
+            self.assertEqual("fresh1", mcp_server.latest_decision_id("harness"))
+            self.assertEqual("", mcp_server.latest_decision_id("cursor"))
+        only_stale = {"calls": [{"id": "stale1", "at": stale, "method": "skill", "skills": ["pdf"], "source": "cursor"}], "rules": {}}
+        with patch.object(cabinet, "load_memory", return_value=only_stale):
+            self.assertEqual("", mcp_server.latest_decision_id())
+
+    def test_get_skill_without_an_id_reads_the_latest_decision(self):
+        import json as jsonlib
+        from datetime import datetime
+        from unittest.mock import patch
+
+        import mcp_server
+
+        now = datetime.now().astimezone().isoformat(timespec="seconds")
+        memory = {"calls": [{"id": "fresh1", "at": now, "method": "skill", "skills": ["docx"], "source": "harness"}], "rules": {}}
+        skill = {"name": "docx", "category": "docs", "content": "正文内容", "summary": "", "path": "", "scripts": []}
+        with patch.object(cabinet, "load_memory", return_value=memory), \
+             patch.object(cabinet, "read_skill", return_value=skill):
+            result = mcp_server.call_tool("get_skill", {"name": "docx"})
+            self.assertFalse(result["isError"], result)
+            payload = jsonlib.loads(result["content"][0]["text"])
+            self.assertEqual("fresh1", payload["decisionId"])
+            self.assertEqual("正文内容", payload["content"])
+            refused = mcp_server.call_tool("get_skill", {"name": "pdf"})
+            self.assertTrue(refused["isError"])
+
     def test_github_backslash_cannot_escape(self):
         with self.assertRaises(ValueError):
             cabinet.parse_github("https://github.com/ada/demo/tree/main/..\\..\\Windows")

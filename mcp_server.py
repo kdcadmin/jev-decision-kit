@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import traceback
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -13,19 +15,20 @@ import cabinet
 
 CONTENT_LIMIT = 20000
 KNOWN_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
+DECISION_FRESH_SECONDS = 900
 
 TOOLS = [
     {
         "name": "get_skill",
-        "description": "读取 jev-decision 这次已经选定的技能正文。必须带 decision_id。不能用来浏览或改选技能。",
+        "description": "读取 jev-decision 这次已经选定的技能正文。不能用来浏览或改选技能。",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "name": {"type": "string", "description": "jev-decision 选定的技能目录名"},
-                "decision_id": {"type": "string", "description": "前言里的 decision_id"},
+                "decision_id": {"type": "string", "description": "可选。前言不再带它；不传就读最近一次（15 分钟内）的决定"},
                 "offset": {"type": "integer", "description": "从第几个字符继续读", "minimum": 0},
             },
-            "required": ["name", "decision_id"],
+            "required": ["name"],
             "additionalProperties": False,
         },
     },
@@ -83,6 +86,39 @@ def allowed_skill_names(decision_id: str) -> set[str]:
     return set()
 
 
+def decision_age_seconds(call: dict) -> float | None:
+    """Seconds since this call was recorded, or None when it carries no time."""
+    stamp = str(call.get("at") or "").strip()
+    if not stamp:
+        return None
+    try:
+        when = datetime.fromisoformat(stamp)
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.astimezone()
+    return (datetime.now().astimezone() - when).total_seconds()
+
+
+def latest_decision_id(source: str = "") -> str:
+    """Newest recorded decision, for hosts that never see a decision_id.
+
+    A freshness window keeps a later round from silently reading a neighbour's
+    decision: several hosts share one call log. `JEV_SOURCE` narrows it further.
+    """
+    wanted = (source or "").strip()
+    for call in cabinet.load_memory().get("calls") or []:
+        if str(call.get("method") or "") != "skill":
+            continue
+        if wanted and str(call.get("source") or "") != wanted:
+            continue
+        age = decision_age_seconds(call)
+        if age is not None and age > DECISION_FRESH_SECONDS:
+            continue
+        return str(call.get("id") or "")
+    return ""
+
+
 def call_tool(name: str, arguments: dict) -> dict:
     if not isinstance(arguments, dict):
         arguments = {}
@@ -94,7 +130,13 @@ def call_tool(name: str, arguments: dict) -> dict:
         except (TypeError, ValueError):
             offset = 0
         if not decision_id:
-            return tool_result("缺少 decision_id。用前言里的那一次决定来读。", is_error=True)
+            decision_id = latest_decision_id(os.environ.get("JEV_SOURCE", ""))
+            if not decision_id:
+                return tool_result(
+                    "没有可用的决定。前言不带 decision_id，只能读最近一次选定（15 分钟内）；"
+                    "几个宿主共用一个柜子时，用 JEV_SOURCE 限定自己的来源。",
+                    is_error=True,
+                )
         memory = cabinet.load_memory()
         known = {str(item.get("id") or "") for item in memory.get("calls") or []}
         if decision_id not in known:
@@ -138,7 +180,7 @@ def handle(message: dict) -> dict | None:
                 "protocolVersion": version,
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "jev-skill-kit", "version": "0.1.0"},
-                "instructions": "选技能的是 jev-decision，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 必须带前言里的 decision_id，只能读取已经选定的名字，超长正文用 offset 续读。",
+                "instructions": "选技能的是 jev-decision，不是你。宿主已经把选定结果放在这轮开头。结果是自己做，就自己做，不要读技能。结果列出了技能，就读完照做，不要再挑选。get_skill 只能读取已经选定的名字，超长正文用 offset 续读；前言不带 decision_id 时它会读最近一次（15 分钟内）的决定。",
             },
         }
     if method == "ping":
