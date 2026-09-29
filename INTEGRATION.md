@@ -135,6 +135,7 @@ args = ["项目目录\\mcp_server.py"]
 - Hermes：已装 `jev-skill-kit` 的 `pre_llm_call` 会顺带 ensure + 短提示。也可单独装 `host/writer_protocol/hermes_plugin.yaml`。
 - OpenClaw：技能柜插件同样会带上短提示。只要写者协议、不要选择器时，用 `host/writer_protocol/openclaw/`。
 - DeepSeek Harness：在 GUI 添加插件 `项目目录\host\writer_protocol\harness`（包名 `dsh-writer-protocol`）。不要和技能柜插件抢改同一条用户消息里已经有的 `jev-writer:` 前缀。
+- Cursor：本仓库 `.cursor/mcp.json`（本机绝对路径，已在 `.gitignore`）。改完后在 Cursor 设置里重载 MCP，才会出现 `writer_protocol_read` / `writer_protocol_append`。
 - MCP：`python -m host.writer_protocol mcp`，或：
 
 ```json

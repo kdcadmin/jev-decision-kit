@@ -6,8 +6,18 @@ stays local. Compact reads are meant for the model; the on-disk file can be long
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+SHANGHAI = timezone(timedelta(hours=8))
+
+
+def now_local() -> datetime:
+    return datetime.now(SHANGHAI)
+
+
+def today_stamp() -> str:
+    return now_local().date().isoformat()
 
 DAY_MARK = "<!-- writer-day:"
 HINT_MARK = "jev-writer:"
@@ -131,9 +141,11 @@ def roll_if_new_day(root: str | Path | None = None) -> bool:
     archive.mkdir(parents=True, exist_ok=True)
     (archive / f"{marked}.md").write_text(text, encoding="utf-8")
     summary = summarize_day(text)
-    heading_match = re.search(r"\n(## [^\n]*台账[^\n]*)", text)
+    heading_match = re.search(r"\n(### [^\n]*明细[^\n]*)", text)
+    if not heading_match:
+        heading_match = re.search(r"\n(## [^\n]*台账[^\n]*)", text)
     heading = heading_match.group(1) if heading_match else "## 今日台账"
-    parts = re.split(r"\n## [^\n]*台账", text, maxsplit=1)
+    parts = re.split(r"\n(?:### [^\n]*明细|## [^\n]*台账)", text, maxsplit=1)
     if heading_match and parts:
         standing = _stamp_day(parts[0], today)
         body = (
@@ -162,7 +174,7 @@ def append(root: str | Path | None, writer: str, files: list[str], status: str, 
     ensure(workspace)
     path = protocol_path(workspace)
     text = path.read_text(encoding="utf-8")
-    when = datetime.now().strftime("%H:%M")
+    when = now_local().strftime("%H:%M")
     scope = "、".join(files) if files else note or "（未列文件）"
     row = f"| {when} | {writer or 'unknown'} | {scope} | {status or '进行中'} | {commit or '未提交'} |"
     if note and note not in scope:

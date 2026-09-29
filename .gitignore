@@ -27,5 +27,6 @@ plugins/
 .mcp.json
 mcp.json
 **/.mcp.json
+.cursor/mcp.json
 WRITER-PROTOCOL.md
 writer-log/
