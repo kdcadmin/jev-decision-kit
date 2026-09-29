@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { apply, alreadyPrefaced, foldPreface, note, resolveKitRoot } from "../host/harness_plugin/index.js";
+import { apply, alreadyPrefaced, foldPreface, note, resolveKitRoot, subagentDispatch } from "../host/harness_plugin/index.js";
 
 function fail(message, value) {
   console.error(message, value);
@@ -55,6 +55,19 @@ const fromLink = resolveKitRoot({}, profileModuleDir, (path) => (path.endsWith("
 if (fromLink !== join("D:/somewhere/jev-decision-kit/host/harness_plugin", "..", "..")) {
   fail("a link: dependency must locate the kit", fromLink);
 }
+
+const started = subagentDispatch({
+  id: "run-9",
+  model: "DeepSeek-V4-Flash",
+  reasoningEffort: "high",
+  task: "并行查资料",
+  provider: "deepseek",
+}, "start");
+if (started.child_id !== "run-9" || started.model !== "DeepSeek-V4-Flash" || started.effort !== "high") {
+  fail("subagent start must keep model and effort", started);
+}
+const ended = subagentDispatch({ id: "run-9", stopReason: "completed" }, "end");
+if (ended.state !== "completed" || ended.child_id !== "run-9") fail("subagent end must keep id", ended);
 
 const hook = hooks["agent/pre-step"].hook;
 

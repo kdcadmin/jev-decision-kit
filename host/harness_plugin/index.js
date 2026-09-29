@@ -271,18 +271,46 @@ export function foldPreface(decision, payloadMessages, preface) {
   return { ...decision, messages: next };
 }
 
+export function firstFilled(...values) {
+  for (const value of values) {
+    if (value == null || typeof value === "object") continue;
+    const text = String(value).trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+export function subagentDispatch(info, phase) {
+  const id = firstFilled(info?.id, info?.runId, info?.agent?.id);
+  const model = firstFilled(
+    info?.model, info?.resolvedModel, info?.modelId,
+    info?.agent?.model, info?.header?.model, info?.llm,
+  );
+  const effort = firstFilled(
+    info?.reasoningEffort, info?.reasoning_effort, info?.effort, info?.thinking,
+    info?.agent?.reasoningEffort, info?.agent?.reasoning_effort,
+  );
+  if (phase === "end") {
+    const stop = firstFilled(info?.stopReason, info?.diagnostic, info?.error, info?.detail);
+    const state = stop === "completed" ? "completed" : (stop === "aborted" ? "aborted" : "error");
+    return { state, child_id: id, model, effort, detail: stop };
+  }
+  return {
+    state: "started",
+    child_id: id,
+    task: firstFilled(info?.task, info?.goal, info?.prompt, info?.agent?.task),
+    model,
+    effort,
+    detail: firstFilled(info?.provider, info?.detail, info?.agent?.provider),
+  };
+}
+
 export function apply(ctx) {
   // Subagent lifecycle events are scope-filtered: dispatch keys the carrier by
   // the delegating parent, so a plugin listener only sees them with
   // `{ global: true }` (same as the harness' own subagent listeners).
-  ctx.on("subagent/start", (info) => reportDispatch({
-    state: "started", child_id: String(info?.id || info?.runId || ""),
-    detail: String(info?.provider || ""),
-  }), { global: true });
-  ctx.on("subagent/end", (info) => reportDispatch({
-    state: info?.stopReason === "completed" ? "completed" : (info?.stopReason === "aborted" ? "aborted" : "error"),
-    child_id: String(info?.id || info?.runId || ""), detail: String(info?.stopReason || info?.diagnostic || ""),
-  }), { global: true });
+  ctx.on("subagent/start", (info) => reportDispatch(subagentDispatch(info, "start")), { global: true });
+  ctx.on("subagent/end", (info) => reportDispatch(subagentDispatch(info, "end")), { global: true });
   ctx.on("agent/pre-step", async (payload, next) => {
     const decision = await next();
     if (decision?.kind !== "enter") return decision;

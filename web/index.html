@@ -1050,6 +1050,11 @@ function openDecision(id) {
     ${call.unnamedCount ? `<p class="note">另外 ${call.unnamedCount} 个门没被点名，按 0 分计，不逐条列。</p>` : ""}
     ${legacy}
     <div><h4>排障用</h4><details><summary>decision_id（默认折叠）</summary><code>${esc(call.id || "")}</code></details></div>`;
+  showDrawer("这次决定");
+}
+function showDrawer(heading) {
+  const title = document.querySelector("#decision-drawer .drawer-hd h3");
+  if (title) title.textContent = heading || "这次决定";
   document.getElementById("decision-drawer").hidden = false;
   document.getElementById("drawer-scrim").hidden = false;
 }
@@ -1529,6 +1534,36 @@ document.getElementById("plugin-view").addEventListener("click", (event) => {
   handleBoardClick(event, () => loadPlugins(false)).catch((error) => alert(error.message));
 });
 
+function effortLabel(value) {
+  const raw = String(value || "").trim();
+  const map = { none: "无", minimal: "最低", low: "低", medium: "中", high: "高", xhigh: "很高", max: "最高", ultra: "极限" };
+  const zh = map[raw.toLowerCase()];
+  if (zh) return zh + "（" + raw + "）";
+  return raw || "—";
+}
+
+function openDispatch(kind, key) {
+  const pack = state.delegation || {};
+  const row = kind === "run"
+    ? (pack.runs || []).find((item) => item.id === key)
+    : (pack.plans || [])[Number(key)];
+  if (!row) return;
+  const isRun = kind === "run";
+  document.getElementById("drawer-body").innerHTML = `
+    <div><h4>${isRun ? "这次子代理" : "这次建议"}</h4><p class="q">${esc(row.task || "（没有任务原文）")}</p></div>
+    <div><h4>结论</h4>
+      <dl class="kv">
+        <dt>宿主</dt><dd>${esc(row.source || "—")}</dd>
+        <dt>模型</dt><dd>${esc(row.model || "—")}</dd>
+        <dt>思考程度</dt><dd>${esc(effortLabel(row.effort))}</dd>
+        <dt>时间</dt><dd>${esc(formatWhen(row.at || row.start || row.end || ""))}</dd>
+        ${isRun ? `<dt>状态</dt><dd>${esc(row.stateText || row.state || "—")}</dd><dt>子代理</dt><dd class="mono">${esc(row.id || "—")}</dd><dt>耗时</dt><dd>${esc(row.duration || "—")}</dd>` : `<dt>建议</dt><dd>${esc(row.advice || "—")}</dd>`}
+      </dl>
+    </div>
+    <div><h4>详情</h4><p class="q">${esc(row.detail || "（没有更多说明）")}</p></div>`;
+  showDrawer("派遣详情");
+}
+
 async function loadDelegation() {
   const data = await api("/api/delegation");
   const entries = data.entries || [];
@@ -1539,11 +1574,15 @@ async function loadDelegation() {
   const runs = new Map();
   for (const entry of observed) {
     const id = entry.childId || "(没有 id)";
-    if (!runs.has(id)) runs.set(id, { id: id, source: entry.source, task: entry.task || "", start: null, end: null, state: entry.state, detail: entry.detail || "" });
+    if (!runs.has(id)) runs.set(id, { id, source: entry.source, task: entry.task || "", start: null, end: null, state: entry.state, model: "", effort: "", detail: "" });
     const run = runs.get(id);
+    if (entry.model) run.model = entry.model;
+    if (entry.effort) run.effort = entry.effort;
     if (entry.state === "started") { run.start = entry.at; run.state = "started"; }
-    else { run.end = entry.at; run.state = entry.state; if (entry.detail) run.detail = entry.detail; }
+    else { run.end = entry.at; run.state = entry.state; }
+    if (entry.detail) run.detail = entry.detail;
     if (!run.task && entry.task) run.task = entry.task;
+    if (!run.source && entry.source) run.source = entry.source;
   }
   function duration(run) {
     if (!run.start || !run.end) return "";
@@ -1553,28 +1592,60 @@ async function loadDelegation() {
   }
   const stateText = { started: "创建中", completed: "已完成", error: "失败", aborted: "已中止" };
   const stateClass = { started: "warn", completed: "ok", error: "err", aborted: "muted" };
-
-  const planRows = plans.map((entry) => {
+  const planList = plans.map((entry) => {
     const advice = entry.kind === "effort-decision"
-      ? `建议强度 ${entry.effort || "?"}`
+      ? `建议强度 ${effortLabel(entry.effort)}`
       : (entry.recommendation === "delegate" ? `建议派 ${entry.agents == null ? "?" : entry.agents} 个` : "单代理");
-    const tone = entry.kind !== "effort-decision" && entry.recommendation === "delegate" ? "ok" : "muted";
-    return `<tr><td data-label="时间" class="mono">${esc(formatWhen(entry.at))}</td><td data-label="宿主">${esc(entry.source)}</td><td data-label="建议"><span class="pill ${tone}">${esc(advice)}</span></td><td data-label="任务">${esc(entry.task || "")}</td><td data-label="依据">${esc(entry.reason || entry.model || "")}</td></tr>`;
-  }).join("") || `<tr><td colspan="5" class="muted-cell">还没有派遣建议。</td></tr>`;
+    return { ...entry, advice };
+  });
+  const runList = Array.from(runs.values()).map((run) => ({
+    ...run,
+    duration: duration(run),
+    stateText: stateText[run.state] || run.state || "",
+  }));
+  state.delegation = { plans: planList, runs: runList };
 
-  const runRows = Array.from(runs.values()).map((run) => `<tr><td data-label="开始" class="mono">${esc(formatWhen(run.start || run.end || ""))}</td><td data-label="宿主">${esc(run.source)}</td><td data-label="状态"><span class="pill ${stateClass[run.state] || "muted"}">${esc(stateText[run.state] || run.state || "")}</span></td><td data-label="子代理 id" class="mono">${esc(run.id)}</td><td data-label="耗时">${esc(duration(run))}</td><td data-label="详情">${esc(run.detail || run.task || "")}</td></tr>`).join("")
-    || `<tr><td colspan="6" class="muted-cell">还没有观测到真实子代理。宿主拉起子代理后，这里会按 run 自动配对「创建 → 结束」并算出耗时。</td></tr>`;
+  const planRows = planList.map((entry, index) => {
+    const tone = entry.kind !== "effort-decision" && entry.recommendation === "delegate" ? "ok" : "muted";
+    return `<tr class="row-click" data-dispatch-plan="${index}">
+      <td data-label="时间" class="mono">${esc(formatWhen(entry.at))}</td>
+      <td data-label="宿主">${esc(entry.source)}</td>
+      <td data-label="建议"><span class="pill ${tone}">${esc(entry.advice)}</span></td>
+      <td data-label="模型">${esc(entry.model || "—")}</td>
+      <td data-label="思考程度">${esc(effortLabel(entry.effort))}</td>
+      <td data-label="任务">${esc(entry.task || "")}</td>
+      <td data-label="详情">${esc(entry.detail || entry.reason || "")}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7" class="muted-cell">还没有派遣建议。</td></tr>`;
+
+  const runRows = runList.map((run) => `<tr class="row-click" data-dispatch-run="${esc(run.id)}">
+      <td data-label="开始" class="mono">${esc(formatWhen(run.start || run.end || ""))}</td>
+      <td data-label="宿主">${esc(run.source)}</td>
+      <td data-label="状态"><span class="pill ${stateClass[run.state] || "muted"}">${esc(run.stateText)}</span></td>
+      <td data-label="模型">${esc(run.model || "—")}</td>
+      <td data-label="思考程度">${esc(effortLabel(run.effort))}</td>
+      <td data-label="耗时">${esc(run.duration)}</td>
+      <td data-label="详情">${esc(run.detail || run.task || "")}</td>
+    </tr>`).join("")
+    || `<tr><td colspan="7" class="muted-cell">还没有观测到真实子代理。宿主拉起子代理后，这里会按 run 自动配对「创建 → 结束」，并带上模型、思考程度和详情。</td></tr>`;
 
   document.getElementById("delegation-view").innerHTML = `
     <div class="calls-head"><h2>子代理派遣</h2><button id="refresh-delegation" type="button">刷新日志</button></div>
     <label><input id="delegation-enabled" type="checkbox" ${data.enabled ? "checked" : ""}> 启用派遣判断</label>
-    <p class="note">当前是保守试运行：只有任务明确提出并行或子代理时才建议派遣；网页试选没有模型。建议强度按任务规则填写。真正的模型和执行详情要等 Hermes、OpenClaw、DeepSeek Harness 拉起子代理后才会出现。Codex、Cursor 尚未接入执行日志。</p>
+    <p class="note">点一行看详情。建议里的「思考程度」是本机规则补的，真正跑起来的模型和强度要等 Hermes / OpenClaw / DeepSeek Harness 上报。网页试选没有模型。Cursor 目前没有执行日志。</p>
     <p class="note" id="delegation-status"></p>
     <h3 class="group">建议（jev-decision 的判断，不一定真的派了）<span class="count">${plans.length}</span></h3>
-    <table><thead><tr><th>时间</th><th>宿主</th><th>建议</th><th>任务</th><th>依据</th></tr></thead><tbody>${planRows}</tbody></table>
-    <h3 class="group">真实子代理（宿主观测，按 run 配对）<span class="count">${runs.size}</span></h3>
-    <table><thead><tr><th>开始</th><th>宿主</th><th>状态</th><th>子代理 id</th><th>耗时</th><th>详情</th></tr></thead><tbody>${runRows}</tbody></table>`;
+    <table><thead><tr><th>时间</th><th>宿主</th><th>建议</th><th>模型</th><th>思考程度</th><th>任务</th><th>详情</th></tr></thead><tbody>${planRows}</tbody></table>
+    <h3 class="group">真实子代理（宿主观测，按 run 配对）<span class="count">${runList.length}</span></h3>
+    <table><thead><tr><th>开始</th><th>宿主</th><th>状态</th><th>模型</th><th>思考程度</th><th>耗时</th><th>详情</th></tr></thead><tbody>${runRows}</tbody></table>`;
   document.getElementById("refresh-delegation").addEventListener("click", () => loadDelegation().catch((error) => alert(error.message)));
+  document.getElementById("delegation-view").onclick = (event) => {
+    if (event.target.closest("button, input, label")) return;
+    const plan = event.target.closest("[data-dispatch-plan]");
+    if (plan) { openDispatch("plan", plan.dataset.dispatchPlan); return; }
+    const run = event.target.closest("[data-dispatch-run]");
+    if (run) openDispatch("run", run.dataset.dispatchRun);
+  };
   document.getElementById("delegation-enabled").addEventListener("change", async (event) => {
     const box = event.target;
     const status = document.getElementById("delegation-status");

@@ -70,6 +70,11 @@ class DelegationTests(unittest.TestCase):
             self.assertEqual("网页试选，无模型", shown["model"])
             self.assertEqual("medium", shown["effort"])
             self.assertIn("保持单代理", shown["detail"])
+            live = delegation.observed("hermes", "started", "child-2", "查资料", "DeepSeek-V4", "high", "provider=deepseek")
+            shown_live = delegation.present(live)
+            self.assertEqual("DeepSeek-V4", shown_live["model"])
+            self.assertEqual("high", shown_live["effort"])
+            self.assertIn("provider=deepseek", shown_live["detail"])
 
     def test_test_source_does_not_pollute_call_log(self):
         with patch.object(cabinet, "record_call") as record, patch.object(cabinet, "load_config", return_value={"selectorEnabled": False, "delegationEnabled": False}):

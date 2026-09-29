@@ -94,7 +94,8 @@ export default {
   register(api) {
     api.on("subagent_spawned", (event) => reportDispatch({
       state: "started", child_id: String(event.childSessionKey || event.runId || ""),
-      task: String(event.task || ""), model: String(event.resolvedModel || ""),
+      task: String(event.task || ""), model: String(event.resolvedModel || event.model || ""),
+      effort: String(event.reasoningEffort || event.reasoning_effort || event.effort || ""),
     }));
     api.on("subagent_ended", (event) => reportDispatch({
       state: event.outcome === "ok" ? "completed" : (event.outcome === "killed" ? "aborted" : "error"),
