@@ -338,6 +338,7 @@ def default_config() -> dict:
 
     return {
         "selectorEnabled": True,
+        "delegationEnabled": False,
         "extraScanRoots": [],
         "board": empty_board(),
     }
@@ -358,13 +359,17 @@ def save_config(updates: dict) -> dict:
     data = load_config()
     if "selectorEnabled" in updates:
         data["selectorEnabled"] = bool(updates["selectorEnabled"])
+    if "delegationEnabled" in updates:
+        data["delegationEnabled"] = bool(updates["delegationEnabled"])
     if "extraScanRoots" in updates and isinstance(updates["extraScanRoots"], list):
         data["extraScanRoots"] = [str(item).strip() for item in updates["extraScanRoots"] if str(item).strip()]
     data.pop("layaModelDir", None)
     _write_config(data)
-    from hosts import sync_hosts
+    hosts = []
+    if "selectorEnabled" in updates:
+        from hosts import sync_hosts
 
-    hosts = sync_hosts(bool(data["selectorEnabled"]))
+        hosts = sync_hosts(bool(data["selectorEnabled"]))
     return {"config": public_config(data), "hosts": hosts}
 
 
@@ -374,6 +379,7 @@ def public_config(data: dict | None = None) -> dict:
     data = data or load_config()
     return {
         "selectorEnabled": bool(data["selectorEnabled"]),
+        "delegationEnabled": bool(data["delegationEnabled"]),
         "jevWeights": str(WEIGHTS),
         "skillDir": str(SKILLS),
         "extraScanRoots": data.get("extraScanRoots") or [],
@@ -544,11 +550,15 @@ def best_matching_rule(task: str, memory: dict, embed=None) -> dict | None:
 def calls_view() -> dict:
     memory = load_memory()
     calls = []
-    for call in memory["calls"][:80]:
+    for call in memory["calls"]:
+        if call.get("source") in {"test", "eval"}:
+            continue
         item = dict(call)
         source = call.get("source") or ""
         item["sourceLabel"] = SOURCE_LABELS.get(source, source)
         calls.append(item)
+        if len(calls) == 80:
+            break
     return {"calls": calls, "rules": task_rule_list(memory), "mcp": mcp_snippet()}
 
 
@@ -1092,6 +1102,8 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
     from host.gate import available_gates, named_skill_gates, decision_from_votes, gate_labels, sentence_names, YES_LINE, GATE, _named
 
     task = task.strip()
+    # Diagnostic calls must never be mixed with real host usage in the call log.
+    record = record and source not in {"test", "eval"}
     original_length = len(task)
     clipped = False
     if not task:
@@ -1100,9 +1112,15 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
         task = task[:2000]
         clipped = True
     config = load_config()
+    dispatch = None
+    if config.get("delegationEnabled") and record:
+        from host.delegation import decide
+
+        dispatch = decide(task, source, True)
     if not config["selectorEnabled"]:
         return {
             "enabled": False,
+            "dispatch": dispatch,
             "message": "技能选择器已关闭。打开后，宿主会在模型开口前用 jev-decision 选技能。",
         }
     del model
@@ -1184,6 +1202,7 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
         "decisionId": call["id"] if record else None,
         "clipped": clipped,
         "originalLength": original_length if clipped else None,
+        "dispatch": dispatch,
     }
 
 
@@ -1206,6 +1225,9 @@ def host_preface(task: str, source: str = "host") -> str:
             except (OSError, ValueError, FileNotFoundError, KeyError):
                 texts[name] = ""
     preface = format_preface(routed, texts)
+    dispatch = routed.get("dispatch") or {}
+    if dispatch.get("recommendation") == "delegate":
+        preface += "\n\n【子代理派遣建议】这句话明确提出并行或子代理。先拆成相互独立的小任务；只有宿主提供子代理工具时才调用。子任务的思考强度由宿主配置决定，最终执行由宿主决定。"
     decision = routed.get("decisionId") or ""
     if decision and preface:
         preface += "\n\ndecision_id=" + str(decision)

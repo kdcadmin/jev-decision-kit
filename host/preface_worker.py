@@ -45,7 +45,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"ok": True})
 
     def do_POST(self) -> None:
-        if self.path != "/preface":
+        if self.path not in {"/preface", "/dispatch-event"}:
             self._send(404, {"ok": False})
             return
         wanted = ""
@@ -58,11 +58,25 @@ class Handler(BaseHTTPRequestHandler):
             self._send(403, {"preface": "【技能柜】这次没能完成选择。自己做，不要翻技能柜。"})
             return
         length = int(self.headers.get("Content-Length", "0") or "0")
+        if length > 16_384:
+            self._send(413, {"ok": False})
+            return
         raw = self.rfile.read(length) if length else b"{}"
         try:
             data = json.loads(raw.decode("utf-8"))
         except json.JSONDecodeError:
             self._send(400, {"preface": ""})
+            return
+        if self.path == "/dispatch-event":
+            try:
+                from host.delegation import observed
+
+                row = observed(**{key: str((data or {}).get(key) or "") for key in
+                    ("source", "state", "child_id", "task", "model", "effort", "detail")})
+            except (TypeError, ValueError) as exc:
+                self._send(400, {"error": str(exc)})
+                return
+            self._send(200, {"ok": True, "entry": row})
             return
         task = str((data or {}).get("task") or "")
         source = str((data or {}).get("source") or "host")

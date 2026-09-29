@@ -99,6 +99,11 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/calls":
                 self._json(200, cabinet.calls_view())
                 return
+            if parsed.path == "/api/delegation":
+                from host.delegation import entries
+
+                self._json(200, {"enabled": cabinet.public_config()["delegationEnabled"], "entries": entries()})
+                return
             if parsed.path == "/api/mcp":
                 from host.mcp_inventory import list_mcp_servers
 

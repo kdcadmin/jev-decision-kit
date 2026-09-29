@@ -147,3 +147,20 @@ def preface_for(task: str, source: str) -> str:
     if not isinstance(body, dict):
         return ""
     return str(body.get("preface") or "")
+
+
+def report_dispatch_event(**fields: str) -> None:
+    port = ensure_worker()
+    if not port:
+        return
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{port}/dispatch-event",
+        data=json.dumps(fields, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json", "X-Kit-Token": _token()},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=3):
+            pass
+    except (OSError, urllib.error.URLError):
+        pass

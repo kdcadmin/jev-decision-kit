@@ -290,6 +290,7 @@
   #library-view .note { max-width: none; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
+  #delegation-view td:last-child { min-width: 12em; }
   #calls-view td:first-child { white-space: nowrap; }
   #calls-view td:last-child { white-space: normal; }
   #calls-view .skill-line {
@@ -468,6 +469,7 @@
       <div class="views">
         <button class="on" type="button" data-view="cabinet">柜</button>
         <button type="button" data-view="calls">调用</button>
+        <button type="button" data-view="delegation">派遣</button>
         <button type="button" data-view="mcp">MCP</button>
         <button type="button" data-view="plugins">插件</button>
         <button type="button" data-view="settings">设置</button>
@@ -498,6 +500,7 @@
     </section>
   </main>
   <section class="sheet" id="calls-view"></section>
+  <section class="sheet" id="delegation-view"></section>
   <section class="sheet" id="mcp-view"></section>
   <section class="sheet" id="plugin-view"></section>
   <section class="sheet settings" id="settings-view"></section>
@@ -865,11 +868,13 @@ document.querySelectorAll(".views button").forEach((button) => {
     const view = button.dataset.view;
     document.querySelector("main").classList.toggle("off", view !== "cabinet");
     document.getElementById("calls-view").classList.toggle("on", view === "calls");
+    document.getElementById("delegation-view").classList.toggle("on", view === "delegation");
     document.getElementById("mcp-view").classList.toggle("on", view === "mcp");
     document.getElementById("plugin-view").classList.toggle("on", view === "plugins");
     document.getElementById("settings-view").classList.toggle("on", view === "settings");
     document.getElementById("library-view").classList.toggle("on", view === "library");
     if (view === "calls") loadCalls().catch((error) => alert(error.message));
+    if (view === "delegation") loadDelegation().catch((error) => alert(error.message));
     if (view === "mcp") loadMcp().catch((error) => alert(error.message));
     if (view === "plugins") loadPlugins(true).catch((error) => alert(error.message));
     if (view === "settings") loadSettings().catch((error) => alert(error.message));
@@ -1007,6 +1012,36 @@ async function loadPlugins(refresh) {
 document.getElementById("plugin-view").addEventListener("click", (event) => {
   handleBoardClick(event, () => loadPlugins(false)).catch((error) => alert(error.message));
 });
+
+async function loadDelegation() {
+  const data = await api("/api/delegation");
+  const rows = (data.entries || []).map((entry) => {
+    const kind = entry.kind === "observed" ? "宿主执行" : (entry.kind === "effort-decision" ? "子任务思考判断" : "派遣判断");
+    const outcome = entry.kind === "observed"
+      ? ({ started: "已创建", completed: "已完成", error: "失败", aborted: "已中止" }[entry.state] || entry.state)
+      : (entry.kind === "effort-decision" ? `建议 ${entry.effort}` : (entry.recommendation === "delegate" ? `建议派 ${entry.agents} 个` : "单代理"));
+    return `<tr><td>${esc(formatWhen(entry.at))}</td><td>${esc(entry.source)}</td><td>${kind}</td><td>${esc(outcome)}</td><td>${esc(entry.task || entry.childId || "")}</td><td>模型：${esc(entry.model)}<br>强度：${esc(entry.effort)}<br>详情：${esc(entry.detail)}</td></tr>`;
+  }).join("") || `<tr><td colspan="6">还没有派遣判断或宿主执行记录。</td></tr>`;
+  document.getElementById("delegation-view").innerHTML = `
+    <div class="calls-head"><h2>子代理派遣</h2><button id="refresh-delegation" type="button">刷新日志</button></div>
+    <label><input id="delegation-enabled" type="checkbox" ${data.enabled ? "checked" : ""}> 启用派遣判断</label>
+    <p class="note">当前是保守试运行：只有任务明确提出并行或子代理时才建议派遣；网页试选没有模型。建议强度按任务规则填写。真正的模型和执行详情要等 Hermes、OpenClaw、DeepSeek Harness 拉起子代理后才会出现。Codex、Cursor 尚未接入执行日志。</p>
+    <p class="note" id="delegation-status"></p>
+    <table><thead><tr><th>时间</th><th>宿主</th><th>层级</th><th>结果</th><th>任务 / 子代理</th><th>模型 / 强度 / 详情</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById("refresh-delegation").addEventListener("click", () => loadDelegation().catch((error) => alert(error.message)));
+  document.getElementById("delegation-enabled").addEventListener("change", async (event) => {
+    const box = event.target;
+    const status = document.getElementById("delegation-status");
+    box.disabled = true;
+    try {
+      await api("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ delegationEnabled: box.checked }) });
+      status.textContent = box.checked ? "派遣判断已开启。" : "派遣判断已关闭。";
+    } catch (error) {
+      box.checked = !box.checked;
+      status.textContent = error.message;
+    } finally { box.disabled = false; }
+  });
+}
 
 async function loadCalls() {
   const data = await api("/api/calls");
