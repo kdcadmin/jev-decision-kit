@@ -50,17 +50,55 @@ class GateTests(unittest.TestCase):
         self.assertEqual(decided["method"], "skill")
         self.assertEqual(decided["skills"][0]["name"], "meeting-minutes")
 
-    def test_preface_for_think_and_skill(self):
+    def test_preface_names_skills_without_pasting_them(self):
         think = format_preface({"enabled": True, "method": "think", "skills": []}, {})
         self.assertIn("自己做", think)
-        self.assertIn("【技能柜】", think)
+        self.assertTrue(think.startswith("jev-decision:"))
         skill = format_preface(
             {"enabled": True, "method": "skill", "skills": [{"name": "docx"}]},
             {"docx": "按模板写"},
         )
-        self.assertIn("## docx", skill)
-        self.assertIn("按模板写", skill)
-        self.assertIn("已选定：docx。", skill)
+        self.assertTrue(skill.startswith("jev-decision: 已选定：docx。"))
+        self.assertNotIn("按模板写", skill)
+        self.assertNotIn("## docx", skill)
+        self.assertIn("技能工具", skill)
+        with_body = format_preface(
+            {"enabled": True, "method": "skill", "skills": [{"name": "docx"}]},
+            {"docx": "按模板写"},
+            with_body=True,
+        )
+        self.assertIn("## docx", with_body)
+        self.assertIn("按模板写", with_body)
+
+    def test_host_preface_hides_the_id_when_there_is_nothing_to_read(self):
+        from unittest.mock import patch
+
+        solo = {"enabled": True, "method": "think", "skills": [], "decisionId": "d1", "dispatch": {}}
+        with patch.object(cabinet, "route_task", return_value=solo):
+            self.assertNotIn("decision_id", cabinet.host_preface("随便说一句话", "test"))
+        plugin = {
+            "enabled": True, "method": "skill", "decisionId": "d2", "dispatch": {},
+            "skills": [{"name": "figma", "kind": "plugin", "host": "Cursor", "summary": "画图"}],
+        }
+        with patch.object(cabinet, "route_task", return_value=plugin):
+            self.assertNotIn("decision_id", cabinet.host_preface("用 Figma 画一张图", "test"))
+        skill = {
+            "enabled": True, "method": "skill", "decisionId": "d3", "dispatch": {},
+            "skills": [{"name": "docx", "kind": "skill"}],
+        }
+        with patch.object(cabinet, "route_task", return_value=skill):
+            self.assertIn("decision_id=d3", cabinet.host_preface("用 Word 写一份周报", "test"))
+
+    def test_already_prefaced_keeps_a_mention_from_skipping_selection(self):
+        from host.gate import already_prefaced
+
+        self.assertTrue(already_prefaced("jev-decision: 已选定：docx。读完照做。"))
+        self.assertTrue(already_prefaced("  \njev-decision: 已选定：docx。"))
+        self.assertTrue(already_prefaced("【技能柜】已选定：docx。"))
+        self.assertFalse(already_prefaced("你说 jev-decision: 这样写就行"))
+        self.assertFalse(already_prefaced("你说【技能柜】这样写就行"))
+        self.assertFalse(already_prefaced("帮我写一份 Word"))
+        self.assertFalse(already_prefaced(""))
 
     def test_several_doors_stay_and_low_ones_drop(self):
         gates = [
@@ -203,9 +241,17 @@ class GateTests(unittest.TestCase):
             {"enabled": True, "method": "skill", "skills": [{"name": "docx"}, {"name": "pdf"}]},
             {"docx": "x" * 30000, "pdf": "y" * 30000},
         )
-        self.assertTrue(preface.startswith("【技能柜】已选定：docx、pdf。"))
+        self.assertTrue(preface.startswith("jev-decision: 已选定：docx、pdf。"))
         self.assertIn("docx", preface[:80])
         self.assertIn("pdf", preface[:80])
+        self.assertNotIn("x" * 100, preface)
+        body = format_preface(
+            {"enabled": True, "method": "skill", "skills": [{"name": "docx"}, {"name": "pdf"}]},
+            {"docx": "x" * 30000, "pdf": "y" * 30000},
+            with_body=True,
+        )
+        self.assertLessEqual(len(body), 24000 + 100)
+        self.assertIn("get_skill", body)
 
     def test_route_uses_the_door(self):
         routed = cabinet.route_task("看一下茅台现在多少钱", "test", record=False)

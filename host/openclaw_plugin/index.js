@@ -54,7 +54,7 @@ async function ensureWorker() {
 
 async function prefaceFor(task) {
   const port = await ensureWorker();
-  if (!port) return "【技能柜】这次没能启动选择。自己做，不要翻技能柜。";
+  if (!port) return "jev-decision: 这次没能启动选择。自己做，不要翻技能柜。";
   try {
     const response = await fetch(`http://127.0.0.1:${port}/preface`, {
       method: "POST",
@@ -65,7 +65,7 @@ async function prefaceFor(task) {
     const body = await response.json();
     return String(body.preface || "");
   } catch {
-    return "【技能柜】这次没能完成选择。自己做，不要翻技能柜。";
+    return "jev-decision: 这次没能完成选择。自己做，不要翻技能柜。";
   }
 }
 
@@ -100,7 +100,8 @@ export default {
     }));
     api.on("before_prompt_build", async (event) => {
       const task = String(event.prompt || "").trim();
-      if (!task || task.includes("【技能柜】")) return;
+      const folded = String(task ?? "").trimStart();
+      if (!task || folded.startsWith("jev-decision:") || folded.startsWith("【技能柜】")) return;
       const preface = await prefaceFor(task);
       if (!preface) return;
       return { prependContext: preface };

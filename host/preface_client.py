@@ -113,9 +113,15 @@ def _wait_port() -> int | None:
     return None
 
 
-def ensure_worker() -> int | None:
+def worker_port() -> int | None:
+    """The healthy preface worker's port, or None. Never starts a worker."""
     port = _read_port()
-    if port and _healthy(port):
+    return port if port and _healthy(port) else None
+
+
+def ensure_worker() -> int | None:
+    port = worker_port()
+    if port:
         return port
     _start_worker()
     port = _wait_port()
@@ -126,12 +132,14 @@ def ensure_worker() -> int | None:
 
 
 def preface_for(task: str, source: str) -> str:
+    from host.gate import already_prefaced
+
     text = message_text(task)
-    if not text or "【技能柜】" in text:
+    if not text or already_prefaced(text):
         return ""
     port = ensure_worker()
     if not port:
-        return "【技能柜】这次没能启动选择。自己做，不要翻技能柜。"
+        return "jev-decision: 这次没能启动选择。自己做，不要翻技能柜。"
     payload = json.dumps({"task": text, "source": source}, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
         f"http://127.0.0.1:{port}/preface",
@@ -143,7 +151,7 @@ def preface_for(task: str, source: str) -> str:
         with urllib.request.urlopen(request, timeout=POST_TIMEOUT) as response:
             body = json.loads(response.read().decode("utf-8"))
     except (OSError, urllib.error.URLError, json.JSONDecodeError):
-        return "【技能柜】这次没能完成选择。自己做，不要翻技能柜。"
+        return "jev-decision: 这次没能完成选择。自己做，不要翻技能柜。"
     if not isinstance(body, dict):
         return ""
     return str(body.get("preface") or "")

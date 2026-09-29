@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import socket
 import sys
@@ -19,6 +20,7 @@ WEB = Path(__file__).resolve().parent
 HOST = "127.0.0.1"
 PORT = 8765
 TOKEN = secrets.token_urlsafe(24)
+WORKER_KEEPALIVE_SECONDS = 10
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -81,8 +83,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if parsed.path == "/api/health":
                 from host.jev import WEIGHTS
+                from host.preface_client import worker_port
 
-                self._json(200, {"ok": True, "modelReady": WEIGHTS.is_file()})
+                self._json(200, {"ok": True, "modelReady": WEIGHTS.is_file(), "prefaceWorker": worker_port()})
                 return
             if parsed.path == "/api/progress":
                 kind = parse_qs(parsed.query).get("kind", [""])[0]
@@ -288,11 +291,53 @@ def _refresh_library() -> None:
         print("[kit] library refresh skipped: " + str(exc), flush=True)
 
 
+def _publish_kit_root() -> None:
+    """Tell installed copies of the host plugin where this kit really lives.
+
+    The host loads its own copy of the plugin, and that copy's directory says
+    nothing about this checkout.
+    """
+    try:
+        shared = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "jev-skill-kit"
+        shared.mkdir(parents=True, exist_ok=True)
+        (shared / "root.txt").write_text(str(ROOT), encoding="utf-8")
+    except OSError as exc:
+        print("[kit] kit root pointer skipped: " + str(exc), flush=True)
+
+
+def _ensure_worker_once() -> int | None:
+    from host.preface_client import ensure_worker
+
+    try:
+        port = ensure_worker()
+    except Exception as exc:
+        print("[kit] preface worker skipped: " + str(exc), flush=True)
+        return None
+    if not port:
+        print("[kit] preface worker unavailable", flush=True)
+    return port
+
+
+def _keep_worker() -> None:
+    """Own the preface worker: hosts only reuse it, and hosts are not asked to spawn.
+
+    Spawning from a host plugin process proved unreliable, so the long-lived page
+    server keeps one healthy worker alive instead.
+    """
+    import time
+
+    while True:
+        _ensure_worker_once()
+        time.sleep(WORKER_KEEPALIVE_SECONDS)
+
+
 def main() -> None:
     import threading
 
+    _publish_kit_root()
     threading.Thread(target=_warm_model, daemon=True).start()
     threading.Thread(target=_refresh_library, daemon=True).start()
+    threading.Thread(target=_keep_worker, daemon=True).start()
     class KitServer(ThreadingHTTPServer):
         allow_reuse_address = False
 

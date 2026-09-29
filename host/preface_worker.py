@@ -23,7 +23,7 @@ def _preface(task: str, source: str) -> str:
         return cabinet.host_preface(task, source)
     except Exception as exc:
         print("[preface] " + str(exc), flush=True)
-        return "【技能柜】这次没能完成选择。自己做，不要翻技能柜。"
+        return "jev-decision: 这次没能完成选择。自己做，不要翻技能柜。"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -55,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
             wanted = ""
         got = (self.headers.get("X-Kit-Token") or "").strip()
         if not wanted or got != wanted:
-            self._send(403, {"preface": "【技能柜】这次没能完成选择。自己做，不要翻技能柜。"})
+            self._send(403, {"preface": "jev-decision: 这次没能完成选择。自己做，不要翻技能柜。"})
             return
         length = int(self.headers.get("Content-Length", "0") or "0")
         if length > 16_384:

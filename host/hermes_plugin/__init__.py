@@ -9,12 +9,13 @@ if str(ROOT) not in sys.path:
 
 from host.preface_client import message_text, preface_for, report_dispatch_event
 from host.delegation import assign_task_efforts, record_task_efforts
+from host.gate import already_prefaced
 import cabinet
 
 
 def pre_llm_call(user_message="", **_kwargs):
     text = message_text(user_message)
-    if not text or "【技能柜】" in text:
+    if not text or already_prefaced(text):
         return None
     preface = preface_for(text, "hermes")
     if not preface:

@@ -9,7 +9,7 @@
 在模型看到这句话之前：
 
 1. 取出用户的原句。不要拆开，不要先让模型总结。
-2. 原句里已经有 `【技能柜】` 就停。那是上一轮写进去的，再送一次会重复选择。
+2. 原句以 `jev-decision:` 开头就停（旧前言留下的 `【技能柜】` 也算）。那是上一轮写进去的，再送一次会重复选择。只在句子中间提到这个词不算。
 3. 把原句交给柜，拿到前言。
 4. 前言是空的，就按平时那样继续。选择器关着的时候会是空的。
 5. 前言不是空的，就把它放在这一轮的开头，然后再让模型说话。
@@ -38,7 +38,7 @@ Content-Type: application/json
 返回：
 
 ```json
-{"preface": "【技能柜】……"}
+{"preface": "jev-decision: 已选定：docx。用你宿主自己的技能工具读正文，读完照做，不要再挑选。"}
 ```
 
 必须带本机令牌。服务把令牌写在 `runtime/preface.token`，请求头用 `X-Kit-Token`。没有令牌或令牌不对，前言服务直接拒绝。项目里的 Python 客户端 `host/preface_client.py`、最小示例 `examples/ask_preface.py`，以及 OpenClaw / DeepSeek Harness 插件都会读这个文件。不要把令牌写进仓库。
@@ -55,10 +55,10 @@ preface = cabinet.host_preface("用户的原句", "你的宿主名")
 
 ## 前言是什么意思
 
-每段前言都以 `【技能柜】` 开头。
+每段前言都以 `jev-decision:` 开头。它只报选了什么，不再把正文塞进来。
 
 - 写了「自己做」：这次没有技能。模型自己完成，不要打开技能目录，不要再选。
-- 写了技能名，并且下面跟着正文：这些就是要用的技能。正文已经放进来了。读完照做，不要改用别的技能。
+- 写了技能名：这些就是要用的技能。正文不在前言里，用宿主自己的技能工具（或 MCP 的 `get_skill`）读，读完照做，不要改用别的技能。
 - 写了插件：按那一句去用指定宿主上的那个插件。插件只在已经装了它的宿主里能跑。柜子不会替你安装，也不会去改那个宿主的配置来启动它。
 - 写了「沿用了你对某一句的调整」：这次沿用了以前对很像的那句话做过的增删。
 
@@ -104,7 +104,7 @@ stdio 配置：
 }
 ```
 
-宿主如果已经把前言放进这一轮，模型按前言做就够了。只有前言里的正文被截断、需要再读同一份选定技能时，才用 `get_skill`。调用时必须带前言末尾的 `decision_id`，超长正文用 `offset` 续读。
+宿主如果已经把前言放进这一轮，模型按前言做就够了：前言只报名字，正文用 `get_skill` 按名字读。调用时必须带前言末尾的 `decision_id`，超长正文用 `offset` 续读。前言里没有 `decision_id` 的那种（选择失败、或者写着「自己做」）不要调用它。
 
 ## 已经接上的宿主
 
@@ -112,7 +112,7 @@ stdio 配置：
 
 Hermes 的开口前选择和子代理执行日志需要安装本项目的 Hermes 插件。在项目根目录运行 `python -m host.hermes_plugin.install`；它在 `~/.hermes/plugins/jev-skill-kit` 写入一个指向当前项目代码的薄入口，后续更新项目代码不必再复制插件。桌面端和 TUI 还需要 `host.hermes_plugin.install.install_shell_hooks` 把四个 shell hook 写入 Hermes 的 `config.yaml`。本机 Hermes 0.21.0 对子代理只提供共用的思考强度，因此可用 `host.hermes_core_patch.install` 给每个子任务增加独立的 `reasoning_effort`；安装器会保存 `delegate_tool.py.jev.bak`，可用 `host.hermes_core_patch.undo` 恢复。派遣开关打开后，插件和 shell hook 会在 `delegate_task` 执行前给没有明确强度的子任务补上初始规则判断；用户或宿主明确写的强度保持不变。`subagent_start` / `subagent_stop` 会把真实创建、完成事件和实际强度记在网页「派遣」页。此强度判断目前是规则策略，还不是训练好的 JEV 权重。修改后需重新启动 Hermes 才能让已有进程加载新代码。
 
-DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用。Electron 的 `desktop` profile 不能走 CLI 的 `dsh plugin add`。在 GUI 里：设置 → 插件 → 添加插件，填本机绝对路径 `项目目录\host\harness_plugin`，然后重启 App 并开新会话。不要把 `cordis.patch.yml` 的 `insert.name` 写成 `index.js` 的绝对路径——加载器要的是已经装进该 profile 的包名 `dsh-jev-skill-kit`。其它 profile 可以用：
+DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用。Electron 的 `desktop` profile 不能走 CLI 的 `dsh plugin add`。在 GUI 里：设置 → 插件 → 添加插件，填本机绝对路径 `项目目录\host\harness_plugin`，然后重启 App 并开新会话。安装是**拷贝**：插件被复制成 `profiles\desktop\node_modules\dsh-jev-skill-kit`，之后改项目里的 `host\harness_plugin\index.js` 不会影响那份副本，重启 App 也不会重新复制。所以要么改完重新安装，要么把 profile 的依赖从 `file:项目目录\host\harness_plugin` 改成 `link:项目目录\host\harness_plugin`（`node_modules` 里那份跟着指向项目目录）。改成 link 之后，改完只需重启 App 即生效。不要把 `cordis.patch.yml` 的 `insert.name` 写成 `index.js` 的绝对路径——加载器要的是已经装进该 profile 的包名 `dsh-jev-skill-kit`。其它 profile 可以用：
 
 ```bash
 dsh plugin add 项目目录\host\harness_plugin

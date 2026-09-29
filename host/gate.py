@@ -4,7 +4,8 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-MARKER = "【技能柜】"
+MARKER = "jev-decision:"
+LEGACY_MARKER = "【技能柜】"
 SKILL_TEXT_LIMIT = 8000
 PREFACE_TEXT_LIMIT = 24000
 
@@ -645,19 +646,33 @@ def decision_from_votes(
     }
 
 
-def format_preface(routed: dict, texts: dict[str, str]) -> str:
+def already_prefaced(text: str) -> bool:
+    """True when the text already carries a decision preface.
+
+    Only a leading marker counts: a user who merely mentions it mid-sentence must
+    still get a selection.
+    """
+    body = (text or "").lstrip()
+    return body.startswith(MARKER) or body.startswith(LEGACY_MARKER)
+
+
+def format_preface(routed: dict, texts: dict[str, str], with_body: bool = False) -> str:
+    """Name what was chosen. Bodies stay out unless a caller asks for them."""
     if not routed.get("enabled", True):
         return ""
     if routed.get("method") != "skill":
-        return MARKER + "jev-decision 已选定：自己做。不要读取技能，不要再挑选。"
+        return MARKER + " 已选定：自己做。不要读取技能，不要再挑选。"
     chosen = routed.get("skills") or []
     kinds = {str(item.get("kind") or "skill") for item in chosen}
     names = [str(skill.get("name") or "") for skill in chosen if skill.get("name")]
-    lead = MARKER + "已选定：" + "、".join(names) + "。读完照做，不要再挑选。"
     if kinds == {"plugin"}:
-        lead = MARKER + "已选定插件：" + "、".join(names) + "。按插件做，不要再挑选。"
+        lead = MARKER + " 已选定插件：" + "、".join(names) + "。按插件做，不要再挑选。"
     elif "plugin" in kinds:
-        lead = MARKER + "已选定技能和插件：" + "、".join(names) + "。读完照做，不要再挑选。"
+        lead = MARKER + " 已选定技能和插件：" + "、".join(names) + "。读完照做，不要再挑选。"
+    else:
+        lead = MARKER + " 已选定：" + "、".join(names) + "。"
+    if not with_body and kinds != {"plugin"}:
+        lead += "用你宿主自己的技能工具读正文，读完照做，不要再挑选。"
     chunks = [lead]
     if routed.get("clipped"):
         chunks.append("原句超过 2000 字，后面没参与选择。")
@@ -666,14 +681,19 @@ def format_preface(routed: dict, texts: dict[str, str]) -> str:
         chunks.append("沿用了你对「" + str(remembered) + "」的调整。")
     for skill in chosen:
         name = str(skill.get("name") or "")
+        kind = str(skill.get("kind") or "skill")
+        host = str(skill.get("host") or "").strip()
+        where = host + " 上的" if host else ""
+        if not with_body:
+            if kind == "plugin":
+                chunks.append("使用" + where + "插件 " + name + "。" + str(skill.get("summary") or ""))
+            continue
         body = (texts.get(name) or "").strip()
-        if not body and skill.get("kind") == "plugin":
-            host = str(skill.get("host") or "").strip()
-            where = host + " 上的" if host else ""
+        if not body and kind == "plugin":
             body = "使用" + where + "插件 " + name + "。" + str(skill.get("summary") or "")
         if len(body) > SKILL_TEXT_LIMIT:
             body = body[:SKILL_TEXT_LIMIT] + "\n…（后面已截断，用 get_skill 按 offset 续读。）"
-        title = "插件 " + name if skill.get("kind") == "plugin" else name
+        title = "插件 " + name if kind == "plugin" else name
         chunks.append("## " + title + "\n" + body)
     joined = "\n\n".join(chunks)
     if len(joined) <= PREFACE_TEXT_LIMIT:

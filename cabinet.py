@@ -1207,32 +1207,18 @@ def route_task(task: str, source: str = "web", model=None, record: bool = True) 
 
 
 def host_preface(task: str, source: str = "host") -> str:
-    from host.gate import format_preface
+    from host.gate import already_prefaced, format_preface
 
     text = (task or "").strip()
-    if not text or "【技能柜】" in text:
+    if not text or already_prefaced(text):
         return ""
     routed = route_task(text, source)
-    texts = {}
-    for skill in routed.get("skills") or []:
-        name = skill.get("name") or ""
-        path = skill.get("path") or ""
-        if not name:
-            continue
-        if path:
-            try:
-                texts[name] = read_skill(name).get("content") or ""
-            except (OSError, ValueError, FileNotFoundError, KeyError):
-                texts[name] = ""
-    preface = format_preface(routed, texts)
+    preface = format_preface(routed, {})
     dispatch = routed.get("dispatch") or {}
     if dispatch.get("recommendation") == "delegate":
         preface += "\n\n【子代理派遣建议】这句话明确提出并行或子代理。先拆成相互独立的小任务；只有宿主提供子代理工具时才调用。子任务的思考强度由宿主配置决定，最终执行由宿主决定。"
     decision = routed.get("decisionId") or ""
-    if decision and preface:
-        preface += "\n\ndecision_id=" + str(decision)
-    if routed.get("clipped") and preface:
-        preface += "\n原句超过 2000 字，已截断后再选。"
+    del decision  # 前言不再露 decision_id；get_skill 读最近一次决定。
     return preface
 
 

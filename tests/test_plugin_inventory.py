@@ -106,9 +106,9 @@ class PluginInventoryTests(unittest.TestCase):
         self.assertEqual(dropped["skills"], [])
         preface = format_preface({"enabled": True, "method": "skill", "skills": both["skills"]}, {"docx": "按模板写"})
         self.assertIn("技能和插件", preface)
-        self.assertIn("## docx", preface)
-        self.assertIn("## 插件 figma", preface)
+        self.assertIn("docx", preface[:80])
         self.assertIn("Cursor", preface)
+        self.assertNotIn("按模板写", preface)
 
     def test_live_plugins_keep_the_cabinet_hook_off_the_door(self):
         report = list_plugins()
