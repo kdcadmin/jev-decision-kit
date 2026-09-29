@@ -296,7 +296,6 @@ try {
   #library-view .note { max-width: none; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
-  #delegation-view td:last-child { min-width: 12em; }
   #calls-view td:first-child { white-space: nowrap; }
   #calls-view td:last-child { white-space: normal; }
   #calls-view .skill-line {
@@ -767,6 +766,21 @@ try {
   .drawer-body .gate.ok b{ color:var(--accent); }
   body .app tr.row-click{ cursor:pointer; }
 
+  /* 调用 / 派遣：任务和详情只占一行，全文点开右侧抽屉 */
+  body .app #calls-view table,
+  body .app #delegation-view table { table-layout: fixed; }
+  body .app #calls-view td,
+  body .app #delegation-view td { vertical-align: middle; }
+  body .app #delegation-view tbody td,
+  body .app #calls-view td.clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 0;
+  }
+  html[data-view="cards"] body .app #calls-view td.clip,
+  html[data-view="cards"] body .app #delegation-view tbody td { max-width: 100%; }
+
   /* ============ Stage 6：开关看得懂 · 列表/卡片对全站生效 ============ */
   /* 启用开关：原来被通用 button 规则盖掉，旋钮和颜色都没了 → 看不出开还是关 */
   body .app button.switch{
@@ -931,6 +945,11 @@ function formatWhen(value) {
 
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+function clipTd(label, text) {
+  const line = String(text || "").replace(/\s+/g, " ").trim();
+  return `<td class="clip" data-label="${esc(label)}" title="${esc(line)}">${esc(line)}</td>`;
 }
 
 const KIT_TOKEN = "__KIT_TOKEN__";
@@ -1613,8 +1632,8 @@ async function loadDelegation() {
       <td data-label="建议"><span class="pill ${tone}">${esc(entry.advice)}</span></td>
       <td data-label="模型">${esc(entry.model || "—")}</td>
       <td data-label="思考程度">${esc(effortLabel(entry.effort))}</td>
-      <td data-label="任务">${esc(entry.task || "")}</td>
-      <td data-label="详情">${esc(entry.detail || entry.reason || "")}</td>
+      ${clipTd("任务", entry.task)}
+      ${clipTd("详情", entry.detail || entry.reason || "")}
     </tr>`;
   }).join("") || `<tr><td colspan="7" class="muted-cell">还没有派遣建议。</td></tr>`;
 
@@ -1625,14 +1644,14 @@ async function loadDelegation() {
       <td data-label="模型">${esc(run.model || "—")}</td>
       <td data-label="思考程度">${esc(effortLabel(run.effort))}</td>
       <td data-label="耗时">${esc(run.duration)}</td>
-      <td data-label="详情">${esc(run.detail || run.task || "")}</td>
+      ${clipTd("详情", run.detail || run.task || "")}
     </tr>`).join("")
     || `<tr><td colspan="7" class="muted-cell">还没有观测到真实子代理。宿主拉起子代理后，这里会按 run 自动配对「创建 → 结束」，并带上模型、思考程度和详情。</td></tr>`;
 
   document.getElementById("delegation-view").innerHTML = `
     <div class="calls-head"><h2>子代理派遣</h2><button id="refresh-delegation" type="button">刷新日志</button></div>
     <label><input id="delegation-enabled" type="checkbox" ${data.enabled ? "checked" : ""}> 启用派遣判断</label>
-    <p class="note">点一行看详情。建议里的「思考程度」是本机规则补的，真正跑起来的模型和强度要等 Hermes / OpenClaw / DeepSeek Harness 上报。网页试选没有模型。Cursor 目前没有执行日志。</p>
+    <p class="note">任务和详情只显示一行。点这一行，右边弹出全文、模型、思考程度。</p>
     <p class="note" id="delegation-status"></p>
     <h3 class="group">建议（jev-decision 的判断，不一定真的派了）<span class="count">${plans.length}</span></h3>
     <table><thead><tr><th>时间</th><th>宿主</th><th>建议</th><th>模型</th><th>思考程度</th><th>任务</th><th>详情</th></tr></thead><tbody>${planRows}</tbody></table>
@@ -1678,7 +1697,7 @@ async function loadCalls() {
       : (names.length ? names : [""]).map((name, index) => `<div class="skill-line"><span class="skill-name">${esc(name)}</span>${name ? `<button type="button" data-drop-call="${esc(call.id)}" data-skill="${esc(name)}">删除</button>` : "<span></span>"}${index === 0 ? `<button class="chip-add" type="button" data-open-add="${esc(call.id)}">添加</button>${forget}` : "<span></span><span></span>"}</div>`).join("") + passedLine(call.passed);
     return `<tr class="row-click" data-call="${esc(call.id)}">
       <td data-label="时间">${esc(formatWhen(call.at))}<br>${esc(call.sourceLabel || call.source || "")}</td>
-      <td data-label="任务">${esc(call.task || "")}</td>
+      ${clipTd("任务", call.task)}
       <td data-label="做法">${thinking ? "自主思考" : "调用技能"}</td>
       <td data-label="类型">${esc(call.label || call.category || "")}</td>
       <td data-label="调用的技能">${skills}</td>
@@ -1690,7 +1709,7 @@ async function loadCalls() {
       <h2>调用记录</h2>
       <button id="open-mcp" type="button">接入教程</button>
     </div>
-    <p class="note">「删除」和「添加」只记住这一句话，以及以后很像的说法，不会让整个分类跟着变。点「删掉记录」只去掉这一行。选了自主思考的那次不套技能。</p>
+    <p class="note">任务只显示一行，点这一行右边弹出这次决定的全文和判定依据。「删除」和「添加」只记住这一句话，以及以后很像的说法。点「删掉记录」只去掉这一行。选了自主思考的那次不套技能。</p>
     ${rules}
     <table><thead><tr><th>时间</th><th>任务</th><th>做法</th><th>类型</th><th>调用的技能</th></tr></thead><tbody>${rows}</tbody></table>`;
   document.getElementById("open-mcp").addEventListener("click", openMcpCard);
