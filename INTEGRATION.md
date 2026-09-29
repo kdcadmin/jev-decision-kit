@@ -126,7 +126,31 @@ command = "项目目录\\.venv\\Scripts\\python.exe"
 args = ["项目目录\\mcp_server.py"]
 ```
 
-Cursor 没有接这条前言。不要假设它会先问柜子。
+## 写者协议（插件 + MCP）
+
+每个 git 工作区自己一份 `WRITER-PROTOCOL.md`，不进公开仓库。装了对应插件或 MCP 的智能体开口前会确保文件存在：没有就按模板创建。插件只注入一行 `jev-writer:` 提示，不把整份宪法塞进上下文。台账用 MCP 的 `writer_protocol_read`（今日行 + 昨日摘要）和 `writer_protocol_append`（每改一批文件记一行）。
+
+换日历日时，昨天的全文进 `writer-log/YYYY-MM-DD.md`，协议里只留硬规则和一段昨日摘要，再开一张空台账。JEV 不挑选这个 MCP，也不要把它写进技能柜清单。
+
+- Hermes：已装 `jev-skill-kit` 的 `pre_llm_call` 会顺带 ensure + 短提示。也可单独装 `host/writer_protocol/hermes_plugin.yaml`。
+- OpenClaw：技能柜插件同样会带上短提示。只要写者协议、不要选择器时，用 `host/writer_protocol/openclaw/`。
+- DeepSeek Harness：在 GUI 添加插件 `项目目录\host\writer_protocol\harness`（包名 `dsh-writer-protocol`）。不要和技能柜插件抢改同一条用户消息里已经有的 `jev-writer:` 前缀。
+- MCP：`python -m host.writer_protocol mcp`，或：
+
+```json
+{
+  "mcpServers": {
+    "writer-protocol": {
+      "command": "项目目录\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "host.writer_protocol", "mcp"],
+      "cwd": "项目目录",
+      "env": {"PYTHONUTF8": "1"}
+    }
+  }
+}
+```
+
+Cursor 没有接技能柜前言，但可以单独加这个 MCP；动手前 `writer_protocol_read`，改完 `writer_protocol_append`。不要假设 Cursor 会先问柜子。
 
 打开网页不会改 Hermes 或 OpenClaw 的配置。只有在设置里保存选择器开关时才会同步那两项 MCP。
 

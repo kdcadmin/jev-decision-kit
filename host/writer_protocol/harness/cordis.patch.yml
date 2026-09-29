@@ -1,0 +1,3 @@
+- insert:
+    - id: writer-protocol
+      name: dsh-writer-protocol

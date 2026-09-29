@@ -1,10 +1,13 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const python = join(root, ".venv", "Scripts", "python.exe");
+const pythonWin = join(root, ".venv", "Scripts", "python.exe");
+const pythonPosix = join(root, ".venv", "bin", "python");
+const python = existsSync(pythonWin) ? pythonWin : (existsSync(pythonPosix) ? pythonPosix : "python");
 const worker = join(root, "host", "preface_worker.py");
 const portFile = join(root, "runtime", "preface.port");
 const tokenFile = join(root, "runtime", "preface.token");
@@ -101,10 +104,23 @@ export default {
     api.on("before_prompt_build", async (event) => {
       const task = String(event.prompt || "").trim();
       const folded = String(task ?? "").trimStart();
-      if (!task || folded.startsWith("jev-decision:") || folded.startsWith("【技能柜】")) return;
-      const preface = await prefaceFor(task);
-      if (!preface) return;
-      return { prependContext: preface };
+      const parts = [];
+      if (!folded.startsWith("jev-writer:")) {
+        const hint = spawnSync(python, ["-m", "host.writer_protocol", "hint", "--root", String(event.cwd || process.cwd())], {
+          cwd: root,
+          encoding: "utf8",
+          windowsHide: true,
+          timeout: 8000,
+        });
+        const writer = String(hint.stdout || "").trim();
+        if (writer.startsWith("jev-writer:")) parts.push(writer);
+      }
+      if (task && !folded.startsWith("jev-decision:") && !folded.startsWith("【技能柜】")) {
+        const preface = await prefaceFor(task);
+        if (preface) parts.push(preface);
+      }
+      if (!parts.length) return;
+      return { prependContext: parts.join("\n\n") };
     });
   },
 };
