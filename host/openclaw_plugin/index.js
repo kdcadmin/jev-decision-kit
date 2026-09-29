@@ -2,7 +2,6 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const python = join(root, ".venv", "Scripts", "python.exe");
@@ -70,11 +69,35 @@ async function prefaceFor(task) {
   }
 }
 
-export default definePluginEntry({
+async function reportDispatch(event) {
+  const port = await ensureWorker();
+  if (!port || !event.child_id) return;
+  try {
+    await fetch(`http://127.0.0.1:${port}/dispatch-event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Kit-Token": await readFile(tokenFile, "utf8").then((text) => text.trim()).catch(() => "") },
+      body: JSON.stringify({ source: "openclaw", ...event }),
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch { /* Logging must not block the host. */ }
+}
+
+// Export the runtime entry directly: this checkout lives outside OpenClaw's
+// node_modules tree, so a bare `openclaw/plugin-sdk/*` import cannot resolve.
+export default {
   id: "jev-skill-kit",
   name: "技能柜",
   description: "jev-decision 在模型开口前选定自己做，或选定哪几份技能和插件。",
   register(api) {
+    api.on("subagent_spawned", (event) => reportDispatch({
+      state: "started", child_id: String(event.childSessionKey || event.runId || ""),
+      task: String(event.task || ""), model: String(event.resolvedModel || ""),
+    }));
+    api.on("subagent_ended", (event) => reportDispatch({
+      state: event.outcome === "ok" ? "completed" : (event.outcome === "killed" ? "aborted" : "error"),
+      child_id: String(event.targetSessionKey || event.runId || ""),
+      detail: String(event.error || event.reason || event.outcome || ""),
+    }));
     api.on("before_prompt_build", async (event) => {
       const task = String(event.prompt || "").trim();
       if (!task || task.includes("【技能柜】")) return;
@@ -83,4 +106,4 @@ export default definePluginEntry({
       return { prependContext: preface };
     });
   },
-});
+};

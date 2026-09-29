@@ -110,7 +110,9 @@ stdio 配置：
 
 选择器开着时，Hermes 用 `pre_llm_call`，OpenClaw 用 `before_prompt_build`，DeepSeek Harness 插件用 `agent/pre-step`。它们在模型开口前要这段前言。关掉选择器之后，它们不再把原句交过来。
 
-DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用。Electron 的 `desktop` profile 不能走 CLI 的 `dsh plugin add`，在 GUI 里：设置 → 插件 → 添加插件，填本机绝对路径 `项目目录\host\harness_plugin`，然后重启 App 并开新会话。其它 profile 可以用：
+Hermes 的开口前选择和子代理执行日志需要安装本项目的 Hermes 插件。在项目根目录运行 `python -m host.hermes_plugin.install`；它在 `~/.hermes/plugins/jev-skill-kit` 写入一个指向当前项目代码的薄入口，后续更新项目代码不必再复制插件。桌面端和 TUI 还需要 `host.hermes_plugin.install.install_shell_hooks` 把四个 shell hook 写入 Hermes 的 `config.yaml`。本机 Hermes 0.21.0 对子代理只提供共用的思考强度，因此可用 `host.hermes_core_patch.install` 给每个子任务增加独立的 `reasoning_effort`；安装器会保存 `delegate_tool.py.jev.bak`，可用 `host.hermes_core_patch.undo` 恢复。派遣开关打开后，插件和 shell hook 会在 `delegate_task` 执行前给没有明确强度的子任务补上初始规则判断；用户或宿主明确写的强度保持不变。`subagent_start` / `subagent_stop` 会把真实创建、完成事件和实际强度记在网页「派遣」页。此强度判断目前是规则策略，还不是训练好的 JEV 权重。修改后需重新启动 Hermes 才能让已有进程加载新代码。
+
+DeepSeek Harness 可以当插件，也可以当 MCP，两种形式可以一起用。Electron 的 `desktop` profile 不能走 CLI 的 `dsh plugin add`。在 GUI 里：设置 → 插件 → 添加插件，填本机绝对路径 `项目目录\host\harness_plugin`，然后重启 App 并开新会话。不要把 `cordis.patch.yml` 的 `insert.name` 写成 `index.js` 的绝对路径——加载器要的是已经装进该 profile 的包名 `dsh-jev-skill-kit`。其它 profile 可以用：
 
 ```bash
 dsh plugin add 项目目录\host\harness_plugin
