@@ -70,24 +70,28 @@ class GateTests(unittest.TestCase):
         self.assertIn("## docx", with_body)
         self.assertIn("按模板写", with_body)
 
-    def test_host_preface_hides_the_id_when_there_is_nothing_to_read(self):
+    def test_host_preface_never_exposes_the_decision_id(self):
+        # 2026-09-29 决定：前言一律不输出 decision_id；get_skill 没号时读最近一次选定。
+        # 这条测试曾与 cabinet.py 的实现互相矛盾（HEAD 那一版），改动时两处必须一起动。
         from unittest.mock import patch
 
-        solo = {"enabled": True, "method": "think", "skills": [], "decisionId": "d1", "dispatch": {}}
-        with patch.object(cabinet, "route_task", return_value=solo):
-            self.assertNotIn("decision_id", cabinet.host_preface("随便说一句话", "test"))
-        plugin = {
-            "enabled": True, "method": "skill", "decisionId": "d2", "dispatch": {},
-            "skills": [{"name": "figma", "kind": "plugin", "host": "Cursor", "summary": "画图"}],
+        cases = {
+            "自己做": {"enabled": True, "method": "think", "skills": [], "decisionId": "d1", "dispatch": {}},
+            "只选插件": {
+                "enabled": True, "method": "skill", "decisionId": "d2", "dispatch": {},
+                "skills": [{"name": "figma", "kind": "plugin", "host": "Cursor", "summary": "画图"}],
+            },
+            "选定技能": {
+                "enabled": True, "method": "skill", "decisionId": "d3", "dispatch": {},
+                "skills": [{"name": "docx", "kind": "skill"}],
+            },
         }
-        with patch.object(cabinet, "route_task", return_value=plugin):
-            self.assertNotIn("decision_id", cabinet.host_preface("用 Figma 画一张图", "test"))
-        skill = {
-            "enabled": True, "method": "skill", "decisionId": "d3", "dispatch": {},
-            "skills": [{"name": "docx", "kind": "skill"}],
-        }
-        with patch.object(cabinet, "route_task", return_value=skill):
-            self.assertIn("decision_id=d3", cabinet.host_preface("用 Word 写一份周报", "test"))
+        for label, routed in cases.items():
+            with patch.object(cabinet, "route_task", return_value=routed):
+                preface = cabinet.host_preface("用 Word 写一份周报", "test")
+            self.assertNotIn("decision_id", preface, label)
+            for leaked in ("d1", "d2", "d3"):
+                self.assertNotIn(leaked, preface, label)
 
     def test_already_prefaced_keeps_a_mention_from_skipping_selection(self):
         from host.gate import already_prefaced

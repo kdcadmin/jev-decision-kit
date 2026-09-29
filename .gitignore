@@ -20,3 +20,11 @@ intro/frames/
 *.mov
 *.mkv
 *.wav
+# 本机私有，不进公开仓库（规则与台账见 WRITER-PROTOCOL.md）：
+# 技能副本 skills/ 已在上面挡；下面是宿主侧技能目录、插件安装件、MCP 配置、写者协议本身。
+.agents/skills/
+plugins/
+.mcp.json
+mcp.json
+**/.mcp.json
+WRITER-PROTOCOL.md

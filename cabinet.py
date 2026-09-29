@@ -1217,8 +1217,8 @@ def host_preface(task: str, source: str = "host") -> str:
     dispatch = routed.get("dispatch") or {}
     if dispatch.get("recommendation") == "delegate":
         preface += "\n\n【子代理派遣建议】这句话明确提出并行或子代理。先拆成相互独立的小任务；只有宿主提供子代理工具时才调用。子任务的思考强度由宿主配置决定，最终执行由宿主决定。"
-    decision = routed.get("decisionId") or ""
-    del decision  # 前言不再露 decision_id；get_skill 读最近一次决定。
+    # 前言永不输出 decision_id（2026-09-29 决定）：get_skill 没号时读 15 分钟内最近一次真选定。
+    # 改这里必须同时看 tests/test_gate.py::test_host_preface_never_exposes_the_decision_id。
     return preface
 
 
