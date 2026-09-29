@@ -10,8 +10,16 @@ if str(ROOT) not in sys.path:
 from host.preface_client import message_text, preface_for, report_dispatch_event
 from host.delegation import assign_task_efforts, record_task_efforts
 from host.gate import already_prefaced
-from host.writer_protocol import already_hinted, session_hint
 import cabinet
+
+try:
+    from host.writer_protocol import already_hinted, session_hint
+except ImportError:
+    def already_hinted(text=""):
+        return False
+
+    def session_hint(_root=None):
+        return ""
 
 
 def pre_llm_call(user_message="", **_kwargs):
@@ -19,9 +27,11 @@ def pre_llm_call(user_message="", **_kwargs):
     parts = []
     if not already_hinted(text):
         try:
-            parts.append(session_hint(Path.cwd()))
+            hint = session_hint(Path.cwd())
         except OSError:
-            pass
+            hint = ""
+        if hint:
+            parts.append(hint)
     if text and not already_prefaced(text):
         preface = preface_for(text, "hermes")
         if preface:

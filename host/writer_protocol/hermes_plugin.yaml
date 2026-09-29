@@ -1,5 +1,0 @@
-name: writer-protocol
-version: 0.1.0
-description: Ensure a workspace writer protocol exists and inject a short hint.
-provides_hooks:
-  - pre_llm_call

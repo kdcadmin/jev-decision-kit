@@ -1,6 +1,0 @@
-{
-  "id": "writer-protocol",
-  "name": "写者协议",
-  "activation": { "onStartup": true },
-  "configSchema": { "type": "object", "additionalProperties": false }
-}

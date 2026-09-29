@@ -30,3 +30,5 @@ mcp.json
 .cursor/mcp.json
 WRITER-PROTOCOL.md
 writer-log/
+host/writer_protocol/
+tests/test_writer_protocol.py

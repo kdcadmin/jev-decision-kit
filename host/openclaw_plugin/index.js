@@ -105,7 +105,7 @@ export default {
       const task = String(event.prompt || "").trim();
       const folded = String(task ?? "").trimStart();
       const parts = [];
-      if (!folded.startsWith("jev-writer:")) {
+      if (!folded.startsWith("jev-writer:") && existsSync(join(root, "host", "writer_protocol", "__init__.py"))) {
         const hint = spawnSync(python, ["-m", "host.writer_protocol", "hint", "--root", String(event.cwd || process.cwd())], {
           cwd: root,
           encoding: "utf8",
