@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>技能柜 · 开口之前</title>
+  <style>
+    @font-face {
+      font-family: "Noto SC";
+      src: url("/fonts/NotoSansSC-VF.ttf") format("truetype");
+      font-weight: 100 900;
+    }
+    :root {
+      --cream: #f3eee4;
+      --ink: #111110;
+      --orange: #ff6a12;
+      --blue: #2b6bff;
+      --mute: #8a857c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #0c0c0b;
+      font-family: "Noto SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+    .stage {
+      width: 1080px;
+      height: 1920px;
+      position: relative;
+      background: #0c0c0b;
+    }
+    .half {
+      position: absolute;
+      left: 0;
+      width: 1080px;
+      height: 880px;
+      overflow: hidden;
+    }
+    .half.top { top: 88px; background: #161513; }
+    .half.bot { top: 968px; background: var(--cream); }
+    .pillbar {
+      position: absolute;
+      top: 18px;
+      left: 28px;
+      right: 28px;
+      height: 56px;
+      display: flex;
+      gap: 14px;
+      z-index: 20;
+    }
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .pill.o { background: var(--orange); }
+    .pill.b { background: var(--blue); }
+    .pill .dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff;
+    }
+    .vs {
+      margin-left: auto;
+      color: #fff;
+      font-size: 26px;
+      font-weight: 700;
+      align-self: center;
+      opacity: 0.85;
+    }
+    .word {
+      position: absolute;
+      left: 48px;
+      right: 48px;
+      top: 280px;
+      font-size: 168px;
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      opacity: 0;
+      transform: translateY(28px) scale(0.94);
+    }
+    .half.top .word { color: #fff; }
+    .half.bot .word { color: var(--ink); }
+    .word.on {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .word.off {
+      opacity: 0;
+      transform: translateY(-18px) scale(0.98);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+    .sub {
+      position: absolute;
+      left: 52px;
+      right: 52px;
+      top: 120px;
+      font-size: 36px;
+      font-weight: 650;
+      opacity: 0;
+    }
+    .half.top .sub { color: #c9c2b6; }
+    .half.bot .sub { color: #5c574e; }
+    .sub.on { opacity: 1; transition: opacity 240ms ease; }
+    .chips {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      bottom: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .chip {
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 26px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    .chip.on {
+      opacity: 1;
+      transform: none;
+      transition: opacity 200ms ease, transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .half.top .chip { background: #2a2622; color: #f2ece3; }
+    .half.bot .chip { background: #1a1a19; color: #f3eee4; }
+    .chip.bad { background: #3a1a12; color: #ff8d6a; }
+    .chip.ok { background: #14331c; color: #8dffb0; }
+    .stat {
+      position: absolute;
+      right: 48px;
+      top: 40px;
+      font-size: 92px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      opacity: 0;
+    }
+    .stat.on { opacity: 1; transition: opacity 200ms ease; }
+    .half.top .stat { color: #ff6a12; }
+    .half.bot .stat { color: #2b6bff; }
+    .shot {
+      position: absolute;
+      left: 40px;
+      right: 40px;
+      top: 210px;
+      height: 520px;
+      border-radius: 18px;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.97);
+      background: #ddd7cc;
+    }
+    .shot.on {
+      opacity: 1;
+      transform: none;
+      transition: opacity 280ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+    }
+    .wave {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 72px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      z-index: 12;
+    }
+    .bar {
+      width: 6px;
+      height: 10px;
+      background: #fff;
+      border-radius: 2px;
+      transform-origin: center;
+    }
+    .ai {
+      position: absolute;
+      left: 28px;
+      bottom: 88px;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      z-index: 13;
+      opacity: 0.7;
+    }
+    .comments {
+      position: absolute;
+      right: 28px;
+      bottom: 110px;
+      width: 420px;
+      z-index: 14;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cmt {
+      background: rgba(20,20,18,.82);
+      color: #fff;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 24px;
+      font-weight: 650;
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    .cmt.on {
+      opacity: 1;
+      transform: none;
+      transition: opacity 240ms ease, transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cmt b { color: #ffd36a; font-weight: 800; }
+    .end {
+      position: absolute;
+      inset: 88px 0 72px 0;
+      background: #0c0c0b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      opacity: 0;
+      z-index: 30;
+      color: #f3eee4;
+    }
+    .end.on { opacity: 1; transition: opacity 400ms ease; }
+    .end h1 {
+      font-size: 120px;
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      text-align: center;
+      font-weight: 900;
+    }
+    .end p { font-size: 36px; color: #b7b1a6; font-weight: 650; }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="pillbar">
+      <div class="pill o"><span class="dot"></span>模型自己翻</div>
+      <div class="pill b"><span class="dot"></span>jev-decision</div>
+      <div class="vs">同一句话 · 谁先开口</div>
+    </div>
+
+    <section class="half top" id="top">
+      <div class="stat" id="tStat"></div>
+      <div class="sub" id="tSub"></div>
+      <div class="word" id="tWord"></div>
+      <div class="chips" id="tChips"></div>
+    </section>
+
+    <section class="half bot" id="bot">
+      <div class="stat" id="bStat"></div>
+      <div class="sub" id="bSub"></div>
+      <div class="word" id="bWord"></div>
+      <div class="chips" id="bChips"></div>
+      <div class="shot" id="shot"><img src="../docs/home.png" alt="" /></div>
+    </section>
+
+    <div class="ai">内容由 AI 生成</div>
+    <div class="comments">
+      <div class="cmt" data-at="6">上面乱翻 · 下面关门</div>
+      <div class="cmt" data-at="14">点了名才留下，没点名关掉</div>
+      <div class="cmt" data-at="22"><b>33 / 33</b> 评估句全过</div>
+      <div class="cmt" data-at="30">插件挂开口前，MCP 不许改选</div>
+    </div>
+    <div class="wave" id="wave"></div>
+    <div class="end" id="end">
+      <h1>本机先选<br/>再让模型说话</h1>
+      <p>技能柜 · jev-decision · 开口之前</p>
+    </div>
+  </div>
+  <script>
+    const wave = document.getElementById("wave");
+    for (let i = 0; i < 64; i++) {
+      const b = document.createElement("div");
+      b.className = "bar";
+      wave.appendChild(b);
+    }
+    const bars = [...wave.children];
+
+    const scenes = [
+      { t: 0.0, top: { sub: "用户开口", word: "现在几点", chips: ["天气","浏览器","日历","Word"] }, bot: { sub: "本机先选", word: "自己做", chips: ["没点名","自己做"] } },
+      { t: 6.4, top: { sub: "整理会议纪要", word: "全柜翻开", chips: ["纪要","周报","邮件","PPT","路由"] }, bot: { sub: "点了名留下", word: "留下", chips: ["会议纪要"] } },
+      { t: 12.8, top: { sub: "一次交好几份", word: "全开", chips: ["skill A","skill B","skill C"] }, bot: { sub: "没点名", word: "关掉", chips: ["YES_LINE 0.4"] } },
+      { t: 19.2, top: { sub: "Laya 旧路由", word: "15 / 33", chips: ["选错门","测不过"] }, bot: { sub: "jev-decision", word: "33 / 33", chips: ["点了名留下","没点名关掉"] } },
+      { t: 25.6, top: { sub: "模型自己挂插件", word: "晚了", chips: ["先说话","再翻柜"] }, bot: { sub: "Harness 挂开口前", word: "先选", chips: ["MCP 不能改选"] } },
+      { t: 32.0, top: { sub: "先说话再找柜", word: "乱", chips: [] }, bot: { sub: "柜在本机", word: "准", chips: ["技能柜"] }, shot: true },
+      { t: 38.4, end: true }
+    ];
+
+    const tWord = document.getElementById("tWord");
+    const bWord = document.getElementById("bWord");
+    const tSub = document.getElementById("tSub");
+    const bSub = document.getElementById("bSub");
+    const tChips = document.getElementById("tChips");
+    const bChips = document.getElementById("bChips");
+    const shot = document.getElementById("shot");
+    const end = document.getElementById("end");
+    const tStat = document.getElementById("tStat");
+    const bStat = document.getElementById("bStat");
+
+    function slap(el, text) {
+      el.classList.remove("on");
+      el.classList.add("off");
+      requestAnimationFrame(() => {
+        el.textContent = text;
+        el.classList.remove("off");
+        void el.offsetWidth;
+        el.classList.add("on");
+      });
+    }
+
+    function setChips(box, list, kind) {
+      box.innerHTML = "";
+      list.forEach((name, i) => {
+        const c = document.createElement("div");
+        c.className = "chip " + (kind || "");
+        c.textContent = name;
+        box.appendChild(c);
+        setTimeout(() => c.classList.add("on"), 40 + i * 70);
+      });
+    }
+
+    let idx = -1;
+    function apply(i) {
+      const s = scenes[i];
+        if (s.end) {
+        end.classList.add("on");
+        document.querySelectorAll(".cmt").forEach((el) => el.classList.remove("on"));
+        return;
+      }
+      end.classList.remove("on");
+      slap(tWord, s.top.word);
+      slap(bWord, s.bot.word);
+      tSub.textContent = s.top.sub;
+      bSub.textContent = s.bot.sub;
+      tSub.classList.add("on");
+      bSub.classList.add("on");
+      setChips(tChips, s.top.chips, i === 3 ? "bad" : "");
+      setChips(bChips, s.bot.chips, "ok");
+      if (s.shot) shot.classList.add("on");
+      else shot.classList.remove("on");
+      if (i === 3) {
+        tStat.textContent = "15";
+        bStat.textContent = "33";
+        tStat.classList.add("on");
+        bStat.classList.add("on");
+      } else {
+        tStat.classList.remove("on");
+        bStat.classList.remove("on");
+      }
+    }
+
+    const OFFSET = Number(new URLSearchParams(location.search).get("t") || 0);
+    const t0 = performance.now() - OFFSET * 1000;
+    function tick(now) {
+      const t = (now - t0) / 1000;
+      let next = idx;
+      for (let i = 0; i < scenes.length; i++) {
+        if (t >= scenes[i].t) next = i;
+      }
+      if (next !== idx) {
+        idx = next;
+        apply(idx);
+      }
+      document.querySelectorAll(".cmt").forEach((el) => {
+        if (t >= Number(el.dataset.at)) el.classList.add("on");
+      });
+      const beat = 0.5 + 0.5 * Math.abs(Math.sin(t * Math.PI * 3.6));
+      bars.forEach((b, i) => {
+        const h = 8 + 42 * beat * (0.35 + 0.65 * Math.abs(Math.sin(t * 8 + i * 0.4)));
+        b.style.height = h + "px";
+      });
+      if (t < 44) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

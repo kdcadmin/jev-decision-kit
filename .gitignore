@@ -19,3 +19,6 @@ intro/frames/
 *.webm
 *.mov
 *.mkv
+*.wav
+douyin-split-mv/_qa*.png
+douyin-split-mv/_rec/
