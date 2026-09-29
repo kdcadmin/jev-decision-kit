@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>技能柜</title>
+  <style>
+    @font-face {
+      font-family: "Noto SC";
+      src: url("/fonts/NotoSansSC-VF.ttf") format("truetype");
+      font-weight: 100 900;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1920px; height: 1080px; overflow: hidden;
+      background: #0b0b0c;
+      font-family: "Noto SC", "Microsoft YaHei", sans-serif;
+      color: #f4f4f2;
+    }
+    .stage { width: 1920px; height: 1080px; position: relative; background:
+      radial-gradient(900px 600px at 50% 40%, #161616 0%, #0b0b0c 70%); }
+
+    .scene { position: absolute; inset: 0; opacity: 0; }
+    .scene.on { opacity: 1; transition: opacity 420ms ease; }
+
+    .logo-row {
+      position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+      display: flex; align-items: center; gap: 28px;
+    }
+    .mark {
+      width: 96px; height: 96px; border-radius: 28px;
+      background: #e8e4da; color: #111;
+      display: grid; place-items: center;
+      font-weight: 900; font-size: 42px; letter-spacing: -0.06em;
+    }
+    .word h1 { font-size: 92px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
+    .word p { margin-top: 10px; font-size: 28px; color: #9a9a94; font-weight: 650; letter-spacing: 0.18em; }
+
+    .hero {
+      position: absolute; left: 140px; top: 38%;
+      font-size: 108px; font-weight: 800; line-height: 1.05; letter-spacing: -0.06em;
+    }
+    .hero em { font-style: normal; color: #c9c4b8; }
+
+    .feat { position: absolute; inset: 0; }
+    .feat .copy { position: absolute; left: 120px; top: 280px; width: 640px; }
+    .feat .n { font-size: 22px; letter-spacing: 0.22em; color: #8d8d86; font-weight: 700; }
+    .feat h2 { margin-top: 18px; font-size: 72px; font-weight: 800; letter-spacing: -0.05em; line-height: 1.08; }
+    .feat p { margin-top: 18px; font-size: 26px; color: #a7a79f; font-weight: 600; line-height: 1.5; }
+
+    .panel {
+      position: absolute; right: 110px; top: 180px; width: 860px;
+      background: #141414; border: 1px solid #2a2a28; border-radius: 18px;
+      padding: 22px 24px; font-size: 22px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    }
+    .panel .bar { color: #7d7d76; font-size: 16px; margin-bottom: 14px; }
+    .code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 20px; line-height: 1.7; color: #d7d4cc; }
+    .code .k { color: #7aa2ff; } .code .s { color: #c9a227; } .code .c { color: #6f6f68; }
+    .chip-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .chip { padding: 8px 14px; border-radius: 999px; background: #222; font-weight: 750; font-size: 18px; }
+    .chip.on { background: #14331c; color: #b9ffd0; }
+    .chip.off { background: #3a1c16; color: #ffb09a; }
+    .stat {
+      position: absolute; right: 150px; bottom: 160px;
+      background: #101010; border: 1px solid #2c2c2a; border-radius: 14px;
+      padding: 18px 22px; min-width: 280px;
+    }
+    .stat b { display: block; font-size: 42px; letter-spacing: -0.04em; }
+    .stat span { color: #8e8e86; font-weight: 650; }
+
+    .tick {
+      position: absolute; left: 0; right: 0; top: 46%;
+      font-size: 84px; font-weight: 800; letter-spacing: -0.04em;
+      white-space: nowrap; color: #eceae4;
+      animation: slide 14s linear infinite;
+    }
+    @keyframes slide { from { transform: translateX(20%); } to { transform: translateX(-55%); } }
+
+    .endnote {
+      position: absolute; left: 50%; bottom: 90px; transform: translateX(-50%);
+      color: #8a8a84; font-size: 22px; font-weight: 650;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <section class="scene on" id="s0">
+      <div class="logo-row">
+        <div class="mark">柜</div>
+        <div class="word">
+          <h1>技能柜</h1>
+          <p>JEV-DECISION · 开口之前</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="s1">
+      <div class="hero">一句话，<br>开口之前先选 <em>Skill</em></div>
+    </section>
+
+    <section class="scene" id="s2">
+      <div class="feat">
+        <div class="copy">
+          <div class="n">01 —</div>
+          <h2>点了名留下</h2>
+          <p>同一句「整理会议纪要」。柜门上写了名的留下，没写的关掉。模型只执行这个结果。</p>
+        </div>
+        <div class="panel">
+          <div class="bar">技能柜 · jev-decision · 0.81</div>
+          <div>把这次会议整理成纪要</div>
+          <div class="chip-row">
+            <span class="chip on">会议纪要</span>
+            <span class="chip off">周报 关掉</span>
+            <span class="chip off">PPT 关掉</span>
+            <span class="chip off">邮件 关掉</span>
+          </div>
+        </div>
+        <div class="stat"><span>留下</span><b>meeting-minutes</b></div>
+      </div>
+    </section>
+
+    <section class="scene" id="s3">
+      <div class="feat">
+        <div class="copy">
+          <div class="n">02 —</div>
+          <h2>没点名，自己做</h2>
+          <p>现在几点了。天气、Word、浏览器全部关掉。自主思考 100。</p>
+        </div>
+        <div class="panel">
+          <div class="bar">执行 · 自己做</div>
+          <div class="code">
+            <div><span class="c"># unnamed doors → 0</span></div>
+            <div><span class="k">method</span> = <span class="s">"think"</span></div>
+            <div>weather = <span class="s">off</span></div>
+            <div>word = <span class="s">off</span></div>
+          </div>
+        </div>
+        <div class="stat"><span>做法</span><b>自己做</b></div>
+      </div>
+    </section>
+
+    <section class="scene" id="s4">
+      <div class="feat">
+        <div class="copy">
+          <div class="n">03 —</div>
+          <h2>挂在开口前</h2>
+          <p>Harness 先跑。MCP 只登记，不许改选。进对话立刻生效。</p>
+        </div>
+        <div class="panel">
+          <div class="bar">PreStepDecision</div>
+          <div class="code">
+            <div>plugin.<span class="k">before_speak</span>()</div>
+            <div>mcp.<span class="k">select</span> = <span class="s">False</span></div>
+            <div>score <span class="k">&gt;=</span> 0.4 → keep</div>
+          </div>
+        </div>
+        <div class="stat"><span>评估句</span><b>33 / 33</b></div>
+      </div>
+    </section>
+
+    <section class="scene" id="s5">
+      <div class="tick">点了名留下 · 没点名关掉 · MCP 不能改选 · Harness 挂开口前 · 本机先选 · </div>
+      <div class="endnote">技能柜 · 有人用吗</div>
+    </section>
+  </div>
+  <script>
+    const beats = [
+      { t: 0, id: "s0" },
+      { t: 6.2, id: "s1" },
+      { t: 12.4, id: "s2" },
+      { t: 21.2, id: "s3" },
+      { t: 29.4, id: "s4" },
+      { t: 37.2, id: "s5" }
+    ];
+    const OFFSET = Number(new URLSearchParams(location.search).get("t") || 0);
+    const t0 = performance.now() - OFFSET * 1000;
+    let cur = "";
+    function tick(now) {
+      const t = (now - t0) / 1000;
+      let id = "s0";
+      beats.forEach((b) => { if (t >= b.t) id = b.id; });
+      if (id !== cur) {
+        cur = id;
+        document.querySelectorAll(".scene").forEach((el) => el.classList.toggle("on", el.id === id));
+      }
+      if (t < 44) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
