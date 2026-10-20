@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { appendFile, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -64,13 +64,27 @@ export function resolveKitRoot(env = process.env, dir = moduleDir, read = readPo
 }
 
 const root = resolveKitRoot();
-const python = join(root, ".venv", "Scripts", "python.exe");
+// jev-decision-kit 是一个 Python 工作区：从市场单独装本插件、但机器上没有这个 kit 时，
+// 必须**保持安静**——否则每一轮都会被塞一句「没能启动选择」，比不装还糟。
 const worker = join(root, "host", "preface_worker.py");
+const kitPresent = Boolean(root) && existsSync(worker);
+// venv 的 python 在 Windows 是 Scripts/python.exe，在 macOS/Linux 是 bin/python。
+const python = [
+  join(root, ".venv", "Scripts", "python.exe"),
+  join(root, ".venv", "bin", "python"),
+].find((candidate) => existsSync(candidate)) || join(root, ".venv", "Scripts", "python.exe");
 const portFile = join(root, "runtime", "preface.port");
 const tokenFile = join(root, "runtime", "preface.token");
 const logFile = process.env.JEV_HARNESS_LOG || join(root, "runtime", "harness-plugin.log");
 const LOG_LIMIT_BYTES = 262_144;
 const workerWaitMs = Math.max(50, Number(process.env.JEV_WORKER_WAIT_MS) || 8000);
+let warnedMissingKit = false;
+
+function warnMissingKitOnce() {
+  if (warnedMissingKit) return;
+  warnedMissingKit = true;
+  noteAsync("kit-missing", `root=${root || "(unresolved)"} 插件保持静默，不注入前言`);
+}
 
 // Filled by every failed ensureWorker() so a fallback preface can name its own
 // cause: the host process may be unable to write the log at all.
@@ -145,11 +159,14 @@ async function healthy(port) {
 function startWorker() {
   let child;
   try {
+    // 别用 detached：Windows 上 detached 会让 windowsHide 失效——控制台应用会自己分配一个新控制台，
+    // 于是弹出一个标题为 python.exe 路径的窗口；用户一关那个窗口，worker 就以 0xC000013A
+    // （STATUS_CONTROL_C_EXIT）退出 → 探活失败 → 重拉 → 又弹一个，变成"反复弹窗"（2026-10-14 实测）。
+    // stdio:"ignore" + child.unref() 已经足够不让父进程被拖住，不需要 detached。
     child = spawn(python, [worker], {
       cwd: root,
       windowsHide: true,
       stdio: "ignore",
-      detached: true,
     });
   } catch (error) {
     remember(`spawn 抛错 ${reason(error?.message || error)}`);
@@ -225,6 +242,7 @@ async function prefaceFor(task) {
 }
 
 async function reportDispatch(event) {
+  if (!kitPresent) return;
   const child = String(event?.child_id || "");
   const port = await ensureWorker();
   if (!port) {
@@ -250,7 +268,9 @@ async function reportDispatch(event) {
 }
 
 function prependPreface(message, preface) {
-  const prefix = { type: "text", text: `${preface}\n\n` };
+  // 前言和用户那句话之间不留换行（用户要求："把中间的换行去掉"）：
+  // 之前是 `${preface}\n\n`，正文里会空出一行。
+  const prefix = { type: "text", text: preface };
   const content = Array.isArray(message?.content)
     ? [prefix, ...message.content]
     : typeof message?.content === "string"
@@ -314,6 +334,10 @@ export function apply(ctx) {
   ctx.on("agent/pre-step", async (payload, next) => {
     const decision = await next();
     if (decision?.kind !== "enter") return decision;
+    if (!kitPresent) {
+      warnMissingKitOnce();
+      return decision;
+    }
     const task = messageText(payload?.messages);
     if (!task || alreadyPrefaced(task)) return decision;
     const preface = await prefaceFor(task);

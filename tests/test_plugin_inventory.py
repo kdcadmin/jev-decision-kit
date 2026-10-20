@@ -128,7 +128,7 @@ class PluginInventoryTests(unittest.TestCase):
 
 class HarnessPluginTests(unittest.TestCase):
     def test_harness_bundle_declares_patch_and_pre_step_hook(self):
-        folder = ROOT / "host" / "harness_plugin"
+        folder = ROOT / "plugins" / "dsh-jev-skill-kit"
         manifest = json.loads((folder / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["name"], "dsh-jev-skill-kit")
         self.assertEqual(manifest["dsh"]["bundle"]["patch"], "./cordis.patch.yml")

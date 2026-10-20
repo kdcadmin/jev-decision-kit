@@ -1,0 +1,20 @@
+{
+  "name": "dsh-jev-skill-kit",
+  "version": "0.1.1",
+  "description": "Injects a per-turn skill-selection preface, chosen by the local JEV model of jev-decision-kit.",
+  "type": "module",
+  "main": "index.js",
+  "files": ["index.js", "cordis.patch.yml", "README.md", "screenshots.json"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kdcadmin/jev-decision-kit.git",
+    "directory": "plugins/dsh-jev-skill-kit"
+  },
+  "keywords": ["dsh-plugin", "dsh", "skills", "local-model", "jev-decision"],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

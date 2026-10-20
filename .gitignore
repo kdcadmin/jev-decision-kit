@@ -23,7 +23,9 @@ intro/frames/
 # 本机私有，不进公开仓库（规则与台账见 WRITER-PROTOCOL.md）：
 # 技能副本 skills/ 已在上面挡；下面是宿主侧技能目录、插件安装件、MCP 配置、写者协议本身。
 .agents/skills/
-plugins/
+# 插件安装件（宿主装进来的东西）不进仓库；但 plugins/ 下我们**自己发布**的 DSH 插件要进仓库
+plugins/*
+!plugins/dsh-jev-skill-kit/
 .mcp.json
 mcp.json
 **/.mcp.json
@@ -32,3 +34,4 @@ WRITER-PROTOCOL.md
 writer-log/
 host/writer_protocol/
 tests/test_writer_protocol.py
+.writer-ignore

@@ -1,8 +1,8 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { apply, alreadyPrefaced, foldPreface, note, resolveKitRoot, subagentDispatch } from "../host/harness_plugin/index.js";
+import { apply, alreadyPrefaced, foldPreface, note, resolveKitRoot, subagentDispatch } from "../plugins/dsh-jev-skill-kit/index.js";
 
 function fail(message, value) {
   console.error(message, value);
@@ -41,18 +41,18 @@ if (resolveKitRoot({}, installedDir, () => "") !== join(installedDir, "..", ".."
 // path in its manifest, which survives a reinstall that drops pointer files.
 const profileModuleDir = join(tmpdir(), "jev-profile", "node_modules", "dsh-jev-skill-kit");
 const manifest = JSON.stringify({
-  dependencies: { "dsh-jev-skill-kit": "file:D:/somewhere/jev-decision-kit/host/harness_plugin" },
+  dependencies: { "dsh-jev-skill-kit": "file:D:/somewhere/jev-decision-kit/plugins/dsh-jev-skill-kit" },
 });
 const fromManifest = resolveKitRoot({}, profileModuleDir, (path) => (path.endsWith("package.json") ? manifest : ""));
-if (fromManifest !== join("D:/somewhere/jev-decision-kit/host/harness_plugin", "..", "..")) {
+if (fromManifest !== join("D:/somewhere/jev-decision-kit/plugins/dsh-jev-skill-kit", "..", "..")) {
   fail("a file: dependency must locate the kit", fromManifest);
 }
 // A linked install keeps the same path in the manifest.
 const linkManifest = JSON.stringify({
-  dependencies: { "dsh-jev-skill-kit": "link:D:/somewhere/jev-decision-kit/host/harness_plugin" },
+  dependencies: { "dsh-jev-skill-kit": "link:D:/somewhere/jev-decision-kit/plugins/dsh-jev-skill-kit" },
 });
 const fromLink = resolveKitRoot({}, profileModuleDir, (path) => (path.endsWith("package.json") ? linkManifest : ""));
-if (fromLink !== join("D:/somewhere/jev-decision-kit/host/harness_plugin", "..", "..")) {
+if (fromLink !== join("D:/somewhere/jev-decision-kit/plugins/dsh-jev-skill-kit", "..", "..")) {
   fail("a link: dependency must locate the kit", fromLink);
 }
 
@@ -97,7 +97,9 @@ if (folded.startsRequestSeries !== true || folded.messages === original) {
 if (folded.messages[0].source !== original[0].source || folded.messages[0].role !== "user") {
   fail("fold must keep producer source", folded.messages[0]);
 }
-if (folded.messages[0].content[0]?.text !== "jev-decision: 这次自己做，不要翻技能柜。\n\n") {
+// 2026-10-07（用户要求「把中间的换行去掉」）：前言与用户那句话之间不再留空行，
+// 所以这里断言的不再是 `…。\n\n`，就是前言原文。改前言格式必须同步改这里。
+if (folded.messages[0].content[0]?.text !== "jev-decision: 这次自己做，不要翻技能柜。") {
   fail("fold must prefix preface", folded.messages[0].content);
 }
 if (folded.messages[0].source?.kind === "plugin") {
@@ -136,10 +138,14 @@ try {
 // The host process may be unable to write that log at all, so a failed worker
 // bootstrap must also name its cause inside the injected preface itself.
 const barren = await mkdtemp(join(tmpdir(), "jev-barren-root-"));
+// 让它"看起来像 kit"：有 worker 文件但起不来。没有 worker 文件的目录是另一种情形
+// （见下面的 no-kit 用例）：那属于"没装 kit"，插件必须完全静默。
+await mkdir(join(barren, "host"), { recursive: true });
+await writeFile(join(barren, "host", "preface_worker.py"), "");
 process.env.JEV_KIT_ROOT = barren;
 process.env.JEV_WORKER_WAIT_MS = "300";
 try {
-  const probe = await import("../host/harness_plugin/index.js?diagnostics");
+  const probe = await import("../plugins/dsh-jev-skill-kit/index.js?diagnostics");
   const probeHooks = {};
   probe.apply({
     on(name, fn) {
@@ -161,6 +167,36 @@ try {
   delete process.env.JEV_KIT_ROOT;
   delete process.env.JEV_WORKER_WAIT_MS;
   await rm(barren, { recursive: true, force: true });
+}
+
+// A marketplace install without the Python workspace must stay silent: no
+// preface, no per-turn error text (one `kit-missing` log line is enough).
+const noKit = await mkdtemp(join(tmpdir(), "jev-no-kit-"));
+process.env.JEV_KIT_ROOT = noKit;
+try {
+  const probe = await import("../plugins/dsh-jev-skill-kit/index.js?no-kit");
+  const probeHooks = {};
+  probe.apply({
+    on(name, fn) {
+      probeHooks[name] = fn;
+    },
+  });
+  const messages = [{ role: "user", content: [{ type: "text", text: "第一次用这个插件" }] }];
+  const decision = await probeHooks["agent/pre-step"](
+    { messages },
+    async () => ({ kind: "enter", messages, startsRequestSeries: true }),
+  );
+  // 没注入时 messages 原样返回，第一段就是用户原句——所以要判"有没有前言"，不是"有没有文字"。
+  const firstText = String(decision?.messages?.[0]?.content?.[0]?.text || "");
+  if (firstText.startsWith("jev-decision:") || firstText.includes("没能启动")) {
+    fail("missing kit must stay silent", firstText);
+  }
+  if (decision?.messages?.[0]?.content?.length !== 1) {
+    fail("missing kit must not add content parts", decision?.messages?.[0]?.content);
+  }
+} finally {
+  delete process.env.JEV_KIT_ROOT;
+  await rm(noKit, { recursive: true, force: true });
 }
 
 console.log("ok");
